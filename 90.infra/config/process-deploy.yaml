@@ -1,0 +1,49 @@
+# 테크밸리 로컬 E2E — SSOT: 02.arch/config/local/
+version: 1
+
+local:
+  mongo_uri_env: TV_MONGO_URI
+  postgres_uri_env: TV_POSTGRES_URI
+  default_mongo_fallback: mongodb://tv:tv_local_dev@127.0.0.1:27000/iot_service?authSource=admin
+  default_postgres: postgresql://tv:tv_local_dev@127.0.0.1:25432/iot_analytics
+  minio:
+    endpoint: http://127.0.0.1:19010
+    console: http://127.0.0.1:19011
+    access_key: tv
+    secret_key: tv_local_dev
+    bucket: tv-local-media
+    region: ap-northeast-2
+    force_path_style: true
+
+scenarios:
+  full_local_service:
+    description: Podman → bootstrap → manifest → rules → predeploy → Lambda invoke ×3
+    steps:
+      - id: podman_up
+        run: ./02.arch/config/local/local-up.sh
+      - id: compose_manifest
+        run: npm run compose:manifest
+        cwd: 03.source/lambda
+      - id: rules_build
+        run: npm run rules:build
+        cwd: 03.source/lambda
+      - id: lambda_test_all
+        run: ./02.arch/config/local/local-test-all.sh
+
+processes:
+  ingress_pipeline:
+    deploy_group: ingress
+    config_ref: 02.arch/config/ingress-deploy.yaml
+    local_steps: [lambda_predeploy, stream_sync_invoke]
+
+  stream_ingress:
+    deploy_group: ingress
+    runtime_file: 02.arch/config/normalize-config.default.yaml
+    lambda_env:
+      NORMALIZE_CONFIG_PATH: /var/task/config/normalize-config.default.yaml
+      RULES_DIR: /var/task/rules
+
+  alarm_batch:
+    deploy_group: batch
+    runtime_file: 02.arch/config/02-batch-cadence.yaml
+    local_steps: [batch_invoke]

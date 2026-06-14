@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://techvalley.local/schema/firehose-stream-fact-v1.json",
+  "title": "Techvalley Firehose normalized record (stream_fact_telemetry)",
+  "type": "object",
+  "required": ["device_code", "created_at", "device_timestamp", "rule_code"],
+  "properties": {
+    "device_code": { "type": "string", "description": "장비 S/N — KDS PartitionKey" },
+    "site_id": { "type": "string" },
+    "customer_id": { "type": "string", "description": "company.code 스냅샷" },
+    "tenant_id": { "type": "string", "const": "tv" },
+    "product_code": { "type": "string" },
+    "device_timestamp": { "type": "integer", "description": "UTC epoch ms" },
+    "data_index": { "type": "integer", "minimum": 0 },
+    "created_at": { "type": "string", "format": "date-time", "description": "서버 적재 ISO8601 — Iceberg dt 파티션" },
+    "base_time": { "type": "integer", "description": "yyyyMMddHHmm 10분 버킷" },
+    "event_domain": { "type": "string", "enum": ["telemetry", "alarm", "control", "fota", "file"] },
+    "rule_code": { "type": "string" },
+    "topic": { "type": "string" },
+    "metric_values_kv": { "type": "object", "additionalProperties": { "type": "number" } },
+    "tube.kv": { "type": "number" },
+    "tube.ma": { "type": "number" },
+    "detector.temp_c": { "type": "number" },
+    "yield_pct": { "type": "number" },
+    "is_alarm": { "type": "boolean" },
+    "ingest_source": { "type": "string", "const": "stream-sync-consumer" }
+  }
+}

@@ -1,0 +1,182 @@
+[
+  {
+    "slug": "01-platform-overview",
+    "title": "01. 플랫폼 개요",
+    "rel": "01-platform-overview.md",
+    "excerpt": "테크밸리 IoT 서비스 플랫폼은 **산업용 X-ray·검사 장비**의 원격 관제·알람·서비스·원격제어를 위한 운영 시스템입니다."
+  },
+  {
+    "slug": "02-data-pipeline",
+    "title": "02. AWS 데이터 파이프라인",
+    "rel": "02-data-pipeline.md",
+    "excerpt": "```mermaid"
+  },
+  {
+    "slug": "13-media-upload-pipeline",
+    "title": "13. 미디어 업로드 파이프라인 (이미지·비디오·S3)",
+    "rel": "13-media-upload-pipeline.md",
+    "excerpt": "검사 **이미지 청크**, **비디오 스트림**, **S3 단일 PUT / 멀티파트** 업로드 SSOT입니다."
+  },
+  {
+    "slug": "config-samples-mqtt-topics",
+    "title": "테크밸리 MQTT 토픽 예시 (8세그먼트)",
+    "rel": "config/samples/mqtt-topics.md",
+    "excerpt": "```"
+  },
+  {
+    "slug": "08-greengrass-offline-resilience",
+    "title": "08. Greengrass 오프라인·복구 프로세스",
+    "rel": "08-greengrass-offline-resilience.md",
+    "excerpt": "기능정의서 A1(네트워크 단절 시 **스풀·재동기화**)과 [hiCAMS 아키텍처](https://hd-ksoe.vercel.app/)의 Greengrass V2 오프라인 패턴을 **테크밸리 장비 엣지** 기준으로 정리한 SSOT입니다."
+  },
+  {
+    "slug": "09-ai-anomaly-rules-and-edge-self-healing",
+    "title": "09. AI 이상 감지 · 룰셋 추천 · 엣지 자가복구",
+    "rel": "09-ai-anomaly-rules-and-edge-self-healing.md",
+    "excerpt": "테크밸리 IoT 플랫폼의 **운영 AI** SSOT입니다."
+  },
+  {
+    "slug": "03-storage-tiers",
+    "title": "03. 3-Tier Storage 및 데이터 생명주기",
+    "rel": "03-storage-tiers.md",
+    "excerpt": "기능정의서·운영 UI **기준정보**입니다. 운영 성숙도에 따라 Hot 90일 등으로 확장 가능하나, **UI·제안서 정합**은 아래를 SSOT로 합니다."
+  },
+  {
+    "slug": "04-backend-services",
+    "title": "04. 백엔드 서비스 및 Lambda",
+    "rel": "04-backend-services.md",
+    "excerpt": "테크밸리 백엔드는 **도메인별 독립 배포**를 목표로 합니다. API Gateway 뒤 Lambda 또는 ECS Fargate."
+  },
+  {
+    "slug": "14-backend-frontend-design",
+    "title": "14. 백엔드·프론트엔드 설계",
+    "rel": "14-backend-frontend-design.md",
+    "excerpt": "테크밸리 **운영 포털(Next.js) + API(NestJS)** 설계 SSOT입니다."
+  },
+  {
+    "slug": "15-lambda-development",
+    "title": "15. AWS Lambda 개발 스펙",
+    "rel": "15-lambda-development.md",
+    "excerpt": "테크밸리 **데이터 파이프라인 Lambda 9종** 개발·번들·로컬 테스트 SSOT입니다."
+  },
+  {
+    "slug": "05-yaml-and-rules",
+    "title": "05. YAML·변환 규칙·배치 Cadence",
+    "rel": "05-yaml-and-rules.md",
+    "excerpt": "테크밸리 IoT 플랫폼 **YAML 4층** 설계 SSOT입니다."
+  },
+  {
+    "slug": "10-yaml-pipeline-deploy-automation",
+    "title": "10. YAML 파이프라인 자동 배포",
+    "rel": "10-yaml-pipeline-deploy-automation.md",
+    "excerpt": "테크밸리 IoT 플랫폼의 **YAML → predeploy → Terraform** 자동 배포 SSOT입니다."
+  },
+  {
+    "slug": "06-schema-reference",
+    "title": "06. 스키마 및 UI 매핑",
+    "rel": "06-schema-reference.md",
+    "excerpt": "> **DB 설계 전체(DDL·bootstrap·ERD): [12-database-design.md](./12-database-design.md)**"
+  },
+  {
+    "slug": "12-database-design",
+    "title": "12. 데이터베이스 설계 (테크밸리)",
+    "rel": "12-database-design.md",
+    "excerpt": "3-Tier 저장([03-storage-tiers.md](./03-storage-tiers.md))의 **물리 스키마 SSOT**입니다."
+  },
+  {
+    "slug": "config-schema-org-hierarchy",
+    "title": "조직 · 자산 계층 (company → branch → site → device)",
+    "rel": "config/schema/org-hierarchy.md",
+    "excerpt": "Warm Tier(Postgres) SSOT · UI 필터 · 배치 롤업의 **조직 트리**입니다."
+  },
+  {
+    "slug": "config-schema-documentdb-collection-contract",
+    "title": "DocumentDB 컬렉션 계약 (테크밸리)",
+    "rel": "config/schema/documentdb/collection-contract.md",
+    "excerpt": "`manifest/processes/03-documentdb.yaml` 의 `collections[]` 가 **인덱스·컬렉션 이름 SSOT**입니다."
+  },
+  {
+    "slug": "config-schema-documentdb-document-schema-anchors",
+    "title": "Document schema anchors (테크밸리)",
+    "rel": "config/schema/documentdb/document-schema-anchors.md",
+    "excerpt": "`normalize-config.default.yaml` 의 `document_schema_anchor` ↔ 컬렉션 ↔ `rules/*.json` 레지스트리."
+  },
+  {
+    "slug": "config-schema-postgres-readme",
+    "title": "PostgreSQL DDL (테크밸리 Warm)",
+    "rel": "config/schema/postgres/README.md",
+    "excerpt": "조직 계층: [org-hierarchy.md](../org-hierarchy.md) — `company` → `branch` → `site` → `device`"
+  },
+  {
+    "slug": "config-schema-iceberg-readme",
+    "title": "Iceberg / S3 / Firehose (테크밸리 Cold Tier)",
+    "rel": "config/schema/iceberg/README.md",
+    "excerpt": "| 파일 | 역할 |"
+  },
+  {
+    "slug": "07-repo-and-deployment",
+    "title": "07. 저장소 구조 및 배포",
+    "rel": "07-repo-and-deployment.md",
+    "excerpt": "```"
+  },
+  {
+    "slug": "11-config-examples-reference",
+    "title": "11. 설정 예시·샘플 레퍼런스",
+    "rel": "11-config-examples-reference.md",
+    "excerpt": "테크밸리 X-ray·검사 장비 IoT 플랫폼의 **설정·샘플 SSOT**입니다."
+  },
+  {
+    "slug": "config-readme",
+    "title": "02.arch/config — 테크밸리 아키텍처 설정 SSOT",
+    "rel": "config/README.md",
+    "excerpt": "**모든 YAML·JSON·manifest·samples는 이 폴더가 원본입니다.**"
+  },
+  {
+    "slug": "config-local-readme",
+    "title": "로컬 개발 — SSOT: 02.arch/config/local/",
+    "rel": "config/local/README.md",
+    "excerpt": "```bash"
+  },
+  {
+    "slug": "config-samples-s3-object-layout-example",
+    "title": "S3 객체 레이아웃 예시 (dev)",
+    "rel": "config/samples/s3-object-layout.example.md",
+    "excerpt": "버킷: `tv-ingress-dev-tv-analytics-raw`"
+  },
+  {
+    "slug": "gen-postgres-table-inventory",
+    "title": "Postgres 테이블 인벤토리",
+    "rel": "__generated/postgres-table-inventory.md",
+    "excerpt": "Postgres DDL 5 files — alert, notification, telemetry rollups, device, company…"
+  },
+  {
+    "slug": "reference-media-upload",
+    "title": "미디어 · S3 업로드 레퍼런스",
+    "rel": "reference/media-upload",
+    "excerpt": "이미지 청크 · 비디오 스트림 · single PUT · multipart · MQTT file/* · samples JSON"
+  },
+  {
+    "slug": "reference-lambda",
+    "title": "AWS Lambda 9종 개발 레퍼런스",
+    "rel": "reference/lambda",
+    "excerpt": "Node.js 24 ESM · pipeline-core · 9종 handler · bundle · predeploy · test:local:ingress batch media"
+  },
+  {
+    "slug": "reference-ui-api",
+    "title": "UI · API · NestJS 레퍼런스",
+    "rel": "reference/ui-api",
+    "excerpt": "운영 포털 화면 ↔ REST API · NestJS contexts · FOTA update-jobs · Cognito JWT companyId branchId siteId"
+  },
+  {
+    "slug": "reference-postgres",
+    "title": "Postgres DDL 레퍼런스",
+    "rel": "reference/postgres",
+    "excerpt": "Aurora PostgreSQL Warm Tier — SQL 파일별 테이블·컬럼 정의"
+  },
+  {
+    "slug": "reference-docdb",
+    "title": "DocumentDB 레퍼런스",
+    "rel": "reference/docdb",
+    "excerpt": "Hot Tier 컬렉션 · 인덱스 · manifest processes"
+  }
+]

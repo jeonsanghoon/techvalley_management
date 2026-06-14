@@ -1,0 +1,52 @@
+# 테크밸리 X-ray periodic — tube.kv · detector · yield
+rule_id: rule_periodic_telemetry_v1
+rule_code: rule_periodic_telemetry_v1
+rule_version: "1.0.0"
+spec_version: "1"
+deploy_version: "1.0.0"
+description: "periodic/telemetry/report — periodic_telemetry"
+topic_match:
+  - pattern: "tv/{env}/+/+/periodic/telemetry/report/json"
+metric_kv_catalog:
+  source_array: data
+  pivot:
+    into: metric_values_kv
+    key_field: key
+    value_field: value
+    value_type_field: value_type
+  columns:
+    - { key: tube.kv, label: "튜브 kV", unit: "kV", value_type: number, alert_path: metric_values_kv.tube.kv }
+    - { key: tube.ma, label: "튜브 mA", unit: "mA", value_type: number }
+    - { key: detector.temp_c, label: "디텍터 온도", unit: "°C", value_type: number }
+    - { key: yield_pct, label: "수율", unit: "%", value_type: number }
+    - { key: greengrass.uptime_pct, label: "GG 가동", unit: "%", value_type: number }
+    - { key: spool_usage_pct, label: "Spooler", unit: "%", value_type: number }
+payload:
+  type: json_to_json
+  format: { strict: false, max_depth: 32 }
+  map:
+    - { from: deviceId, to: device_code, target_type: string, required: true }
+    - { from: datas, to: data, target_type: array, required: true }
+    - { from: device_timestamp, to: device_timestamp, target_type: int64, required: true }
+    - { from: data_index, to: data_index, target_type: int64, required: false }
+    - { from: site_id, to: site_id, target_type: string, required: false }
+    - { from: customer_id, to: customer_id, target_type: string, required: false }
+  target:
+    document_model: metric_values_kv
+alerts_raw:
+  - id: tube_kv_high
+    when: { path: metric_values_kv.tube.kv, op: ">", value: 180 }
+    severity: critical
+    set_meta: { is_alarm: true, primary_alarm_code: ALARM_TUBE_KV_HIGH }
+  - id: detector_temp_high
+    when: { path: metric_values_kv.detector.temp_c, op: ">", value: 65 }
+    severity: warning
+    set_meta: { is_alarm: true, primary_alarm_code: ALARM_DETECTOR_TEMP_HIGH }
+  - id: yield_drop
+    when: { path: metric_values_kv.yield_pct, op: "<", value: 90 }
+    severity: warning
+    set_meta: { is_alarm: true, primary_alarm_code: ALARM_YIELD_DROP }
+targets:
+  - collection: periodic_telemetry
+    unique_key: [device_code, device_timestamp, data_index]
+    on_duplicate: skip

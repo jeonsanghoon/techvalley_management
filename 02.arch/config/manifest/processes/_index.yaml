@@ -1,0 +1,29 @@
+version: 1
+composed_output: 02.arch/config/manifest/01-data-platform.manifest.yaml
+processes:
+  - id: platform_meta
+    file: 00-platform-meta.yaml
+    deploy_group: schema
+  - id: ingress_pipeline
+    file: 01-ingress-pipeline.yaml
+    deploy_group: ingress
+  - id: documentdb
+    file: 03-documentdb.yaml
+    deploy_group: schema
+  - id: stream_ingress
+    file: 04-stream-ingress.yaml
+    deploy_group: ingress
+  - id: alarm_batch
+    file: 05-alarm-batch.yaml
+    deploy_group: batch
+  - id: postgres
+    file: 06-postgres.yaml
+    deploy_group: schema
+external_runtime:
+  - id: normalize_config
+    path: 02.arch/config/normalize-config.default.yaml
+  - id: batch_cadence
+    path: 02.arch/config/02-batch-cadence.yaml
+  - id: converter_rules
+    build: npm run rules:build
+    output: 02.arch/config/rules/*.json

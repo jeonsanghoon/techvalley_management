@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>테크밸리 IoT·제조 통합 플랫폼 — 종합 기능정의서</title>
+<style>
+  :root{
+    --navy:#0B3D5C; --navy2:#062840; --accent:#1C7293;
+    --blue-bg:#E6F1FB; --blue-line:#185FA5; --blue-ink:#0C447C;
+    --green-bg:#EEF6EE; --green-line:#3B6D11; --green-ink:#27500A;
+    --purple-bg:#EEE9F8; --purple-line:#534AB7; --purple-ink:#3C3489;
+    --red-line:#A32D2D; --red-ink:#791F1F; --red-bg:#FCEBEB;
+    --amber-bg:#FAEEDA; --amber-line:#854F0B; --amber-ink:#633806;
+    --line:#D9E2E8; --ink:#1c2b33; --muted:#5b6b73; --light:#EEF4F8;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0; font-family:"Malgun Gothic","맑은 고딕",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    color:var(--ink); background:#f4f6f8; line-height:1.6; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1140px; margin:0 auto; padding:0 20px 80px;}
+
+  header.cover{background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%); color:#fff; padding:54px 20px 46px; text-align:center;}
+  header.cover .eyebrow{letter-spacing:3px; font-size:13px; opacity:.8; margin:0 0 14px;}
+  header.cover h1{font-size:28px; font-weight:700; margin:0 0 8px; line-height:1.35;}
+  header.cover .sub{font-size:19px; font-weight:600; margin:0 0 6px;}
+  header.cover .meta{font-size:14px; opacity:.85; margin:14px 0 0;}
+  .badges{display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:20px;}
+  .badge{background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.25); color:#fff; padding:5px 12px; border-radius:20px; font-size:12px;}
+
+  nav.toc{position:sticky; top:0; z-index:20; background:#fff; border-bottom:1px solid var(--line); box-shadow:0 1px 6px rgba(0,0,0,.04);}
+  nav.toc ul{max-width:1140px; margin:0 auto; padding:0 20px; list-style:none; display:flex; gap:2px; overflow-x:auto;}
+  nav.toc a{display:block; padding:13px 12px; font-size:12.5px; color:var(--muted); text-decoration:none; white-space:nowrap; border-bottom:2px solid transparent;}
+  nav.toc a:hover{color:var(--navy); border-bottom-color:var(--accent);}
+
+  section{background:#fff; border:1px solid var(--line); border-radius:12px; padding:26px 30px; margin-top:24px; box-shadow:0 1px 3px rgba(0,0,0,.03);}
+  .sec-no{display:inline-block; color:#fff; font-size:13px; font-weight:700; min-width:30px; height:30px; line-height:30px; text-align:center; border-radius:7px; margin-right:10px; padding:0 6px;}
+  .n-a{background:var(--blue-line);} .n-b{background:var(--green-line);} .n-c{background:var(--amber-line);}
+  .n-d{background:var(--purple-line);} .n-e{background:var(--navy);}
+  h2{font-size:21px; color:var(--navy); margin:0 0 4px; display:flex; align-items:center;}
+  .sec-desc{color:var(--muted); font-size:14px; margin:6px 0 18px;}
+  h3{font-size:16px; color:var(--accent); margin:24px 0 10px; padding-left:10px; border-left:3px solid var(--accent);}
+
+  table{width:100%; border-collapse:collapse; font-size:13.5px; margin:6px 0 4px;}
+  th,td{border:1px solid var(--line); padding:8px 11px; text-align:left; vertical-align:top;}
+  thead th{background:var(--navy); color:#fff; font-weight:600; text-align:center; font-size:13px;}
+  tbody td.k{background:var(--light); font-weight:600; white-space:nowrap;}
+  tbody td.idx{background:#f0f6fb; font-weight:700; text-align:center; width:46px; color:var(--navy);}
+  thead.blue th{background:var(--blue-line);} thead.green th{background:var(--green-line);}
+  thead.amber th{background:var(--amber-line);} thead.purple th{background:var(--purple-line);}
+  .small{font-size:12.5px; color:var(--muted); margin:8px 0 0;}
+  code{background:#f1f5f8; border:1px solid #e2eaf0; border-radius:4px; padding:1px 6px; font-family:Consolas,monospace; font-size:12.5px; color:#0C447C;}
+  .tag{display:inline-block; font-size:11px; padding:1px 8px; border-radius:11px; font-weight:600; margin-left:6px;}
+  .tag.a{background:var(--blue-bg); color:var(--blue-ink);}
+  .tag.b{background:var(--green-bg); color:var(--green-ink);}
+  .date{color:var(--red-ink); font-weight:600;}
+
+  .kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin:8px 0 4px;}
+  .kpi{background:var(--light); border-radius:10px; padding:14px 16px;}
+  .kpi .v{font-size:21px; font-weight:700; color:var(--navy);}
+  .kpi .l{font-size:12.5px; color:var(--muted); margin-top:2px;}
+
+  ol.notes{margin:6px 0 0; padding-left:20px;} ol.notes li{margin:7px 0; font-size:14px;}
+  footer{text-align:center; color:var(--muted); font-size:12.5px; margin-top:40px;}
+
+  .lc-controls{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px;}
+  .lc-controls button{border:1px solid var(--line); background:#fff; color:var(--navy); cursor:pointer; padding:7px 12px; border-radius:8px; font-size:13px;}
+  .lc-controls button:hover{background:var(--light);}
+  .lc-hint{font-size:12px; color:var(--muted);}
+  #lc-zoom{margin-left:auto; font-size:12px; color:var(--muted);}
+  #lc-vp{position:relative; width:100%; height:560px; overflow:hidden; border:1px solid var(--line); border-radius:10px; background:#fafcfd; cursor:grab; touch-action:none;}
+  #lc-stage{position:absolute; top:0; left:0; transform-origin:0 0;}
+  .mer{background:#fafcfd; border:1px solid var(--line); border-radius:10px; padding:18px; margin:6px 0; text-align:center;}
+  .mer svg{display:block; margin:0 auto; height:auto;}
+  .mer.mer-v{overflow:visible;}
+  .mer.mer-v svg{width:min(100%, 480px); max-width:100%;}
+  .mer.mer-h{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+  .mer.mer-h svg{width:auto; max-width:none;}
+  details{margin:4px 0 14px;} summary{cursor:pointer; font-size:13px; color:var(--accent);}
+  pre{background:#0e2233; color:#cfe3f2; padding:14px 16px; border-radius:8px; overflow-x:auto; font-size:12px; line-height:1.5; font-family:Consolas,monospace;}
+  .mer-h{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;}
+  .zoom-btn{border:1px solid var(--accent); background:#fff; color:var(--accent); cursor:pointer; padding:5px 12px; border-radius:8px; font-size:12.5px; font-weight:600; white-space:nowrap;}
+  .zoom-btn:hover{background:var(--accent); color:#fff;}
+  #mer-overlay{display:none; position:fixed; inset:0; z-index:1000; background:rgba(10,20,30,.92); flex-direction:column;}
+  #mer-overlay.open{display:flex;}
+  #mer-ov-bar{display:flex; align-items:center; gap:10px; padding:12px 18px; color:#fff; flex-wrap:wrap;}
+  #mer-ov-bar .title{font-size:15px; font-weight:600; margin-right:auto;}
+  #mer-ov-bar button{border:1px solid rgba(255,255,255,.4); background:rgba(255,255,255,.1); color:#fff; cursor:pointer; padding:6px 12px; border-radius:8px; font-size:13px;}
+  #mer-ov-bar button:hover{background:rgba(255,255,255,.22);}
+  #mer-ov-vp{flex:1; overflow:hidden; cursor:grab; touch-action:none; position:relative;}
+  #mer-ov-stage{position:absolute; top:0; left:0; transform-origin:0 0; background:#fff; padding:24px; border-radius:10px;}
+  #mer-ov-stage svg{display:block;}
+  .lc-svg .t{font-family:"Malgun Gothic",sans-serif; font-size:15px; font-weight:600;}
+  .lc-svg .ts{font-family:"Malgun Gothic",sans-serif; font-size:12.5px; font-weight:400;}
+  .lc-svg .lbl{font-family:"Malgun Gothic",sans-serif; font-size:17px; font-weight:700;}
+  @page{margin:12mm;}
+  @media print{
+    body{background:#fff;} nav.toc,.lc-controls{display:none;}
+    header.cover{background:var(--navy)!important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    section{box-shadow:none; border:1px solid #ccc; page-break-inside:avoid; margin-top:14px;}
+    thead th,tbody td.k,tbody td.idx{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    #lc-vp{height:auto; overflow:visible; border:none;}
+    #lc-stage{position:static; transform:none!important;}
+    .lc-svg{width:100%!important; height:auto!important;}
+  }
+</style>
+</head>
+<body>
+
+<header class="cover">
+  <p class="eyebrow">FUNCTIONAL SPECIFICATION</p>
+  <h1>테크밸리 IoT·제조 통합 플랫폼 — 종합 기능정의서</h1>
+  <p class="sub">기능·개발업무(IoT/ERP 구분)·일정·SLA·연동·프로젝트별 흐름도 통합</p>
+  <p class="meta">프로젝트 A: IoT 서비스 플랫폼 &nbsp;|&nbsp; 프로젝트 B: 제조·ERP 플랫폼 &nbsp;|&nbsp; AWS · MZC</p>
+  <div class="badges">
+    <span class="badge">제품주문 ≠ 부품주문</span>
+    <span class="badge">출하·배송 예정일 관리</span>
+    <span class="badge">SLA·서비스 가능 수준</span>
+    <span class="badge">연동 API · 데이터 이행</span>
+    <span class="badge">AWS 인증·보안</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <ul>
+    <li><a href="#overview">개요</a></li>
+    <li><a href="#iot">A. IoT 서비스 기능</a></li>
+    <li><a href="#erp">B. 제조·ERP 기능</a></li>
+    <li><a href="#ai">D. AI 지원(Bedrock·RAG)</a></li>
+    <li><a href="#sow">개발업무(작업명세서)</a></li>
+    <li><a href="#orders">제품/부품 주문</a></li>
+    <li><a href="#schedule">일정(출하·배송 예정일)</a></li>
+    <li><a href="#sla">서비스 수준(SLA)</a></li>
+    <li><a href="#api">연동 API</a></li>
+    <li><a href="#security">인증·보안(AWS)</a></li>
+    <li><a href="#migration">데이터 마이그레이션</a></li>
+    <li><a href="#integration">연동 구성도</a></li>
+    <li><a href="#mermaid">통합 흐름도(Mermaid)</a></li>
+    <li><a href="#notes">비고</a></li>
+  </ul>
+</nav>
+
+<div class="wrap">
+
+  <!-- 0 -->
+  <section id="overview">
+    <h2><span class="sec-no n-e">0</span>개요</h2>
+    <p class="sec-desc">본 문서는 테크밸리 산업용 X-ray/CT IoT·제조 통합 플랫폼의 전체 기능을 <b>Phase 구분 없이</b> 도메인 단위로 나열한 종합 기능정의서입니다. 장비 운영·정비를 담당하는 <b>프로젝트 A(IoT 서비스 플랫폼)</b>와 수주·생산·발주·재고를 담당하는 <b>프로젝트 B(제조·ERP 플랫폼)</b>로 구분하며, 제품주문(완제품 장비)과 부품주문(정비용 부품)을 분리 처리합니다. 모든 주문은 <b>출하예정일·배송예정일 등 전 단계 일정</b>과 <b>서비스 수준(SLA)·서비스 가능 수준</b>으로 관리됩니다.</p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">2 프로젝트</div><div class="l">IoT 서비스 / 제조·ERP</div></div>
+      <div class="kpi"><div class="v">제품 + 부품</div><div class="l">주문 유형 분리</div></div>
+      <div class="kpi"><div class="v">예정일·실적일</div><div class="l">전 단계 일정 관리</div></div>
+      <div class="kpi"><div class="v">SLA 등급</div><div class="l">서비스 가능 수준 정의</div></div>
+    </div>
+  </section>
+
+  <!-- A IoT functions -->
+  <section id="iot">
+    <h2><span class="sec-no n-a">A</span>IoT 서비스 플랫폼 — 기능 목록</h2>
+    <p class="sec-desc">장비 운영·모니터링·정비 사이클 기능 (프로젝트 A). 핵심 서비스 흐름은 <b>알람 → 원격제어 → 서비스 호출 → 처리 진행 등록</b>이며, <b>부품 주문</b>과 <b>AS(정비) 관리</b>는 별도 도메인으로 분리합니다.</p>
+    <table>
+      <thead class="blue"><tr><th>No</th><th style="width:180px">기능 도메인</th><th>세부 기능</th></tr></thead>
+      <tbody>
+        <tr><td class="idx">A1</td><td class="k">IoT 데이터 수집</td><td>튜브·디텍터·본체 텔레메트리 수집 / 엣지(Greengrass v2) 연동 / 페이로드 정규화·스키마 표준화 / 네트워크 단절 시 스풀·재동기화</td></tr>
+        <tr><td class="idx">A2</td><td class="k">데이터 파이프라인·저장</td><td>IoT Core·Rule·Kinesis 수집 / Lambda 정규화·적재 / 3-Tier 저장(Hot:DocumentDB · Warm:Aurora PG · Cold:Iceberg/S3) / 수명주기 이관</td></tr>
+        <tr><td class="idx">A3</td><td class="k">통합 관제 대시보드</td><td>글로벌 플릿 지도·상태 신호 / 실시간 텔레메트리 위젯 / 멀티디바이스 반응형 / EMG 핫라인</td></tr>
+        <tr><td class="idx">A4</td><td class="k">이상 알람·룰셋</td><td>임계 알람 룰 엔진(EventBridge) / 복합 임계·조건 룰셋 관리 / 알림 발송(SNS·SES) / 알람 → 원격제어·서비스 호출 트리거</td></tr>
+        <tr><td class="idx">A5</td><td class="k">원격제어</td><td>알람 연계 1차 조치 / kV/mA 파라미터 설정·보정 / 본체 안전모드 전환 / IoT Jobs·Device Shadow / Fail-safe 인터락 / 원격 해결·미해결 판정</td></tr>
+        <tr><td class="idx">A6</td><td class="k">서비스 호출·티케팅</td><td>알람·원격제어 미해결 시 서비스 호출(자동·수동) / 티켓 발행 / 심각도·SLA 분류(Warning/Critical) / 서비스 가능 수준 연계 / 고객·현장 정보 연결</td></tr>
+        <tr><td class="idx">A7</td><td class="k">서비스 처리·진행 등록</td><td>엔지니어 배정(전문성·권역·스케줄) / 처리단계 상태(접수→배정→출동→작업→완료) / 출동·작업 예정·실적일 / 작업결과·교체기록·완료 등록 / SLA 집계</td></tr>
+        <tr><td class="idx">A8</td><td class="k">검사·수율 관리</td><td>검사 알고리즘·Threshold 등록·버전 관리 / 제품별 수율(Yield)·파레토 / LOT·시리얼 트레이서빌리티·전수검사 로그</td></tr>
+        <tr><td class="idx">A9</td><td class="k">장비·고객사 관리</td><td>장비 마스터·라이프사이클 이력 / 소모성부품(튜브·디텍터) 수명관리 / 고객사·설치현장·다거점 매핑</td></tr>
+        <tr><td class="idx">A10</td><td class="k">부품 주문(요청)</td><td>서비스 처리 중 부품 필요 시 발주 요청 / 안전재고·소요량 산정 / 발주 요청 생성 → 프로젝트 B 전달 / 요청·배송 상태 추적 <span class="tag a">주문 도메인</span></td></tr>
+        <tr><td class="idx">A11</td><td class="k">AS(정비) 관리</td><td>정비·교체 이력 관리 / 만족도 조사 / 재발·품질 분석 / AS 통계·리포트 / 서비스 완료 후 운영 복귀 확인 <span class="tag b">AS 도메인</span></td></tr>
+        <tr><td class="idx">A12</td><td class="k">권한·인증·보안</td><td>웹 사용자 인증(Cognito User Pool·JWT·MFA) / 역할·메뉴 권한(RBAC) / IoT 장비 인증(X.509·JITP/JITR·Thing Policy) / Secrets Manager·KMS 자격증명 / API Gateway Authorizer / CloudTrail·감사 로그</td></tr>
+      </tbody>
+    </table>
+    <h3>서비스 처리 흐름 (알람 → 제어 → 호출 → 진행 등록)</h3>
+    <table>
+      <thead class="blue"><tr><th style="width:60px">단계</th><th style="width:160px">처리 단계</th><th>내용</th><th style="width:120px">연계 기능</th></tr></thead>
+      <tbody>
+        <tr><td class="idx">1</td><td class="k">이상 알람 발생</td><td>임계·복합 룰에 의한 알람 감지 / 담당자·관제 알림(SNS·SES·대시보드)</td><td>A4</td></tr>
+        <tr><td class="idx">2</td><td class="k">원격제어 시도</td><td>1차 원격 조치(kV/mA·펌웨어·안전모드) / 제어 이력·결과 기록</td><td>A5</td></tr>
+        <tr><td class="idx">3</td><td class="k">해결 판정</td><td>원격 해결 시 → 처리 등록·종료 / 미해결 시 → 서비스 호출 단계로 전환</td><td>A5·A7</td></tr>
+        <tr><td class="idx">4</td><td class="k">서비스 호출</td><td>티켓 자동·수동 발행 / 심각도·SLA·서비스 가능 수준 표시 / 고객·장비·증상 연결</td><td>A6</td></tr>
+        <tr><td class="idx">5</td><td class="k">처리 진행 등록</td><td>엔지니어 배정 / 접수→배정→출동→작업→완료 단계별 예정·실적일 / 작업·교체 결과 등록</td><td>A7</td></tr>
+        <tr><td class="idx">6</td><td class="k">부품 주문 (조건부)</td><td>현장 조치 시 부품 필요 → 발주 요청 → 프로젝트 B 연동 → 배송·교체 추적</td><td>A10</td></tr>
+        <tr><td class="idx">7</td><td class="k">AS 완료·이력</td><td>정비 완료 확인 / AS 이력·만족도 등록 / 정상 복귀·운영 재개</td><td>A11</td></tr>
+      </tbody>
+    </table>
+    <p class="small">※ <b>부품 주문(A10)</b>은 발주·배송·재고 연계 중심, <b>AS 관리(A11)</b>는 정비 이력·품질·만족도 중심으로 기능·화면·API를 분리합니다.</p>
+  </section>
+
+  <!-- B ERP functions -->
+  <section id="erp">
+    <h2><span class="sec-no n-b">B</span>제조·ERP 플랫폼 — 기능 목록</h2>
+    <p class="sec-desc">수주·생산·발주·재고 사이클 기능 (프로젝트 B). Phase 구분 없이 도메인 단위로 나열.</p>
+    <table>
+      <thead class="green"><tr><th>No</th><th style="width:180px">기능 도메인</th><th>세부 기능</th></tr></thead>
+      <tbody>
+        <tr><td class="idx">B1</td><td class="k">수주 관리</td><td>제품주문(완제품 장비) 접수 / 견적·계약 / Sales Order(SO) 생성 / 고객사·대리점 연계</td></tr>
+        <tr><td class="idx">B2</td><td class="k">제조지시·생산(MES)</td><td>작업지시(Work Order) / 공정 실적 관리 / 생산 진척·완료 / 생산~출하 추적</td></tr>
+        <tr><td class="idx">B3</td><td class="k">소요량 전개(MRP)</td><td>BOM 관리 / 소요량 산출 / 안전재고 기준 산정 / 생산·구매 소요 분해</td></tr>
+        <tr><td class="idx">B4</td><td class="k">수발주·구매</td><td>PR→PO 발주·승인 워크플로우(전자결재) / 협력사 마스터·단가·납기·평가</td></tr>
+        <tr><td class="idx">B5</td><td class="k">입고·검수·정산</td><td>입고·발주 대사 / 수입검사(X-ray) 연계 / 부품 출하·엔지니어 공수 정산</td></tr>
+        <tr><td class="idx">B6</td><td class="k">자재·재고 관리</td><td>부품 마스터·재고·입출고 / 권역 창고 / 안전재고 알람·소요 예측 연계</td></tr>
+        <tr><td class="idx">B7</td><td class="k">출하·배송 지시</td><td>출하 지시·예정일 산정 / 운송사 배차 / 송장 발행 / 배송 추적 연계</td></tr>
+        <tr><td class="idx">B8</td><td class="k">ERP 연동·전표</td><td>외부 ERP(SAP 등) API 연동 / 경량 클라우드 ERP(대안) / 회계·정산 전표</td></tr>
+        <tr><td class="idx">B9</td><td class="k">마스터 데이터</td><td>장비·부품 마스터·BOM 원천 관리 / S/N 디지털 자산카드 / 프로젝트 A로 동기화</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- D: AI Support Platform (Bedrock + RAG) -->
+  <section id="ai">
+    <h2><span class="sec-no" style="background:#534AB7;">D</span>AI 지원 플랫폼 — Bedrock + RAG (서비스 업무 향상)</h2>
+    <p class="sec-desc">서비스 엔지니어·상담 업무의 생산성을 높이기 위한 별도 AI 지원 영역입니다. Amazon Bedrock(Claude)과 RAG(정비 이력·매뉴얼 지식베이스)를 결합해 검색·요약·추천·진단 가이드를 제공합니다. 운영 IoT·ERP와는 API로 연계되는 독립 영역으로 구성합니다.</p>
+    <table>
+      <thead class="purple"><tr><th>No</th><th style="width:200px">기능 도메인</th><th>세부 기능</th></tr></thead>
+      <tbody>
+        <tr><td class="idx">D1</td><td class="k">정비 이력·매뉴얼 RAG 검색·요약</td><td>정비 이력·장비 매뉴얼·기술문서 지식베이스(Knowledge Base) 구축 / 자연어 질의 → 근거 문서 검색·인용 / 핵심 요약 답변 생성</td></tr>
+        <tr><td class="idx">D2</td><td class="k">서비스 리포트·조치 자동 추천</td><td>증상·알람·텔레메트리 입력 → 유사 사례 검색 / 권장 조치·부품·점검 항목 추천 / 서비스 리포트 초안 자동 작성</td></tr>
+        <tr><td class="idx">D3</td><td class="k">챗봇 기반 장애 진단 가이드</td><td>대화형 진단 챗봇(엔지니어·상담사용) / 단계별 트러블슈팅 가이드 / 원격제어·서비스 호출·진행등록으로 핸드오프</td></tr>
+        <tr><td class="idx">D4</td><td class="k">지식베이스·파이프라인 운영</td><td>문서 수집·청킹·임베딩 / 벡터 검색(OpenSearch 등) / 가드레일·인용 표기·환각 억제 / 피드백 기반 품질 개선</td></tr>
+      </tbody>
+    </table>
+    <p class="small">※ AI 지원 플랫폼은 운영(IoT)·제조(ERP)의 데이터를 읽어 보조 정보를 생성하며, 실제 제어·발주·정비 확정은 기존 IoT/ERP 기능이 수행합니다(사람 확인 기반).</p>
+  </section>
+
+  <!-- SOW : Development Tasks -->
+  <section id="sow">
+    <h2><span class="sec-no n-e">C</span>개발업무 (작업명세서 — 프로젝트 Task)</h2>
+    <p class="sec-desc">분석·기획·설계·개발(Back-end / Front-end)·테스트·운영·종료 전 과업을 정리. 개발 단위는 <b>공통 / IoT 서비스 / ERP·제조지시</b> 영역으로 구분하며, WBS 모듈(M1~M10, E4/E5, AI 신규) 기준으로 Task를 정의했습니다.</p>
+
+    <h3>분석 · 기획 · 설계</h3>
+    <table>
+      <thead><tr><th style="width:120px">구분</th><th style="width:210px">1depth</th><th>2depth</th><th style="width:90px">WBS</th></tr></thead>
+      <tbody>
+        <tr><td class="k">분석</td><td>요구분석 / 요구사항 정의</td><td>프로젝트 범위정의 / 요구사항 수집·분석 / 요구사항 정의·검증(Legacy MES·기존 검사 SW 분석)</td><td class="idx">공통</td></tr>
+        <tr><td class="k">기획(UI/UX)</td><td>스토리보드 작성</td><td>디자인시안·컴포넌트·라이브러리 확정(Next.js) / 관제 웹 스토리보드 검수·적용</td><td class="idx">M5</td></tr>
+        <tr><td class="k" rowspan="5">설계</td><td>아키텍처/Topic/ERD/API 설계</td><td>AWS 아키텍처(계정/VPC/IAM)·IoT Topic·백엔드 API 정의서 작성</td><td class="idx">공통</td></tr>
+        <tr><td>인증·보안 아키텍처</td><td>Cognito/OIDC·JWT / IAM Role·Policy / IoT X.509·JITP/JITR·Thing Policy / API GW Authorizer·mTLS / Secrets Manager·KMS 설계</td><td class="idx">M10</td></tr>
+        <tr><td>데이터 마이그레이션·3-Tier 스키마</td><td>ERD 스키마정의·테이블 생성 (Hot:DocumentDB / Warm:Aurora PG / Cold:Iceberg)</td><td class="idx">공통/M4</td></tr>
+        <tr><td>인프라(개발/운영 환경)</td><td>OTA 서버구성 / CI·CD 구성(CodePipeline·CodeBuild·CodeDeploy)</td><td class="idx">M1</td></tr>
+        <tr><td>Lambda</td><td>수집·정규화·적재 함수 구성설계·개발(Node.js)</td><td class="idx">M4</td></tr>
+      </tbody>
+    </table>
+
+    <h3>개발 — Back-end (영역 구분: 공통·IoT·ERP·AI 지원)</h3>
+    <table>
+      <thead class="blue"><tr><th style="width:110px">영역</th><th style="width:150px">1depth</th><th>2depth (테크밸리 적용)</th><th style="width:90px">WBS</th></tr></thead>
+      <tbody>
+        <tr><td class="k" rowspan="5" style="background:#E6F1FB;color:#0C447C;">공통</td><td class="k">공통개발</td><td>로그인·인증(Cognito User Pool·Hosted UI·JWT) / 공통라이브러리 / AWS SDK 연동</td><td class="idx">M10</td></tr>
+        <tr><td class="k">기본정보</td><td>공통코드·사용자·협력사/대리점 그룹·메뉴그룹·메뉴정보 / 그룹별·사용자별 메뉴권한(RBAC)</td><td class="idx">M10</td></tr>
+        <tr><td class="k">IAM·역할권한</td><td>IAM Role·Policy / 서비스별 최소권한(Least Privilege) / API Gateway·Lambda 실행 Role / Cross-Account 연동 Role</td><td class="idx">M10</td></tr>
+        <tr><td class="k">Secrets·KMS</td><td>Secrets Manager·Parameter Store / DB·API Key·인증서 저장 / KMS 암호화·키 로테이션 / Lambda·Greengrass 시크릿 주입</td><td class="idx">M10</td></tr>
+        <tr><td class="k">IoT 장비 인증</td><td>X.509 인증서 발급·등록 / JITP·JITR 프로비저닝 / Thing·Thing Group·Policy / Greengrass v2 컴포넌트 인증</td><td class="idx">M2/M10</td></tr>
+        <tr><td class="k" rowspan="12" style="background:#E6F1FB;color:#0C447C;">IoT 서비스</td><td class="k">Lambda</td><td>정규화·변환·적재 함수 구성설계·개발</td><td class="idx">M4</td></tr>
+        <tr><td class="k">텔레메트리 수집</td><td>튜브·디텍터·본체 3대 텔레메트리 수집 / 출하장비정보 적재</td><td class="idx">M2</td></tr>
+        <tr><td class="k">수신정보 조회</td><td>버전정보 / 튜브 상태·설정(kV·mA·s) / 디텍터 상태정보 등</td><td class="idx">M2</td></tr>
+        <tr><td class="k">원격제어</td><td>알람 연계 1차 조치 / kV/mA 파라미터 설정·보정 / 본체 안전모드 전환 / 원격 해결·미해결 판정</td><td class="idx">M6</td></tr>
+        <tr><td class="k">서비스 호출·티케팅</td><td>알람·제어 미해결 시 티켓 자동·수동 발행 / 심각도·SLA·서비스가능수준 연계 / 고객·장비·증상 매핑</td><td class="idx">M6</td></tr>
+        <tr><td class="k">서비스 처리·진행등록</td><td>엔지니어 배정 / 접수→배정→출동→작업→완료 단계 상태 / 예정·실적일 / 작업·교체 결과 등록</td><td class="idx">M6</td></tr>
+        <tr><td class="k">장비정보</td><td>장비스펙·소모성부품(튜브·디텍터) 수명·이상알람·모니터링·원격진단 제어 등</td><td class="idx">M9</td></tr>
+        <tr><td class="k">설정</td><td>임계 알람설정·로그·펌웨어/검사알고리즘 설정·OTA Auto Update설정</td><td class="idx">M6</td></tr>
+        <tr><td class="k">대시보드</td><td>글로벌 플릿 가동현황·장비 이상현황·부품교체현황·장비 사용현황·기타알림</td><td class="idx">M5</td></tr>
+        <tr><td class="k">리포트</td><td>튜브로그·디텍터로그·권역별 사용내역·장비별 이상집계·권역별 A/S 교체집계·수율(Yield) 집계 등</td><td class="idx">M8</td></tr>
+        <tr><td class="k">부품 주문 관리</td><td>발주 요청 생성·상태추적 / 재고·납기 연계 / 배송·교체 일정 연동 <span class="tag a">주문</span></td><td class="idx">M6</td></tr>
+        <tr><td class="k">AS(정비) 관리</td><td>정비·교체 이력 / 만족도 조사 / 재발·품질 분석 / AS 통계·완료 확인 <span class="tag b">AS</span></td><td class="idx">M6</td></tr>
+        <tr><td class="k" rowspan="4" style="background:#EEF6EE;color:#27500A;">ERP·제조지시</td><td class="k">MES·제조지시</td><td>작업지시(Work Order)·공정실적·BOM·MRP 기초 / Legacy MES→Aurora 마이그레이션 / S/N 디지털 자산카드 기록</td><td class="idx">M7/E4</td></tr>
+        <tr><td class="k">장비관리</td><td>장비모델·부품·모델별 OTA·생산(출하)장비·로그정보 등 (마스터)</td><td class="idx">M9</td></tr>
+        <tr><td class="k">고객사관리</td><td>고객사·대리점·부품재고·설치현장·서비스업체 정보 등</td><td class="idx">M9</td></tr>
+        <tr><td class="k">입/출고관리</td><td>부품 입고·출고·권역창고 재고관리</td><td class="idx">M9/E5</td></tr>
+        <tr><td class="k" rowspan="2" style="background:#EEE9F8;color:#3C3489;">AI 지원<br>(Bedrock·RAG)</td><td class="k">RAG 검색·요약 API</td><td>지식베이스 질의·검색·요약(Bedrock Claude) / 조치 추천·리포트 초안 생성 API</td><td class="idx">신규</td></tr>
+        <tr><td class="k">지식베이스 파이프라인</td><td>문서 수집·청킹·임베딩·벡터검색(OpenSearch) / 가드레일·인용·피드백</td><td class="idx">신규</td></tr>
+      </tbody>
+    </table>
+    <h3>개발 — Front-end (영역 구분: 공통·IoT·ERP·AI 지원)</h3>
+    <table>
+      <thead class="blue"><tr><th style="width:110px">영역</th><th style="width:150px">1depth</th><th>2depth (테크밸리 적용)</th><th style="width:90px">WBS</th></tr></thead>
+      <tbody>
+        <tr><td class="k" rowspan="2" style="background:#E6F1FB;color:#0C447C;">공통</td><td class="k">공통개발</td><td>로그인·인증 / 공통라이브러리 / AWS 라이브러리 연동 개발</td><td class="idx">M10</td></tr>
+        <tr><td class="k">기본정보</td><td>공통코드·사용자·협력사/대리점 그룹·메뉴그룹·메뉴정보 / 그룹별·사용자별 메뉴권한(RBAC)</td><td class="idx">M10</td></tr>
+        <tr><td class="k" rowspan="11" style="background:#E6F1FB;color:#0C447C;">IoT 서비스</td><td class="k">텔레메트리 수신 가시화</td><td>장비정보·버전정보·튜브/디텍터 상태·설정 위젯 (실시간 반응형)</td><td class="idx">M5</td></tr>
+        <tr><td class="k">원격제어 UI</td><td>알람 연계 제어 진입 / 파라미터 설정·보정 이력 / 본체 안전모드·EMG 핫라인</td><td class="idx">M5/M6</td></tr>
+        <tr><td class="k">서비스 호출·티케팅 UI</td><td>알람·제어 결과 기반 티켓 발행 / 심각도·SLA·서비스가능 표시 / 호출 이력</td><td class="idx">M6</td></tr>
+        <tr><td class="k">서비스 처리·진행등록 UI</td><td>처리단계(접수→배정→출동→작업→완료) 트래커 / 엔지니어 배정·일정 / 작업결과 등록</td><td class="idx">M6</td></tr>
+        <tr><td class="k">장비정보</td><td>장비스펙·소모성부품 수명·이상알람·모니터링·원격진단 제어 등</td><td class="idx">M9</td></tr>
+        <tr><td class="k">설정</td><td>임계 알람설정·로그·펌웨어/검사알고리즘 설정·OTA Auto Update설정</td><td class="idx">M6</td></tr>
+        <tr><td class="k">대시보드</td><td>글로벌 플릿 가동현황·장비 이상현황·부품교체현황·장비 사용현황·기타알림</td><td class="idx">M5</td></tr>
+        <tr><td class="k">리포트</td><td>튜브로그·디텍터로그·권역별 사용내역·장비별 이상집계·권역별 A/S 교체집계·수율 집계 등</td><td class="idx">M8</td></tr>
+        <tr><td class="k">부품 주문 관리 UI</td><td>발주 요청·상태·배송 추적 / 재고·납기 조회 <span class="tag a">주문</span></td><td class="idx">M6</td></tr>
+        <tr><td class="k">AS(정비) 관리 UI</td><td>정비 이력·만족도·AS 통계 / 완료·복귀 확인 <span class="tag b">AS</span></td><td class="idx">M6</td></tr>
+        <tr><td class="k">외부데이터(연동)</td><td>Legacy MES / 검사 알고리즘·Threshold 연동 데이터 표출</td><td class="idx">M7/M8</td></tr>
+        <tr><td class="k" rowspan="4" style="background:#EEF6EE;color:#27500A;">ERP·제조지시</td><td class="k">MES·제조지시</td><td>작업지시(Work Order) 등록·조회 / 공정실적 현황 / BOM·소요량 조회 화면</td><td class="idx">M7/E4</td></tr>
+        <tr><td class="k">장비관리</td><td>장비모델·부품·모델별 OTA·생산(출하)장비·로그정보 등 (마스터)</td><td class="idx">M9</td></tr>
+        <tr><td class="k">고객사관리</td><td>고객사·대리점·부품재고·설치현장·서비스업체 정보 등</td><td class="idx">M9</td></tr>
+        <tr><td class="k">입/출고관리</td><td>부품 입고·출고·권역창고 재고관리</td><td class="idx">M9/E5</td></tr>
+        <tr><td class="k" rowspan="2" style="background:#EEE9F8;color:#3C3489;">AI 지원<br>(Bedrock·RAG)</td><td class="k">진단 챗봇 UI</td><td>대화형 장애 진단·트러블슈팅 화면 / 근거 문서·인용 표시 / 원격제어·서비스 호출·진행등록 핸드오프</td><td class="idx">신규</td></tr>
+        <tr><td class="k">RAG 검색·추천 위젯</td><td>정비 이력·매뉴얼 검색 결과·요약 표출 / 조치 추천·리포트 초안 편집 UI</td><td class="idx">신규</td></tr>
+      </tbody>
+    </table>
+
+    <h3>테스트 · 운영 · 종료</h3>
+    <table>
+      <thead><tr><th style="width:200px">1depth</th><th>2depth</th><th style="width:90px">WBS</th></tr></thead>
+      <tbody>
+        <tr><td class="k">테스트(통합·연동·UAT)</td><td>통합 테스트 / 부하·연동 테스트 / 인증·권한·보안 점검 / UAT 지원 / 수정사항 반영</td><td class="idx">공통</td></tr>
+        <tr><td class="k">운영 — 파일럿</td><td>현장 파일럿 운영 및 오류사항 수정</td><td class="idx">공통</td></tr>
+        <tr><td class="k">운영 — 라이브</td><td>라이브 운영 및 오류사항 수정·안정화</td><td class="idx">공통</td></tr>
+        <tr><td class="k">종료보고</td><td>산출물 작성 / 사용자 교육 / 운영 이관 / 준공검사</td><td class="idx">공통</td></tr>
+      </tbody>
+    </table>
+
+  </section>
+
+  <!-- Orders -->
+  <section id="orders">
+    <h2><span class="sec-no n-c">①</span>제품주문 / 부품주문 구분</h2>
+    <p class="sec-desc">두 주문은 발생 주체·트리거·전표·배송 형태·완료 기준이 다릅니다.</p>
+    <table>
+      <thead><tr><th style="width:150px">구분</th><th>제품주문 <span class="tag b">완제품 장비</span></th><th>부품주문 <span class="tag a">정비용 부품</span></th></tr></thead>
+      <tbody>
+        <tr><td class="k">대상</td><td>X-ray/CT 완제품 (HAWKEYE, RAPIDER 등)</td><td>튜브·디텍터·PCB 등 소모성/교체 부품</td></tr>
+        <tr><td class="k">발생 주체</td><td>고객사·대리점 (영업 수주)</td><td>IoT 이상 알람·서비스기사 (프로젝트 A)</td></tr>
+        <tr><td class="k">트리거</td><td>수주(견적·계약) → 프로젝트 B</td><td>이상 알람·고장 → 발주 요청 API → 프로젝트 B</td></tr>
+        <tr><td class="k">처리 흐름</td><td>수주 → 제조지시·생산 → 수입검사 → 출하 → 운송 → 설치·시운전</td><td>발주 요청 → 재고 확인 → (부족 시 생산/구매) → 출고 → 배송 → 교체</td></tr>
+        <tr><td class="k">전표</td><td>Sales Order(SO) → Work Order(WO)</td><td>Parts Request(PR) → Purchase/Issue Order</td></tr>
+        <tr><td class="k">배송 형태</td><td>대형 장비 운송·설치 (전문 설치팀 동행)</td><td>택배·퀵 (현장/서비스기사 직배송)</td></tr>
+        <tr><td class="k">완료 기준</td><td>설치·시운전 완료 + IoT 연동 등록</td><td>부품 도착 + 교체 완료 + 정상 복귀</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Schedule -->
+  <section id="schedule">
+    <h2><span class="sec-no n-c">②</span>일정 관리 (출하예정일·배송예정일)</h2>
+    <p class="sec-desc">주문부터 설치/교체까지 전 단계의 <b>예정일·실적일</b>을 관리하며, 예정일 대비 지연 시 알림이 발생합니다.</p>
+    <h3>관리 일정 항목</h3>
+    <table>
+      <thead><tr><th style="width:200px">일정 항목</th><th>설명</th><th style="width:160px">적용</th></tr></thead>
+      <tbody>
+        <tr><td class="k">주문일 (order_date)</td><td>수주/발주 요청 접수 일시</td><td>제품·부품 공통</td></tr>
+        <tr><td class="k">생산 시작·완료 예정일</td><td>제조지시(WO) 기준 생산 일정</td><td>제품 / 재고부족 부품</td></tr>
+        <tr><td class="k"><span class="date">출하예정일 (planned_ship_date)</span></td><td>출하 지시 시 산정되는 출고 예정일</td><td>제품·부품 공통</td></tr>
+        <tr><td class="k">출하실적일 (actual_ship_date)</td><td>실제 출고 일시</td><td>제품·부품 공통</td></tr>
+        <tr><td class="k"><span class="date">배송예정일 (planned_delivery_date / ETA)</span></td><td>운송사 기준 예상 도착 일시</td><td>제품·부품 공통</td></tr>
+        <tr><td class="k">배송실적일 (actual_delivery_date)</td><td>실제 도착 일시 (POD 기준)</td><td>제품·부품 공통</td></tr>
+        <tr><td class="k">설치 예정·완료일</td><td>설치팀 방문 일정 / 시운전 완료</td><td>제품주문</td></tr>
+        <tr><td class="k">기사 방문 예정·완료일</td><td>서비스기사 방문 일정 / 교체 완료</td><td>부품주문</td></tr>
+        <tr><td class="k">지연 알림 (delay_alert)</td><td>예정일 대비 지연 감지·통보 (EventBridge·SNS)</td><td>제품·부품 공통</td></tr>
+      </tbody>
+    </table>
+    <h3>단계별 일정 흐름</h3>
+    <table>
+      <thead><tr><th style="width:120px">주문 유형</th><th>일정 단계 (각 단계 예정일·실적일 관리)</th></tr></thead>
+      <tbody>
+        <tr><td class="k">제품주문</td><td>주문일 → 생산 예정·완료 → <span class="date">출하예정일</span>·출하실적 → <span class="date">배송예정일(ETA)</span>·배송실적 → 설치 예정·완료 → IoT 연동 등록</td></tr>
+        <tr><td class="k">부품주문</td><td>발주 요청일 → (재고 가용 / 생산·구매 예정) → <span class="date">출하예정일</span>·출하실적 → <span class="date">배송예정일(ETA)</span>·배송실적 → 기사 방문·교체 완료 → 정상 복귀</td></tr>
+      </tbody>
+    </table>
+    <h3>배송 추적 데이터</h3>
+    <table>
+      <thead><tr><th style="width:200px">항목</th><th>설명</th></tr></thead>
+      <tbody>
+        <tr><td class="k">shipment_id / order_ref</td><td>배송 식별자 / 연결 주문(SO·PR)</td></tr>
+        <tr><td class="k">delivery_type</td><td>PRODUCT(장비 운송·설치) / PART(택배·퀵) 구분</td></tr>
+        <tr><td class="k">carrier / tracking_no</td><td>운송사·송장번호 (실시간 추적)</td></tr>
+        <tr><td class="k">status</td><td>준비→출고→운송중→도착→설치/교체완료</td></tr>
+        <tr><td class="k">proof_of_delivery</td><td>인수증·설치확인서·교체완료 사진</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- SLA -->
+  <section id="sla">
+    <h2><span class="sec-no n-d">③</span>서비스 수준 (SLA) · 서비스 가능 수준</h2>
+    <p class="sec-desc">장비 중요도·계약 등급에 따른 대응 목표와, 실시간 서비스 가능 여부를 관리합니다.</p>
+    <h3>SLA 등급별 대응 목표</h3>
+    <table>
+      <thead class="purple"><tr><th style="width:110px">등급</th><th style="width:150px">대상</th><th>1차 응답(원격)</th><th>현장 출동</th><th>복구 목표</th><th>가동률 목표</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Critical</td><td>안전·생산 직결 장비</td><td>≤ 15분</td><td>≤ 4시간</td><td>≤ 24시간</td><td>99.5%+</td></tr>
+        <tr><td class="k">High</td><td>주력 검사 장비</td><td>≤ 30분</td><td>≤ 8시간(익일)</td><td>≤ 48시간</td><td>99.0%+</td></tr>
+        <tr><td class="k">Standard</td><td>일반 장비</td><td>≤ 2시간</td><td>≤ 2영업일</td><td>≤ 5영업일</td><td>97.0%+</td></tr>
+      </tbody>
+    </table>
+    <p class="small">※ 응답·복구 시간은 알람 발생(EventBridge) 시점 기준으로 자동 집계되며, SLA 위반 임박 시 에스컬레이션 알림이 발생합니다.</p>
+    <h3>서비스 가능 수준 (Serviceability) 판정 요소</h3>
+    <table>
+      <thead><tr><th style="width:200px">요소</th><th>판정 내용</th></tr></thead>
+      <tbody>
+        <tr><td class="k">부품 가용성</td><td>해당 부품 권역 재고 보유 여부 / 부족 시 출하·배송예정일 기준 가용 시점 산정</td></tr>
+        <tr><td class="k">엔지니어 가용성</td><td>관할 권역 서비스기사 출동 가능 여부·스케줄 (작업중/출동가능)</td></tr>
+        <tr><td class="k">원격 해결 가능성</td><td>이상 유형이 원격제어(파라미터·펌웨어)로 해결 가능한지 판정</td></tr>
+        <tr><td class="k">SLA 충족 가능성</td><td>현재 부품·인력·일정으로 계약 SLA 충족 가능 여부 실시간 표시</td></tr>
+        <tr><td class="k">서비스 가능 수준 표시</td><td>장비별 "즉시 원격가능 / 당일 방문 / 부품 대기(예정일)" 등급으로 대시보드 표출</td></tr>
+      </tbody>
+    </table>
+    <h3>서비스 가능 수준 판정 흐름</h3>
+    <table>
+      <thead><tr><th style="width:60px">순서</th><th>판정 내용</th></tr></thead>
+      <tbody>
+        <tr><td class="idx">1</td><td>이상 감지 → 원격 해결 가능? → 가능 시 "즉시 원격가능"</td></tr>
+        <tr><td class="idx">2</td><td>현장 조치 필요 시 → 부품 재고 가용 + 엔지니어 가용? → "당일/익일 방문 가능"</td></tr>
+        <tr><td class="idx">3</td><td>부품 부족 시 → 발주·출하·배송예정일 산정 → "부품 대기 (예상 복구일 표시)"</td></tr>
+        <tr><td class="idx">4</td><td>SLA 충족 가능성 자동 판정 → 위반 임박 시 에스컬레이션·우선 발주 트리거</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- API -->
+  <section id="api">
+    <h2><span class="sec-no n-e">④</span>연동 API (A ↔ B)</h2>
+    <p class="sec-desc">동기 REST + 비동기 EventBridge. API Gateway 경유, OAuth2 + mTLS, 멱등키·재시도·DLQ 적용.</p>
+    <table>
+      <thead><tr><th style="width:48px">방향</th><th style="width:210px">API / 이벤트</th><th>설명 (페이로드 핵심)</th><th style="width:100px">방식</th></tr></thead>
+      <tbody>
+        <tr><td class="idx">A 내부</td><td class="k"><code>POST /service-tickets</code></td><td>서비스 호출·티켓 발행 — alarm_id, equipment_sn, severity, sla_tier, serviceability</td><td>REST</td></tr>
+        <tr><td class="idx">A 내부</td><td class="k"><code>PATCH /service-tickets/{id}/progress</code></td><td>처리 진행 등록 — stage(접수·배정·출동·작업·완료), planned_at, actual_at, engineer_id, work_result</td><td>REST</td></tr>
+        <tr><td class="idx">A→B</td><td class="k"><code>POST /part-requests</code></td><td>부품 발주 요청 — ticket_id, equipment_sn, part_no, qty, severity, requested_eta</td><td>REST</td></tr>
+        <tr><td class="idx">A→B</td><td class="k"><code>POST /sales-orders</code></td><td>제품 수주 등록 — customer_id, model, qty, site, contract_ref</td><td>REST</td></tr>
+        <tr><td class="idx">B→A</td><td class="k"><code>GET /stock · /lead-time</code></td><td>재고 가용·예상 입고일 — part_no, on_hand, eta</td><td>REST</td></tr>
+        <tr><td class="idx">B→A</td><td class="k"><code>GET /serviceability</code></td><td>서비스 가능 수준 회신 — 부품가용·예상 출하/배송예정일</td><td>REST</td></tr>
+        <tr><td class="idx">B→A</td><td class="k"><code>evt: order.confirmed</code></td><td>발주/수주 확정 — order_ref, status, planned_ship_date</td><td>EventBridge</td></tr>
+        <tr><td class="idx">B→A</td><td class="k"><code>evt: shipment.updated</code></td><td>배송 상태·예정일 변경 — shipment_id, status, ETA</td><td>EventBridge</td></tr>
+        <tr><td class="idx">B→A</td><td class="k"><code>evt: shipment.delivered</code></td><td>도착 통지 → 설치/교체 트리거 — shipment_id, pod</td><td>EventBridge</td></tr>
+        <tr><td class="idx">A→B</td><td class="k"><code>POST /service-results</code></td><td>정비·교체 결과 — ticket_id, part_no, replaced_at, status</td><td>REST</td></tr>
+        <tr><td class="idx">↔</td><td class="k"><code>POST /assets/sync</code></td><td>장비 S/N·BOM·부품 마스터 양방향 동기화</td><td>배치/이벤트</td></tr>
+      </tbody>
+    </table>
+    <p class="small">※ 마스터 기준: 장비/부품 마스터·BOM = 프로젝트 B(ERP), 운영 텔레메트리·서비스 이력 = 프로젝트 A(IoT). 스키마는 IFD 표준·버전 관리. 인증·보안 상세는 <a href="#security">⑤ 인증·보안(AWS)</a> 참조.</p>
+  </section>
+
+  <!-- Security -->
+  <section id="security">
+    <h2><span class="sec-no n-d">⑤</span>인증·보안 (AWS)</h2>
+    <p class="sec-desc">웹 사용자·IoT 장비·서비스 간 연동(API)에 대한 AWS 기반 인증·권한·자격증명·전송보안·감사 체계입니다. <b>역할 기반 최소권한(RBAC + IAM Least Privilege)</b>을 원칙으로 하며, 민감 정보는 <b>Secrets Manager·KMS</b>로 관리합니다.</p>
+
+    <h3>인증·보안 계층별 구성</h3>
+    <table>
+      <thead class="purple"><tr><th style="width:160px">계층</th><th style="width:200px">AWS 서비스</th><th>처리 내용</th></tr></thead>
+      <tbody>
+        <tr><td class="k">웹 사용자 인증</td><td>Cognito User Pool · Hosted UI</td><td>이메일/ID·PW 로그인 / MFA(선택) / JWT(Access·ID·Refresh Token) 발급 / 소셜·SAML·OIDC 연동(옵션) / 비밀번호 정책·계정 잠금</td></tr>
+        <tr><td class="k">API 인증·인가</td><td>API Gateway · Cognito Authorizer · Lambda Authorizer</td><td>JWT Bearer 검증 / OAuth2 Client Credentials(A↔B 연동) / Scope·Audience 검증 / API Key·Usage Plan(내부·파트너 구분)</td></tr>
+        <tr><td class="k">IoT 장비 인증</td><td>IoT Core · X.509 · JITP/JITR</td><td>장비별 X.509 인증서 등록 / JITP(Just-In-Time Provisioning)·JITR(Registration) / Thing·Thing Group 매핑 / Topic별 Publish·Subscribe Policy</td></tr>
+        <tr><td class="k">엣지·원격제어</td><td>Greengrass v2 · IoT Jobs · Device Shadow</td><td>Greengrass 코어 인증서·컴포넌트 서명 / IoT Jobs 실행 권한 / Shadow delta 접근 제어 / 원격제어 Fail-safe 인터락</td></tr>
+        <tr><td class="k">역할·권한(RBAC)</td><td>IAM · Cognito Groups · 앱 RBAC</td><td>관리자·엔지니어·상담·고객사·대리점 등 역할 정의 / 메뉴·API·데이터 범위 권한 / Lambda·ECS 실행 Role 분리 / Cross-Account Role(A↔B)</td></tr>
+        <tr><td class="k">자격증명·키 관리</td><td>Secrets Manager · SSM Parameter Store · KMS</td><td>DB 접속정보·API Key·인증서·외부 ERP 자격증명 저장 / 자동 로테이션 / KMS CMK로 암호화 / Lambda·Greengrass 런타임 주입</td></tr>
+        <tr><td class="k">연동 신뢰성</td><td>API GW · mTLS · EventBridge</td><td>A↔B REST: OAuth2 + mTLS(상호 TLS) / 멱등키(Idempotency-Key) / 재시도·DLQ / EventBridge 이벤트 서명·검증</td></tr>
+        <tr><td class="k">네트워크·전송</td><td>VPC · SG · TLS 1.3 · WAF</td><td>Private Subnet·NAT·VPC Endpoint / Security Group 최소 개방 / 전 구간 TLS 1.2+ / WAF·Shield(옵션) / IoT MQTT over TLS</td></tr>
+        <tr><td class="k">감사·모니터링</td><td>CloudTrail · CloudWatch · GuardDuty</td><td>API·IAM·리소스 변경 감사 로그 / 로그인·권한 거부·원격제어 이력 / 이상 접근 탐지(옵션) / SLA·보안 알람 연계</td></tr>
+      </tbody>
+    </table>
+
+    <h3>역할별 권한 매트릭스 (요약)</h3>
+    <table>
+      <thead><tr><th style="width:130px">역할</th><th>주요 권한</th><th style="width:200px">접근 범위</th></tr></thead>
+      <tbody>
+        <tr><td class="k">시스템 관리자</td><td>전체 메뉴·마스터·설정·사용자·권한·IoT Policy 관리</td><td>전체 플릿·전 권역</td></tr>
+        <tr><td class="k">서비스 엔지니어</td><td>관제·원격제어·티켓·정비·부품요청·리포트 조회</td><td>담당 권역·배정 장비</td></tr>
+        <tr><td class="k">상담·CS</td><td>티켓·서비스 이력·SLA·배송 상태·AI 진단 챗봇</td><td>고객사·설치현장 단위</td></tr>
+        <tr><td class="k">제조·ERP 담당</td><td>수주·생산·발주·재고·출하·마스터(BOM·부품)</td><td>제조·ERP 도메인</td></tr>
+        <tr><td class="k">고객사·대리점</td><td>장비 상태·서비스 이력·주문·배송 조회(읽기 중심)</td><td>소속 고객사·계약 장비</td></tr>
+        <tr><td class="k">IoT 장비(Thing)</td><td>텔레메트리 Publish·명령 Subscribe·Shadow·Jobs(정책 범위)</td><td>해당 Thing·Topic만</td></tr>
+        <tr><td class="k">연동 서비스(A↔B)</td><td>REST API·EventBridge(스코프별) / 마스터 Sync</td><td>API Scope·Client별</td></tr>
+      </tbody>
+    </table>
+
+    <h3>인증 흐름 (요약)</h3>
+    <table>
+      <thead><tr><th style="width:140px">대상</th><th>인증 방식</th><th>토큰·자격증명</th></tr></thead>
+      <tbody>
+        <tr><td class="k">웹·모바일 사용자</td><td>Cognito User Pool 로그인 → JWT</td><td>Access Token(API 호출) · ID Token(사용자 정보) · Refresh Token</td></tr>
+        <tr><td class="k">백엔드 API 호출</td><td>API Gateway Cognito/Lambda Authorizer</td><td>JWT 검증 + RBAC Claim(role, scope) + IAM Role(서비스 내부)</td></tr>
+        <tr><td class="k">IoT 장비</td><td>MQTT over TLS + X.509 Mutual Auth</td><td>디바이스 인증서 · Thing Policy · Topic ACL</td></tr>
+        <tr><td class="k">A↔B 연동 API</td><td>OAuth2 Client Credentials + mTLS</td><td>Client ID/Secret(Secrets Manager) · 상호 인증서 · 멱등키</td></tr>
+        <tr><td class="k">AI·Bedrock 호출</td><td>IAM Role + Bedrock Guardrails</td><td>Lambda 실행 Role · 모델·KB 접근 Policy · PII 마스킹</td></tr>
+      </tbody>
+    </table>
+    <p class="small">※ 인증서·API Key·DB Password 등 평문 저장 금지 — Secrets Manager/KMS 필수 · 인증서 만료 30일 전 알람 · 권한 변경·원격제어·부품발주 등 민감 작업은 CloudTrail·앱 감사 로그 이중 기록.</p>
+  </section>
+
+  <!-- Migration -->
+  <section id="migration">
+    <h2><span class="sec-no n-e">⑥</span>데이터 마이그레이션</h2>
+    <table>
+      <thead><tr><th style="width:190px">원천(Source)</th><th style="width:170px">대상(Target)</th><th>방식 / 도구</th><th style="width:110px">소속</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Legacy MES</td><td>Aurora PostgreSQL</td><td>초기 일괄(DMS) + 스키마 변환(Glue) + CDC 동기화</td><td>B (제조)</td></tr>
+        <tr><td class="k">기존 검사 SW·수율 DB</td><td>S3 + Iceberg (Cold)</td><td>배치 적재·표준화(Glue), 알고리즘·Threshold 매핑</td><td>A (IoT)</td></tr>
+        <tr><td class="k">장비 마스터·BOM</td><td>ERP 마스터(Aurora)</td><td>정제·표준화 적재, S/N 디지털 자산카드 생성</td><td>B → A 동기화</td></tr>
+        <tr><td class="k">부품·재고·발주 이력</td><td>ERP 트랜잭션(Aurora)</td><td>DMS 일괄 + 검증 대사(reconciliation)</td><td>B (제조)</td></tr>
+        <tr><td class="k">서비스/AS 이력</td><td>DocumentDB(Hot)·Aurora(Warm)</td><td>이관·정규화, 티켓·정비 이력 연속성 확보</td><td>A (IoT)</td></tr>
+      </tbody>
+    </table>
+    <h3>이행 단계</h3>
+    <table>
+      <thead><tr><th style="width:60px">단계</th><th>내용</th></tr></thead>
+      <tbody>
+        <tr><td class="idx">1</td><td>현행 분석·매핑 정의 (소스 프로파일링·데이터 품질 진단·매핑 정의서)</td></tr>
+        <tr><td class="idx">2</td><td>초기 일괄 이행 (DMS Full Load) + 스키마 변환·정제(Glue)</td></tr>
+        <tr><td class="idx">3</td><td>검증·대사 (건수/금액/마스터 정합 reconciliation·오류 보정)</td></tr>
+        <tr><td class="idx">4</td><td>운영 중 동기화 (CDC·이벤트로 마스터·재고 실시간 정합)</td></tr>
+        <tr><td class="idx">5</td><td>병행 운영·전환 (Cut-over·안정화·Legacy 중단)</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Integration diagram -->
+  <section id="integration">
+    <h2><span class="sec-no n-e">⑦</span>두 프로젝트 연동 구성도</h2>
+    <p class="sec-desc">프로젝트 A(IoT)·B(제조·ERP)와 연동 계층(API·이벤트·데이터 이행)을 표현한 구성도입니다.</p>
+    <div class="lc-controls">
+      <button onclick="zoomByIg(1.25)">＋ 확대</button>
+      <button onclick="zoomByIg(0.8)">－ 축소</button>
+      <button onclick="resetViewIg()">↺ 초기화</button>
+      <button class="zoom-btn" onclick="openMer('ig-stage','두 프로젝트 연동 구성도')">⛶ 전체 확대 보기</button>
+      <span class="lc-hint">드래그 이동 · 휠 확대/축소</span>
+      <span id="ig-zoom">100%</span>
+    </div>
+    <div id="ig-vp" style="position:relative; width:100%; height:600px; overflow:hidden; border:1px solid var(--line); border-radius:10px; background:#fafcfd; cursor:grab; touch-action:none;">
+      <svg id="ig-stage" class="lc-svg" width="1320" height="1080" viewBox="0 0 1320 1080" style="position:absolute; top:0; left:0; transform-origin:0 0;">
+        <defs>
+          <marker id="ig-ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+        </defs>
+
+        <!-- PROJECT A -->
+        <rect x="30" y="30" width="470" height="760" rx="18" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.8"/>
+        <text class="lbl" x="52" y="62" fill="#0C447C">프로젝트 A · IoT 서비스 플랫폼</text>
+        <text class="ts" x="52" y="83" fill="#185FA5">운영·모니터링·정비</text>
+        <g><rect x="120" y="100" width="290" height="50" rx="9" fill="#378ADD" stroke="#0C447C" stroke-width="0.5"/><text class="t" x="265" y="122" text-anchor="middle" fill="#fff">① IoT 데이터 수집</text><text class="ts" x="265" y="140" text-anchor="middle" fill="#E6F1FB">튜브·디텍터·본체</text></g>
+        <line x1="265" y1="150" x2="265" y2="166" stroke="#185FA5" stroke-width="1.5" marker-end="url(#ig-ar)"/>
+        <g><rect x="120" y="166" width="290" height="50" rx="9" fill="#85B7EB" stroke="#185FA5" stroke-width="0.5"/><text class="t" x="265" y="188" text-anchor="middle" fill="#042C53">② 이상 알람·룰셋</text><text class="ts" x="265" y="206" text-anchor="middle" fill="#0C447C">EventBridge·SNS</text></g>
+        <line x1="265" y1="216" x2="265" y2="232" stroke="#185FA5" stroke-width="1.5" marker-end="url(#ig-ar)"/>
+        <g><rect x="120" y="232" width="290" height="50" rx="9" fill="#85B7EB" stroke="#185FA5" stroke-width="0.5"/><text class="t" x="265" y="254" text-anchor="middle" fill="#042C53">③ 원격제어</text><text class="ts" x="265" y="272" text-anchor="middle" fill="#0C447C">kV/mA·IoT Jobs·해결판정</text></g>
+        <line x1="265" y1="282" x2="265" y2="298" stroke="#185FA5" stroke-width="1.5" marker-end="url(#ig-ar)"/>
+        <g><rect x="120" y="298" width="290" height="50" rx="9" fill="#85B7EB" stroke="#185FA5" stroke-width="0.5"/><text class="t" x="265" y="320" text-anchor="middle" fill="#042C53">④ 서비스 호출·티케팅</text><text class="ts" x="265" y="338" text-anchor="middle" fill="#0C447C">티켓·SLA·서비스가능</text></g>
+        <line x1="265" y1="348" x2="265" y2="364" stroke="#185FA5" stroke-width="1.5" marker-end="url(#ig-ar)"/>
+        <g><rect x="120" y="364" width="290" height="50" rx="9" fill="#85B7EB" stroke="#185FA5" stroke-width="0.5"/><text class="t" x="265" y="386" text-anchor="middle" fill="#042C53">⑤ 처리 진행 등록</text><text class="ts" x="265" y="404" text-anchor="middle" fill="#0C447C">배정·출동·작업·완료</text></g>
+        <line x1="265" y1="414" x2="265" y2="430" stroke="#185FA5" stroke-width="1.5" marker-end="url(#ig-ar)"/>
+        <g><rect x="120" y="430" width="290" height="50" rx="9" fill="#F09595" stroke="#791F1F" stroke-width="0.6"/><text class="t" x="265" y="452" text-anchor="middle" fill="#501313">⑥ 부품 주문 (요청)</text><text class="ts" x="265" y="470" text-anchor="middle" fill="#791F1F">조건부 발주요청 → B</text></g>
+        <line x1="265" y1="480" x2="265" y2="496" stroke="#185FA5" stroke-width="1.5" marker-end="url(#ig-ar)"/>
+        <g><rect x="120" y="496" width="290" height="50" rx="9" fill="#85B7EB" stroke="#185FA5" stroke-width="0.5"/><text class="t" x="265" y="518" text-anchor="middle" fill="#042C53">⑦ AS(정비) 관리</text><text class="ts" x="265" y="536" text-anchor="middle" fill="#0C447C">이력·만족도·운영 복귀</text></g>
+        <line x1="120" y1="521" x2="70" y2="521" stroke="#185FA5" stroke-width="1.3" stroke-dasharray="6 5"/>
+        <line x1="70" y1="521" x2="70" y2="125" stroke="#185FA5" stroke-width="1.3" stroke-dasharray="6 5"/>
+        <line x1="70" y1="125" x2="118" y2="125" stroke="#185FA5" stroke-width="1.3" stroke-dasharray="6 5" marker-end="url(#ig-ar)"/>
+        <rect x="52" y="560" width="426" height="148" rx="10" fill="#fff" stroke="#B5D4F4" stroke-width="0.8"/>
+        <text class="t" x="70" y="586" fill="#0C447C">스택</text>
+        <text class="ts" x="70" y="608" fill="#185FA5">IoT Core·Greengrass v2·Device Shadow·IoT Jobs</text>
+        <text class="ts" x="70" y="628" fill="#185FA5">Kinesis·Lambda·EventBridge·SNS/SES·Cognito</text>
+        <text class="t" x="70" y="654" fill="#0C447C">저장 (3-Tier)</text>
+        <text class="ts" x="70" y="676" fill="#185FA5">DocumentDB(Hot)·Aurora PG(Warm)·Iceberg/S3(Cold)</text>
+        <text class="ts" x="70" y="696" fill="#185FA5">보안: Cognito·IAM·X.509·JITP/JITR·Secrets Manager·KMS·TLS1.3</text>
+
+        <!-- INTEGRATION -->
+        <rect x="530" y="100" width="180" height="660" rx="14" fill="#EEE9F8" stroke="#534AB7" stroke-width="0.8"/>
+        <text class="t" x="620" y="128" text-anchor="middle" fill="#3C3489">연동 계층</text>
+        <g><rect x="544" y="150" width="152" height="74" rx="9" fill="#CECBF6" stroke="#534AB7" stroke-width="0.5"/><text class="t" x="620" y="174" text-anchor="middle" fill="#26215C">부품 발주 API</text><text class="api" x="620" y="194" text-anchor="middle" fill="#3C3489">POST</text><text class="api" x="620" y="210" text-anchor="middle" fill="#3C3489">/part-requests</text></g>
+        <g><rect x="544" y="238" width="152" height="74" rx="9" fill="#CECBF6" stroke="#534AB7" stroke-width="0.5"/><text class="t" x="620" y="262" text-anchor="middle" fill="#26215C">제품 수주 API</text><text class="api" x="620" y="282" text-anchor="middle" fill="#3C3489">POST</text><text class="api" x="620" y="298" text-anchor="middle" fill="#3C3489">/sales-orders</text></g>
+        <g><rect x="544" y="326" width="152" height="74" rx="9" fill="#CECBF6" stroke="#534AB7" stroke-width="0.5"/><text class="t" x="620" y="350" text-anchor="middle" fill="#26215C">재고·납기 API</text><text class="api" x="620" y="370" text-anchor="middle" fill="#3C3489">GET /stock</text><text class="api" x="620" y="386" text-anchor="middle" fill="#3C3489">/lead-time</text></g>
+        <g><rect x="544" y="414" width="152" height="86" rx="9" fill="#AFA9EC" stroke="#3C3489" stroke-width="0.5"/><text class="t" x="620" y="438" text-anchor="middle" fill="#26215C">이벤트 버스</text><text class="api" x="620" y="458" text-anchor="middle" fill="#26215C">EventBridge</text><text class="api" x="620" y="474" text-anchor="middle" fill="#26215C">shipment.*</text><text class="api" x="620" y="490" text-anchor="middle" fill="#26215C">order.confirmed</text></g>
+        <g><rect x="544" y="514" width="152" height="74" rx="9" fill="#CECBF6" stroke="#534AB7" stroke-width="0.5"/><text class="t" x="620" y="538" text-anchor="middle" fill="#26215C">정비결과 API</text><text class="api" x="620" y="558" text-anchor="middle" fill="#3C3489">POST</text><text class="api" x="620" y="574" text-anchor="middle" fill="#3C3489">/service-results</text></g>
+        <g><rect x="544" y="602" width="152" height="92" rx="9" fill="#7F77DD" stroke="#26215C" stroke-width="0.5"/><text class="t" x="620" y="626" text-anchor="middle" fill="#fff">데이터 이행</text><text class="api" x="620" y="646" text-anchor="middle" fill="#EEEDFE">MES→Aurora</text><text class="api" x="620" y="662" text-anchor="middle" fill="#EEEDFE">DMS·Glue·CDC</text><text class="api" x="620" y="680" text-anchor="middle" fill="#EEEDFE">S/N·BOM sync</text></g>
+        <text class="ts" x="620" y="724" text-anchor="middle" fill="#534AB7">Cognito·OAuth2·mTLS</text>
+        <text class="ts" x="620" y="744" text-anchor="middle" fill="#534AB7">Secrets Mgr·IAM·멱등·DLQ</text>
+
+        <!-- PROJECT B -->
+        <rect x="740" y="30" width="470" height="760" rx="18" fill="#EEF6EE" stroke="#3B6D11" stroke-width="0.8"/>
+        <text class="lbl" x="762" y="62" fill="#27500A">프로젝트 B · 제조·ERP 플랫폼</text>
+        <text class="ts" x="762" y="83" fill="#3B6D11">수주·생산·발주·재고</text>
+        <g><rect x="850" y="100" width="290" height="56" rx="9" fill="#C0DD97" stroke="#3B6D11" stroke-width="0.5"/><text class="t" x="995" y="123" text-anchor="middle" fill="#173404">① 수주 (제품주문)</text><text class="ts" x="995" y="142" text-anchor="middle" fill="#27500A">견적·계약</text></g>
+        <line x1="995" y1="156" x2="995" y2="182" stroke="#3B6D11" stroke-width="1.5" marker-end="url(#ig-ar)"/>
+        <g><rect x="850" y="182" width="290" height="56" rx="9" fill="#97C459" stroke="#27500A" stroke-width="0.5"/><text class="t" x="995" y="205" text-anchor="middle" fill="#173404">② 제조지시·생산</text><text class="ts" x="995" y="224" text-anchor="middle" fill="#173404">Work Order·공정실적·BOM</text></g>
+        <line x1="995" y1="238" x2="995" y2="264" stroke="#3B6D11" stroke-width="1.5" marker-end="url(#ig-ar)"/>
+        <g><rect x="850" y="264" width="290" height="56" rx="9" fill="#C0DD97" stroke="#3B6D11" stroke-width="0.5"/><text class="t" x="995" y="287" text-anchor="middle" fill="#173404">③ 소요량 전개 (MRP)</text><text class="ts" x="995" y="306" text-anchor="middle" fill="#27500A">BOM 전개·안전재고</text></g>
+        <line x1="995" y1="320" x2="995" y2="346" stroke="#3B6D11" stroke-width="1.5" marker-end="url(#ig-ar)"/>
+        <g><rect x="850" y="346" width="290" height="56" rx="9" fill="#C0DD97" stroke="#3B6D11" stroke-width="0.5"/><text class="t" x="995" y="369" text-anchor="middle" fill="#173404">④ 수발주·구매</text><text class="ts" x="995" y="388" text-anchor="middle" fill="#27500A">PR→PO·전자결재</text></g>
+        <line x1="995" y1="402" x2="995" y2="428" stroke="#3B6D11" stroke-width="1.5" marker-end="url(#ig-ar)"/>
+        <g><rect x="850" y="428" width="290" height="56" rx="9" fill="#C0DD97" stroke="#3B6D11" stroke-width="0.5"/><text class="t" x="995" y="451" text-anchor="middle" fill="#173404">⑤ 입고·검수</text><text class="ts" x="995" y="470" text-anchor="middle" fill="#27500A">대사·수입검사 연계</text></g>
+        <line x1="995" y1="484" x2="995" y2="510" stroke="#3B6D11" stroke-width="1.5" marker-end="url(#ig-ar)"/>
+        <g><rect x="850" y="510" width="290" height="56" rx="9" fill="#97C459" stroke="#27500A" stroke-width="0.5"/><text class="t" x="995" y="533" text-anchor="middle" fill="#173404">⑥ 재고 관리·출하</text><text class="ts" x="995" y="552" text-anchor="middle" fill="#173404">권역창고·출하 지시</text></g>
+        <line x1="1140" y1="538" x2="1190" y2="538" stroke="#3B6D11" stroke-width="1.3" stroke-dasharray="6 5"/>
+        <line x1="1190" y1="538" x2="1190" y2="128" stroke="#3B6D11" stroke-width="1.3" stroke-dasharray="6 5"/>
+        <line x1="1190" y1="128" x2="1142" y2="128" stroke="#3B6D11" stroke-width="1.3" stroke-dasharray="6 5" marker-end="url(#ig-ar)"/>
+
+        <!-- DELIVERY band (bottom, spans B side) -->
+        <rect x="740" y="600" width="470" height="168" rx="10" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.8"/>
+        <text class="t" x="762" y="626" fill="#633806">배송 (공통 도메인)</text>
+        <g><rect x="762" y="640" width="200" height="50" rx="8" fill="#FAC775" stroke="#854F0B" stroke-width="0.5"/><text class="t" x="862" y="662" text-anchor="middle" fill="#412402">제품 배송·설치</text><text class="api" x="862" y="680" text-anchor="middle" fill="#633806">운송→설치·시운전</text></g>
+        <g><rect x="988" y="640" width="200" height="50" rx="8" fill="#FAC775" stroke="#854F0B" stroke-width="0.5"/><text class="t" x="1088" y="662" text-anchor="middle" fill="#412402">부품 배송</text><text class="api" x="1088" y="680" text-anchor="middle" fill="#633806">택배/퀵→기사 교체</text></g>
+        <text class="ts" x="762" y="716" fill="#854F0B">추적: carrier·tracking_no·status·ETA · POD(인수증/설치확인서)</text>
+        <text class="ts" x="762" y="738" fill="#854F0B">제품→설치 일정 / 부품→서비스기사 방문 일정 동기화</text>
+
+        <!-- CROSS FLOWS -->
+        <!-- A⑥ 부품주문 -> 부품발주 API -->
+        <line x1="410" y1="455" x2="470" y2="455" stroke="#A32D2D" stroke-width="1.6"/><line x1="470" y1="455" x2="470" y2="187" stroke="#A32D2D" stroke-width="1.6"/><line x1="470" y1="187" x2="542" y2="187" stroke="#A32D2D" stroke-width="1.6" marker-end="url(#ig-ar)"/>
+        <text class="api" x="455" y="446" text-anchor="middle" fill="#A32D2D">부품발주</text>
+        <!-- 부품발주 API -> B④ 수발주 -->
+        <line x1="698" y1="187" x2="770" y2="187" stroke="#A32D2D" stroke-width="1.6"/><line x1="770" y1="187" x2="770" y2="374" stroke="#A32D2D" stroke-width="1.6"/><line x1="770" y1="374" x2="848" y2="374" stroke="#A32D2D" stroke-width="1.6" marker-end="url(#ig-ar)"/>
+        <!-- B⑥ 재고/출하 -> 재고·납기 API -->
+        <line x1="848" y1="530" x2="790" y2="530" stroke="#185FA5" stroke-width="1.6"/><line x1="790" y1="530" x2="790" y2="363" stroke="#185FA5" stroke-width="1.6"/><line x1="790" y1="363" x2="698" y2="363" stroke="#185FA5" stroke-width="1.6" marker-end="url(#ig-ar)"/>
+        <text class="api" x="775" y="521" text-anchor="middle" fill="#185FA5">재고·납기</text>
+        <!-- 재고·납기 -> A⑥ 부품주문 -->
+        <line x1="542" y1="363" x2="470" y2="363" stroke="#185FA5" stroke-width="1.6"/><line x1="470" y1="363" x2="470" y2="455" stroke="#185FA5" stroke-width="1.6"/><line x1="470" y1="455" x2="412" y2="455" stroke="#185FA5" stroke-width="1.6" marker-end="url(#ig-ar)"/>
+        <!-- shipment.delivered evt -> A⑤ 처리진행 -->
+        <line x1="620" y1="500" x2="620" y2="389" stroke="#3C3489" stroke-width="1.6" stroke-dasharray="5 4"/><line x1="544" y1="389" x2="412" y2="389" stroke="#3C3489" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#ig-ar)"/>
+        <text class="api" x="500" y="380" text-anchor="middle" fill="#3C3489">배송도착 evt</text>
+      </svg>
+    </div>
+    <h3>프로젝트 A · IoT 서비스 플랫폼 구성 (텍스트)</h3>
+    <table>
+      <thead class="blue"><tr><th style="width:60px">단계</th><th style="width:180px">기능</th><th>내용</th></tr></thead>
+      <tbody>
+        <tr><td class="idx">①</td><td class="k">IoT 데이터 수집</td><td>튜브·디텍터·본체 텔레메트리</td></tr>
+        <tr><td class="idx">②</td><td class="k">이상 알람·룰셋</td><td>임계 룰 · EventBridge · SNS/SES · 제어·호출 트리거</td></tr>
+        <tr><td class="idx">③</td><td class="k">원격제어</td><td>kV/mA 보정 · IoT Jobs · Device Shadow · 원격 해결·미해결 판정</td></tr>
+        <tr><td class="idx">④</td><td class="k">서비스 호출·티케팅</td><td>티켓 자동·수동 발행 · 심각도·SLA · 서비스 가능 수준</td></tr>
+        <tr><td class="idx">⑤</td><td class="k">처리 진행 등록</td><td>엔지니어 배정 · 접수→배정→출동→작업→완료 · 예정·실적일 · 작업결과</td></tr>
+        <tr><td class="idx">⑥</td><td class="k">부품 주문 (요청)</td><td>현장 조치 시 조건부 발주 요청 → 프로젝트 B · 배송 추적 <span class="tag a">주문</span></td></tr>
+        <tr><td class="idx">⑦</td><td class="k">AS(정비) 관리</td><td>정비·교체 이력 · 만족도 · AS 통계 · 운영 복귀 확인 <span class="tag b">AS</span></td></tr>
+      </tbody>
+    </table>
+    <table>
+      <thead class="blue"><tr><th style="width:180px">구성 요소</th><th>상세</th></tr></thead>
+      <tbody>
+        <tr><td class="k">주요 AWS 스택</td><td>IoT Core · Greengrass v2 · Device Shadow · IoT Jobs · Kinesis · Lambda · EventBridge · SNS/SES · Cognito</td></tr>
+        <tr><td class="k">데이터 저장 (3-Tier)</td><td>Hot: DocumentDB (7일) · Warm: Aurora PG (7~90일) · Cold: Iceberg on S3 (90일+)</td></tr>
+        <tr><td class="k">보안</td><td>Cognito · IAM RBAC · X.509·JITP/JITR · Secrets Manager·KMS · API GW Authorizer · mTLS · TLS 1.3 · CloudTrail</td></tr>
+      </tbody>
+    </table>
+
+    <h3>연동 계층 (Integration)</h3>
+    <table>
+      <thead class="purple"><tr><th style="width:170px">연동 요소</th><th>방식 / 엔드포인트</th><th>내용</th></tr></thead>
+      <tbody>
+        <tr><td class="k">발주 요청 API</td><td>REST · <code>POST /purchase-requests</code></td><td>부품 발주 요청 (A→B)</td></tr>
+        <tr><td class="k">재고·납기 API</td><td>REST · <code>GET /stock · /lead-time</code></td><td>재고 가용·예상 입고일 회신 (B→A)</td></tr>
+        <tr><td class="k">이벤트 버스</td><td>EventBridge</td><td>발주완료 · 입고완료 이벤트 (B→A)</td></tr>
+        <tr><td class="k">자산 동기화</td><td>양방향 sync</td><td>S/N · BOM · 부품 마스터 동기화</td></tr>
+        <tr><td class="k">데이터 이행</td><td>DMS · Glue · CDC 동기화</td><td>Legacy MES → Aurora</td></tr>
+        <tr><td class="k">웹 사용자 인증</td><td>Cognito User Pool · JWT</td><td>로그인·MFA·토큰 발급 / API Gateway Authorizer 연동</td></tr>
+        <tr><td class="k">IoT 장비 인증</td><td>X.509 · JITP/JITR · Thing Policy</td><td>장비 프로비저닝·Topic ACL·Greengrass 인증</td></tr>
+        <tr><td class="k">연동 API 인증</td><td>OAuth2 · mTLS · API GW</td><td>Client Credentials·상호 TLS·Scope 기반 접근</td></tr>
+        <tr><td class="k">자격증명·키</td><td>Secrets Manager · KMS</td><td>API Key·DB·인증서 저장·로테이션·암호화</td></tr>
+        <tr><td class="k">역할·권한</td><td>IAM · Cognito Groups · RBAC</td><td>역할별 메뉴·API·데이터 범위 / Least Privilege</td></tr>
+        <tr><td class="k">신뢰성·감사</td><td>EventBridge · CloudTrail</td><td>멱등키 · 재시도 · DLQ · 감사 로그 · IFD 스키마</td></tr>
+      </tbody>
+    </table>
+
+    <p class="small" style="margin-top:8px;">※ A→B: 부품 발주·제품 수주 / B→A: 재고·납기·서비스 가능 수준·배송 이벤트 / 양방향: 마스터 동기화·데이터 이행(Legacy MES→Aurora). 인증·보안 상세: <a href="#security">⑤ 인증·보안(AWS)</a>.</p>
+  </section>
+
+  <!-- Mermaid integrated flows -->
+  <section id="mermaid">
+    <h2><span class="sec-no n-e">⑧</span>통합 흐름도 (Mermaid)</h2>
+    <p class="sec-desc">프로젝트 A·B 서비스/제조 사이클, 제품·부품 주문·배송 경로, 연동 API를 <b>하나의 통합 흐름도</b>로 표현했습니다. AI 지원 플랫폼은 독립 영역으로 별도 제공합니다. 각 다이어그램은 <b>⛶ 전체 확대 보기</b>로 크게 확인할 수 있습니다.</p>
+
+    <h3 class="mer-h">통합 플랫폼 흐름 (A · B · 제품/부품 주문 · 연동) <button class="zoom-btn" onclick="openMer('mer-unified','통합 플랫폼 흐름')">⛶ 전체 확대 보기</button></h3>
+    <div class="mer mer-h" id="mer-unified"></div>
+    <details><summary>Mermaid 소스코드 보기</summary><pre id="src-unified"></pre></details>
+
+    <h3 class="mer-h">AI 지원 플랫폼 흐름 (Bedrock + RAG) <button class="zoom-btn" onclick="openMer('mer-ai','AI 지원 플랫폼 흐름 (Bedrock + RAG)')">⛶ 전체 확대 보기</button></h3>
+    <div class="mer mer-h" id="mer-ai"></div>
+    <details><summary>Mermaid 소스코드 보기</summary><pre id="src-ai"></pre></details>
+  </section>
+
+  <!-- Notes -->
+  <section id="notes">
+    <h2><span class="sec-no n-e">⑨</span>비고</h2>
+    <ol class="notes">
+      <li>전체 기능은 Phase 구분 없이 프로젝트 A(IoT)·B(제조·ERP)의 도메인 단위로 나열했습니다.</li>
+      <li>제품주문(완제품 장비)과 부품주문(정비용 부품)은 발생 주체·트리거·전표·배송 형태·완료 기준이 달라 별도 도메인으로 처리합니다. <b>부품 주문(A10)</b>과 <b>AS(정비) 관리(A11)</b>도 기능·화면·API를 분리합니다.</li>
+      <li>IoT 서비스 핵심 흐름은 <b>알람 → 원격제어 → 서비스 호출 → 처리 진행 등록</b>이며, 부품 주문·AS 완료는 이후 조건부·후속 단계로 연결됩니다.</li>
+      <li>모든 주문은 주문일·생산예정·출하예정일·출하실적·배송예정일(ETA)·배송실적·설치/교체 완료일을 관리하며, 예정일 대비 지연 시 알림이 발생합니다.</li>
+      <li>서비스 수준(SLA)은 Critical/High/Standard 3등급으로 응답·출동·복구·가동률 목표를 정의하고, 알람 시점 기준 자동 집계·에스컬레이션합니다.</li>
+      <li>서비스 가능 수준은 부품 가용성·엔지니어 가용성·원격 해결 가능성·SLA 충족 가능성을 종합해 "즉시 원격가능 / 당일·익일 방문 / 부품 대기(예상 복구일)"로 실시간 표출합니다.</li>
+      <li>연동은 동기 REST + 비동기 EventBridge(배송·예정일 이벤트 포함)이며, 마스터 기준은 장비/부품 = ERP, 운영 텔레메트리 = IoT입니다.</li>
+      <li>데이터 마이그레이션은 Legacy MES → Aurora(DMS·Glue·CDC)를 중심으로 5단계로 수행하며 운영 중 정합을 유지합니다.</li>
+      <li>인증·보안은 Cognito(웹)·X.509/IoT Policy(장비)·OAuth2/mTLS(연동)·Secrets Manager/KMS(자격증명)·IAM/RBAC(권한)·CloudTrail(감사)로 계층 분리 적용합니다.</li>
+    </ol>
+  </section>
+
+  <footer>
+    테크밸리 IoT·제조 통합 플랫폼 · 종합 기능정의서 (Phase 무구분 · 일정 · SLA 포함) · AWS · MZC<br>
+    브라우저 인쇄(Ctrl/Cmd + P) → "PDF로 저장"으로 PDF 출력 가능
+  </footer>
+</div>
+
+<div id="mer-overlay" role="dialog" aria-modal="true">
+  <div id="mer-ov-bar">
+    <span class="title" id="mer-ov-title">다이어그램</span>
+    <button onclick="ovZoom(1.25)">＋ 확대</button>
+    <button onclick="ovZoom(0.8)">－ 축소</button>
+    <button onclick="ovReset()">↺ 맞춤</button>
+    <button onclick="closeMer()">✕ 닫기 (Esc)</button>
+  </div>
+  <div id="mer-ov-vp"><div id="mer-ov-stage"></div></div>
+</div>
+
+<script>
+// ===== Mermaid 전체 확대 오버레이 =====
+(function(){
+  var ov=document.getElementById('mer-overlay');
+  var vp=document.getElementById('mer-ov-vp');
+  var stage=document.getElementById('mer-ov-stage');
+  var titleEl=document.getElementById('mer-ov-title');
+  var scale=1, minScale=1, tx=0, ty=0, baseW=0, baseH=0;
+
+  function apply(){ stage.style.transform='translate('+tx+'px,'+ty+'px) scale('+scale+')'; }
+
+  function fit(){
+    var svg=stage.querySelector('svg'); if(!svg) return;
+    var vw=vp.clientWidth, vh=vp.clientHeight;
+    // 패딩 포함 stage 본래 크기
+    baseW=stage.offsetWidth; baseH=stage.offsetHeight;
+    minScale=Math.min(vw/baseW, vh/baseH, 1);
+    scale=minScale;
+    tx=(vw-baseW*scale)/2; ty=(vh-baseH*scale)/2;
+    apply();
+  }
+  window.openMer=function(srcId, title){
+    var src=document.getElementById(srcId);
+    if(!src){ return; }
+    var svg=(src.tagName&&src.tagName.toLowerCase()==='svg')?src:src.querySelector('svg');
+    if(!svg){ alert('다이어그램이 아직 로딩 중입니다. 잠시 후 다시 눌러주세요.'); return; }
+    titleEl.textContent=title||'다이어그램';
+    stage.innerHTML='';
+    var clone=svg.cloneNode(true);
+    clone.removeAttribute('style');
+    clone.style.maxWidth='none'; clone.style.height='auto';
+    stage.appendChild(clone);
+    ov.classList.add('open');
+    setTimeout(fit, 50);
+  };
+  window.closeMer=function(){ ov.classList.remove('open'); stage.innerHTML=''; };
+  window.ovReset=fit;
+  window.ovZoom=function(f){ var cx=vp.clientWidth/2, cy=vp.clientHeight/2; zoomAt(cx,cy,f); };
+  function zoomAt(cx,cy,f){ var ns=Math.max(minScale*0.5, Math.min(minScale*8 || 8, scale*f)), k=ns/scale; tx=cx-(cx-tx)*k; ty=cy-(cy-ty)*k; scale=ns; apply(); }
+
+  vp.addEventListener('wheel',function(e){ e.preventDefault(); var r=vp.getBoundingClientRect(); zoomAt(e.clientX-r.left,e.clientY-r.top,e.deltaY<0?1.12:0.89); },{passive:false});
+  var drag=false,sx=0,sy=0,stx=0,sty=0;
+  vp.addEventListener('pointerdown',function(e){drag=true;sx=e.clientX;sy=e.clientY;stx=tx;sty=ty;vp.style.cursor='grabbing';vp.setPointerCapture(e.pointerId);});
+  vp.addEventListener('pointermove',function(e){if(!drag)return;tx=stx+(e.clientX-sx);ty=sty+(e.clientY-sy);apply();});
+  function ed(){drag=false;vp.style.cursor='grab';}
+  vp.addEventListener('pointerup',ed); vp.addEventListener('pointercancel',ed);
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape' && ov.classList.contains('open')) closeMer(); });
+  ov.addEventListener('click',function(e){ if(e.target===ov) closeMer(); });
+  window.addEventListener('resize',function(){ if(ov.classList.contains('open')) fit(); });
+})();
+</script>
+
+<script>
+(function(){
+  var vp=document.getElementById('ig-vp'); if(!vp) return;
+  var stage=document.getElementById('ig-stage'), readout=document.getElementById('ig-zoom');
+  var BW=1320, BH=1080, scale, minScale, tx=0, ty=0;
+  function fit(){ var w=vp.clientWidth,h=vp.clientHeight; minScale=Math.min(w/BW,h/BH); scale=minScale; tx=(w-BW*scale)/2; ty=0; apply(); }
+  function apply(){ stage.style.transform='translate('+tx+'px,'+ty+'px) scale('+scale+')'; stage.style.transformOrigin='0 0'; stage.style.position='absolute'; stage.style.top='0'; stage.style.left='0'; readout.textContent=Math.round(scale/minScale*100)+'%'; }
+  window.zoomByIg=function(f){ zoomAt(vp.clientWidth/2, vp.clientHeight/2, f); };
+  function zoomAt(cx,cy,f){ var ns=Math.max(minScale,Math.min(minScale*6,scale*f)),k=ns/scale; tx=cx-(cx-tx)*k; ty=cy-(cy-ty)*k; scale=ns; apply(); }
+  window.resetViewIg=fit;
+  vp.addEventListener('wheel',function(e){ e.preventDefault(); var r=vp.getBoundingClientRect(); zoomAt(e.clientX-r.left,e.clientY-r.top,e.deltaY<0?1.12:0.89); },{passive:false});
+  var drag=false,sx=0,sy=0,stx=0,sty=0;
+  vp.addEventListener('pointerdown',function(e){drag=true;sx=e.clientX;sy=e.clientY;stx=tx;sty=ty;vp.style.cursor='grabbing';vp.setPointerCapture(e.pointerId);});
+  vp.addEventListener('pointermove',function(e){if(!drag)return;tx=stx+(e.clientX-sx);ty=sty+(e.clientY-sy);apply();});
+  function ed2(){drag=false;vp.style.cursor='grab';}
+  vp.addEventListener('pointerup',ed2); vp.addEventListener('pointercancel',ed2);
+  fit(); window.addEventListener('resize',fit);
+})();
+</script>
+
+<script type="module">
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+
+const diagrams = {
+  'unified': `flowchart LR
+    subgraph A["프로젝트 A · IoT 서비스"]
+      direction TB
+      A1[① IoT 데이터 수집]:::a --> A2[② 이상 알람·룰셋]:::a --> A3[③ 원격제어]:::a
+      A3 -->|원격 해결| A9[정상 복귀]:::a
+      A3 -->|미해결| A4[④ 서비스 호출·티케팅]:::a --> A5[⑤ 처리 진행 등록]:::a
+      A5 --> A6{부품 필요?}:::d
+      A6 -->|Yes| A7[⑥ 부품 발주 요청<br/>부품주문]:::r --> A8[현장 작업·교체]:::a
+      A6 -->|No| A8
+      A8 --> A10[⑦ AS 완료·이력]:::a --> A9
+      A9 -.운영 복귀.-> A1
+    end
+    subgraph I["연동 계층"]
+      direction TB
+      I1{{부품발주 API<br/>POST /part-requests}}:::i
+      I2{{수주 API<br/>POST /sales-orders}}:::i
+      I3{{재고·납기 API<br/>GET /stock}}:::i
+      I5{{배송 이벤트<br/>shipment.*}}:::i
+    end
+    subgraph B["프로젝트 B · 제조·ERP"]
+      direction TB
+      B1[① 수주·SO<br/>제품주문 트리거]:::b --> B2[② 제조지시·생산·WO]:::b --> B3[③ MRP·안전재고]:::b
+      B3 --> B4[④ 수발주·구매]:::b --> B5[⑤ 입고·검수]:::b --> B6[⑥ 재고·출하]:::b
+      B6 --> B7P[⑦ 제품 출하·운송<br/>출하·배송예정일]:::ship
+      B6 --> B7R[⑦ 부품 출고·배송<br/>택배·퀵]:::ship
+      B7P --> B8[설치·시운전·IoT등록]:::b
+      B7R --> B9[기사 교체·완료]:::r
+      B7P -.재고 소진.-> B3
+    end
+    A7 --> I1 --> B4
+    B1 --> I2
+    B6 --> I3 --> A7
+    B5 --> I5 --> A5
+    B8 -.-> A1
+    B9 -.-> A10
+    classDef a fill:#B5D4F4,stroke:#185FA5,color:#042C53
+    classDef b fill:#C0DD97,stroke:#3B6D11,color:#173404
+    classDef r fill:#F09595,stroke:#791F1F,color:#501313
+    classDef d fill:#FAEEDA,stroke:#854F0B,color:#633806
+    classDef i fill:#CECBF6,stroke:#534AB7,color:#26215C
+    classDef ship fill:#FAC775,stroke:#854F0B,color:#412402`,
+
+  'ai': `flowchart LR
+    subgraph SRC["데이터 소스"]
+      direction TB
+      S1[정비 이력]:::src
+      S2[장비 매뉴얼·<br/>기술문서]:::src
+      S3[IoT 텔레메트리·<br/>알람]:::src
+    end
+    subgraph KB["지식베이스 (RAG)"]
+      direction TB
+      K1[수집·청킹·<br/>임베딩]:::kb --> K2[(벡터 검색<br/>OpenSearch)]:::kbd
+    end
+    subgraph AI["Bedrock (Claude)"]
+      direction TB
+      B1[검색·요약]:::ai
+      B2[조치·리포트<br/>추천]:::ai
+      B3[진단 챗봇<br/>가이드]:::ai
+    end
+    subgraph USE["서비스 업무"]
+      direction TB
+      U1[엔지니어·상담사]:::use
+      U2[원격제어·<br/>서비스 호출·진행등록]:::use
+    end
+    S1 --> K1
+    S2 --> K1
+    S3 -.참조.-> AI
+    K2 --> B1 --> B2 --> B3
+    B3 --> U1
+    U1 -->|"사람 확인"| U2
+    classDef src fill:#E6F1FB,stroke:#185FA5,color:#0C447C,font-size:15px
+    classDef kb fill:#CECBF6,stroke:#534AB7,color:#26215C,font-size:15px
+    classDef kbd fill:#AFA9EC,stroke:#3C3489,color:#26215C,font-size:15px
+    classDef ai fill:#7F77DD,stroke:#26215C,color:#fff,font-size:15px
+    classDef use fill:#C0DD97,stroke:#3B6D11,color:#173404,font-size:15px`
+};
+
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+mermaid.initialize({ startOnLoad:false, theme:'base', fontFamily:'"Malgun Gothic", sans-serif',
+  themeVariables:{ darkMode:dark, fontSize:'14px', lineColor:'#6b7a82' },
+  flowchart:{ useMaxWidth:false, htmlLabels:true, padding:12, nodeSpacing:28, rankSpacing:40 } });
+
+function fitVerticalMer(el){
+  const svgEl = el.querySelector('svg');
+  if(!svgEl) return;
+  const vb = svgEl.viewBox?.baseVal;
+  if(!vb || !vb.width) return;
+  const ratio = vb.height / vb.width;
+  const targetW = Math.min(480, Math.max(280, el.clientWidth - 36));
+  svgEl.setAttribute('width', targetW);
+  svgEl.setAttribute('height', Math.round(targetW * ratio));
+}
+
+async function render(key, elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  try{
+    const { svg } = await mermaid.render('m-'+key+'-svg', diagrams[key]);
+    el.innerHTML = svg;
+    const svgEl = el.querySelector('svg');
+    if(svgEl) svgEl.removeAttribute('style');
+    if(el.classList.contains('mer-v')) fitVerticalMer(el);
+  }catch(e){ el.innerHTML = '<p style="color:#A32D2D;font-size:13px">다이어그램 렌더링 실패</p>'; }
+}
+
+(async function(){
+  await render('unified','mer-unified');
+  await render('ai','mer-ai');
+  // 소스코드 표시
+  const srcMap = {'src-unified':'unified','src-ai':'ai'};
+  for(const [id,key] of Object.entries(srcMap)){
+    const p = document.getElementById(id);
+    if(p) p.textContent = diagrams[key];
+  }
+  window.addEventListener('resize', function(){
+    document.querySelectorAll('.mer.mer-v').forEach(fitVerticalMer);
+  });
+})();
+</script>
+</body>
+</html>

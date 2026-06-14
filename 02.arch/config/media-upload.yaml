@@ -1,0 +1,62 @@
+# 테크밸리 미디어 업로드 SSOT — S3 단일 PUT · 멀티파트 · 이미지 청크 · 비디오 스트림
+version: 1
+
+s3:
+  bucket_env_var: TV_MEDIA_BUCKET
+  default_bucket: tv-ingress-dev-tv-media-upload
+  prefixes:
+    image: media/images/{device_code}/{request_code}/
+    image_parts: media/images/{device_code}/{request_code}/parts/
+    video_stream: media/video-stream/{device_code}/{request_code}/
+    inspection_log: media/logs/{device_code}/{request_code}/
+    errors: errors/media-upload/{device_code}/
+
+thresholds:
+  single_put_max_bytes: 5242880
+  multipart_part_size_bytes: 8388608
+  image_chunk_size_bytes: 1048576
+  video_stream_segment_duration_sec: 10
+  video_stream_max_segment_bytes: 16777216
+
+presigned:
+  single_put_expires_seconds: 3600
+  multipart_upload_expires_seconds: 86400
+  part_url_expires_seconds: 3600
+  max_parts_per_session: 10000
+
+upload_modes:
+  image:
+    allowed_file_kinds: [image/jpeg, image/png, image/webp, inspection_frame]
+    default_mode: image_chunk
+    fallback_single_put_below_bytes: 5242880
+  video:
+    allowed_file_kinds: [video/mp4, video/mjpeg-stream, video/h264-segment]
+    default_mode: video_stream
+  log:
+    allowed_file_kinds: [application/gzip, application/zip, text/plain]
+    default_mode: multipart
+
+mqtt:
+  domain: file
+  roles: [request, response, chunk, stream, progress, complete, abort]
+  response_retained: true
+  qos: 1
+
+lambda:
+  orchestrator: file_upload_orchestrator
+  invoke_on_roles: [request, abort]
+  complete_via: [complete, chunk, stream]
+
+documentdb:
+  collection: files_history
+  session_link_field: request_code
+
+postgres:
+  session_table: media_upload_session
+  part_table: media_upload_part
+  stream_segment_table: media_stream_segment
+  equipment_log_table: equipment_log_media
+
+batch:
+  cadence_id: media_upload_export
+  batch_source_id: aurora.media_upload_query

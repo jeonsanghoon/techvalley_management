@@ -1,0 +1,1273 @@
+/*
+ * CSS 레이어 선언 순서 (뒤에 선언된 레이어가 우선):
+ *   theme < base < components < utilities < [언레이어드]
+ *
+ * MUI emotion 스타일은 enableCssLayer 제거로 언레이어드(최우선) — SPA 이동 시 CSS injection 안정성 확보.
+ * @layer mui 블록은 Tailwind preflight가 깨뜨리는 MUI 정적 클래스(SvgIcon 등) 보정용으로 유지.
+ * Tailwind utilities(@layer utilities)는 언레이어드 MUI emotion 스타일을 이길 수 없으므로
+ * 커스텀 유틸리티 클래스(flex, p-*, m-* 등)는 emotion 없는 구간에서 사용해야 함.
+ */
+@layer theme, base, mui, components, utilities;
+@import "tailwindcss";
+
+@layer components {
+  @import "ag-grid-enterprise/styles/ag-grid.css";
+  @import "ag-grid-enterprise/styles/ag-theme-quartz.css";
+}
+
+:root {
+  --devias-primary: #635bff;
+  --devias-primary-dark: #432ad8;
+  color-scheme: light;
+}
+
+:root,
+:root[data-color-mode="light"] {
+  --background: #ffffff;
+  --foreground: #111827;
+  --tv-border: #dde4ea;
+  --tv-border-strong: #cbd5e1;
+  --tv-surface: #ffffff;
+  --tv-surface-sunken: #f4f6f8;
+  color-scheme: light;
+}
+
+:root[data-color-mode="dark"] {
+  --background: #090a0b;
+  --foreground: #f9fafb;
+  --tv-border: rgba(255, 255, 255, 0.22);
+  --tv-border-strong: rgba(255, 255, 255, 0.32);
+  --tv-surface: #181c22;
+  --tv-surface-sunken: #12161c;
+  color-scheme: dark;
+}
+
+@layer base {
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: "Malgun Gothic", "맑은 고딕", var(--font-inter), -apple-system,
+      BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+}
+
+/* Tailwind preflight 보정 — @layer mui (enableCssLayer) */
+@layer mui {
+.MuiTypography-h4 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.MuiTypography-h5 {
+  font-size: 1.375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.MuiTypography-h6 {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.MuiTypography-subtitle1 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.MuiTypography-subtitle2 {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.MuiTypography-body1 {
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.MuiTypography-body2 {
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+.MuiTypography-caption {
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.MuiTypography-overline {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
+}
+
+.MuiCardHeader-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+:root[data-color-mode="dark"] .MuiCardHeader-title {
+  color: #f9fafb;
+}
+
+:root[data-color-mode="dark"] .MuiCardHeader-subheader {
+  color: #9fa6ad;
+}
+
+/* ApexCharts — 다크모드 범례·축·라벨 텍스트 */
+[data-color-mode="dark"] .tv-apex-chart .apexcharts-legend-text {
+  color: #cdd7e1 !important;
+}
+
+[data-color-mode="dark"] .tv-apex-chart .apexcharts-text.apexcharts-pie-label,
+[data-color-mode="dark"] .tv-apex-chart .apexcharts-datalabel,
+[data-color-mode="dark"] .tv-apex-chart .apexcharts-datalabel-label,
+[data-color-mode="dark"] .tv-apex-chart .apexcharts-datalabel-value {
+  fill: #e5e7eb;
+}
+
+[data-color-mode="dark"] .tv-apex-chart .apexcharts-xaxis-label,
+[data-color-mode="dark"] .tv-apex-chart .apexcharts-yaxis-label {
+  fill: #9fa6ad;
+}
+
+[data-color-mode="dark"] .tv-apex-chart .apexcharts-gridline {
+  stroke: rgba(255, 255, 255, 0.14);
+}
+
+[data-color-mode="dark"] .tv-apex-chart .apexcharts-tooltip.apexcharts-theme-dark {
+  background: #1e242b;
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #e5e7eb;
+}
+
+/* ApexCharts — 다크모드 툴바·내보내기 메뉴 (theme.mode + 앱 data-color-mode 이중 보정) */
+[data-color-mode="dark"] .tv-apex-chart .apexcharts-theme-dark .apexcharts-menu,
+[data-color-mode="dark"] .tv-apex-chart .apexcharts-menu {
+  background: rgba(28, 28, 31, 0.95) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #f3f4f6 !important;
+  box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-color-mode="dark"] .tv-apex-chart .apexcharts-theme-dark .apexcharts-menu-item,
+[data-color-mode="dark"] .tv-apex-chart .apexcharts-menu-item {
+  color: #f3f4f6 !important;
+}
+
+[data-color-mode="dark"] .tv-apex-chart .apexcharts-theme-dark .apexcharts-menu-item:hover,
+[data-color-mode="dark"] .tv-apex-chart .apexcharts-menu-item:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-color-mode="dark"] .tv-apex-chart .apexcharts-theme-dark .apexcharts-menu-item:focus-visible,
+[data-color-mode="dark"] .tv-apex-chart .apexcharts-menu-item:focus-visible {
+  background: rgba(255, 255, 255, 0.08) !important;
+  outline-color: #ffd500;
+}
+
+[data-color-mode="dark"] .tv-apex-chart .apexcharts-theme-dark .apexcharts-menu-icon,
+[data-color-mode="dark"] .tv-apex-chart .apexcharts-menu-icon {
+  color: #d4d6dc !important;
+}
+
+[data-color-mode="dark"] .tv-apex-chart .apexcharts-theme-dark .apexcharts-toolbar,
+[data-color-mode="dark"] .tv-apex-chart .apexcharts-toolbar {
+  background: rgba(28, 28, 31, 0.82);
+}
+
+.tv-page-context-header {
+  overflow: visible;
+}
+
+/* 페이지 상단 제목 — 본문 섹션·카드·그리드 제목보다 크게 */
+.tv-page-context-header .tv-page-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+@media (max-width: 600px) {
+  .tv-page-context-header .tv-page-title {
+    font-size: 1.125rem;
+  }
+}
+
+/* Tailwind preflight svg{display:block} — MUI SvgIcon 크기·레이아웃 보정 */
+svg.MuiSvgIcon-root {
+  display: inline-block !important;
+  width: 1em !important;
+  height: 1em !important;
+  flex-shrink: 0;
+  box-sizing: content-box;
+}
+
+.MuiChip-icon.MuiSvgIcon-root {
+  width: 18px !important;
+  height: 18px !important;
+  font-size: 18px !important;
+}
+
+.MuiChip-root {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  max-width: 100%;
+}
+
+.MuiChip-icon {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.MuiChip-label {
+  line-height: 1.43;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.MuiAvatar-root .MuiSvgIcon-root {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  font-size: 1.25rem !important;
+}
+
+.MuiTabs-scrollButtons .MuiSvgIcon-root {
+  width: 20px !important;
+  height: 20px !important;
+  font-size: 20px !important;
+}
+
+.MuiInputAdornment-root .MuiSvgIcon-root {
+  width: 20px !important;
+  height: 20px !important;
+  font-size: 20px !important;
+}
+
+/* Tailwind preflight — MUI 버튼·탭 appearance 보정 */
+button.MuiButton-root,
+button.MuiIconButton-root,
+button.MuiTab-root {
+  appearance: none;
+  font: inherit;
+}
+
+.MuiButton-startIcon .MuiSvgIcon-root,
+.MuiButton-endIcon .MuiSvgIcon-root {
+  width: 1.125rem !important;
+  height: 1.125rem !important;
+  font-size: 1.125rem !important;
+}
+
+.MuiListItemIcon-root .MuiSvgIcon-root {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  font-size: 1.25rem !important;
+}
+
+.MuiBreadcrumbs-separator .MuiSvgIcon-root {
+  width: 1rem !important;
+  height: 1rem !important;
+  font-size: 1rem !important;
+}
+
+.MuiAlert-icon .MuiSvgIcon-root {
+  width: 1.375rem !important;
+  height: 1.375rem !important;
+  font-size: 1.375rem !important;
+}
+}
+
+/* 사이드바 — flex 스크롤·메뉴 그룹 겹침 방지 */
+.tv-side-nav nav {
+  overscroll-behavior: contain;
+}
+
+.tv-side-nav .MuiList-root {
+  position: relative;
+  width: 100%;
+}
+
+.tv-side-nav .MuiListItemButton-root {
+  position: relative;
+  z-index: 0;
+}
+
+/* AG Grid 셀 내부 MUI 위젯 */
+.tv-ag-grid .MuiChip-root {
+  max-height: 26px;
+  vertical-align: middle;
+}
+
+.tv-ag-grid .MuiChip-label {
+  line-height: 1.2;
+}
+
+.tv-ag-grid .MuiSvgIcon-root {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  font-size: 1.25rem !important;
+}
+
+.tv-ag-grid .MuiLinearProgress-root {
+  min-width: 48px;
+}
+
+/* 상단 날씨 팝업 — 아이콘·행 레이아웃 고정 */
+.tv-weather-popup {
+  isolation: isolate;
+}
+
+.tv-weather-popup .tv-weather-popup__icon,
+.tv-weather-popup .MuiSvgIcon-root {
+  width: 14px !important;
+  height: 14px !important;
+  font-size: 14px !important;
+  flex-shrink: 0;
+}
+
+.tv-weather-popup__emoji {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.tv-weather-popup__emoji--lg {
+  width: 36px;
+  height: 36px;
+  font-size: 28px;
+}
+
+.tv-weather-popup__day-row {
+  display: grid;
+  grid-template-columns: 72px 28px minmax(0, 1fr) auto 36px;
+  align-items: center;
+  column-gap: 8px;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+
+.tv-weather-popup__day-row:hover {
+  background: rgba(67, 74, 81, 0.06);
+}
+
+:root[data-color-mode="dark"] .tv-weather-popup__day-row:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.tv-weather-popup__day-label {
+  font-weight: 600;
+}
+
+.tv-weather-popup__day-desc {
+  color: var(--foreground);
+  opacity: 0.72;
+  min-width: 0;
+}
+
+.tv-weather-popup__day-temp {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tv-weather-popup__day-rain {
+  text-align: right;
+  opacity: 0.72;
+}
+
+@keyframes tv-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 0.75;
+  }
+}
+
+.tv-pulse-dot {
+  animation: tv-pulse 1.5s ease-in-out infinite;
+}
+
+@layer components {
+/* AG Grid — 테크밸리 Quartz 테마 */
+.ag-watermark,
+.ag-watermark-text {
+  display: none !important;
+}
+
+:root[data-color-mode="light"] .tv-ag-grid.ag-theme-quartz,
+:root:not([data-color-mode="dark"]) .tv-ag-grid.ag-theme-quartz {
+  --ag-font-family: "Malgun Gothic", "맑은 고딕", sans-serif;
+  --ag-font-size: 13px;
+  --ag-grid-size: 6px;
+  --ag-header-height: 44px;
+  --ag-row-height: 42px;
+  --ag-header-background-color: #f4f6f8;
+  --ag-header-foreground-color: #434a51;
+  --ag-header-cell-hover-background-color: #eef2f6;
+  --ag-header-column-separator-color: #dde4ea;
+  --ag-header-column-separator-height: 60%;
+  --ag-selected-row-background-color: rgba(99, 91, 255, 0.08);
+  --ag-row-hover-color: rgba(67, 74, 81, 0.04);
+  --ag-active-color: #635bff;
+  --ag-checkbox-checked-color: #635bff;
+  --ag-checkbox-unchecked-color: #94a3b8;
+  --ag-border-color: #dde4ea;
+  --ag-secondary-border-color: #eef2f6;
+  --ag-row-border-color: #eef2f6;
+  --ag-background-color: #ffffff;
+  --ag-odd-row-background-color: #fafcfd;
+  --ag-range-selection-border-color: #635bff;
+  --ag-cell-horizontal-padding: 14px;
+  --ag-wrapper-border-radius: 0;
+  --ag-borders: solid 1px;
+  --ag-foreground-color: #1e293b;
+  --ag-secondary-foreground-color: #5c6670;
+  --ag-chrome-background-color: #ffffff;
+  color-scheme: light;
+}
+
+.tv-ag-grid .ag-root-wrapper {
+  width: 100%;
+  border: none;
+  background: var(--ag-background-color, #fff);
+}
+
+.tv-ag-grid .ag-header {
+  border-bottom: 1px solid #dde4ea;
+}
+
+.tv-ag-grid .ag-header-cell-label {
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  color: #5c6670;
+}
+
+.tv-ag-grid .ag-header-cell-text {
+  font-weight: 600;
+  color: #434a51;
+}
+
+/* .ag-cell에 flex 적용 금지 — 체크박스·선택 컬럼 레이아웃 깨짐 */
+.tv-ag-grid .ag-cell-wrapper {
+  align-items: center;
+}
+
+.tv-ag-grid .ag-row {
+  border-bottom: 1px solid var(--ag-row-border-color);
+}
+
+.tv-ag-grid .ag-pinned-left-header,
+.tv-ag-grid .ag-pinned-left-cols-container {
+  box-shadow: 4px 0 10px -6px rgba(11, 61, 92, 0.18);
+}
+
+.tv-ag-grid .tv-cell-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  letter-spacing: -0.02em;
+}
+
+.tv-ag-grid .tv-cell-center .ag-cell-wrapper {
+  justify-content: center;
+}
+
+.tv-ag-grid .ag-cell-focus:not(.ag-cell-range-selected):focus-within {
+  border-color: rgba(28, 114, 147, 0.45) !important;
+}
+
+.tv-ag-grid .ag-overlay-no-rows-center {
+  color: #5b6b73;
+  font-size: 13px;
+}
+
+.tv-ag-grid .ag-paging-panel,
+.tv-ag-grid .ag-floating-filter,
+.tv-ag-grid .ag-header-cell-filter-button,
+.tv-ag-grid .ag-side-bar {
+  display: none !important;
+}
+
+[data-color-mode="dark"] .tv-ag-grid.ag-theme-quartz {
+  --ag-foreground-color: #e5e7eb;
+  --ag-secondary-foreground-color: #9fa6ad;
+  --ag-header-background-color: #12161c;
+  --ag-header-foreground-color: #cdd7e1;
+  --ag-header-cell-hover-background-color: #1e242b;
+  --ag-header-column-separator-color: rgba(255, 255, 255, 0.22);
+  --ag-selected-row-background-color: rgba(99, 91, 255, 0.16);
+  --ag-row-hover-color: rgba(255, 255, 255, 0.04);
+  --ag-border-color: rgba(255, 255, 255, 0.22);
+  --ag-secondary-border-color: rgba(255, 255, 255, 0.16);
+  --ag-row-border-color: rgba(255, 255, 255, 0.14);
+  --ag-background-color: #181c22;
+  --ag-odd-row-background-color: #161a20;
+  --ag-chrome-background-color: #181c22;
+  --ag-modal-overlay-background-color: rgba(9, 10, 11, 0.66);
+  color-scheme: dark;
+}
+
+[data-color-mode="dark"] .tv-ag-grid .ag-root-wrapper {
+  background: var(--ag-background-color);
+}
+
+[data-color-mode="dark"] .tv-ag-grid .ag-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+[data-color-mode="dark"] .tv-ag-grid .ag-header-cell-label,
+[data-color-mode="dark"] .tv-ag-grid .ag-header-cell-text {
+  color: #cdd7e1;
+}
+
+[data-color-mode="dark"] .tv-ag-grid .ag-pinned-left-header,
+[data-color-mode="dark"] .tv-ag-grid .ag-pinned-left-cols-container {
+  box-shadow: 4px 0 10px -6px rgba(0, 0, 0, 0.45);
+}
+
+[data-color-mode="dark"] .tv-ag-grid .ag-cell-focus:not(.ag-cell-range-selected):focus-within {
+  border-color: rgba(99, 91, 255, 0.55) !important;
+}
+
+[data-color-mode="dark"] .tv-ag-grid .ag-overlay-no-rows-center {
+  color: #9fa6ad;
+}
+
+[data-color-mode="dark"] .tv-grid-shell {
+  background: var(--tv-surface);
+  border: 1px solid var(--tv-border) !important;
+}
+
+.tv-grid-shell {
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100%;
+  min-width: 0;
+  background: var(--ag-background-color, #fff);
+}
+
+.tv-ag-grid .tv-cell-remote-actions {
+  overflow: visible;
+  padding-inline: 4px;
+}
+
+.tv-ag-grid .tv-cell-remote-actions .ag-cell-wrapper {
+  justify-content: center;
+  overflow: visible;
+}
+
+.tv-ag-grid .tv-equipment-remote-actions .MuiIconButton-root {
+  border: 1px solid var(--ag-border-color, #dde4ea);
+  border-radius: 6px;
+  background: var(--ag-background-color, #fff);
+}
+
+[data-color-mode="dark"] .tv-ag-grid .tv-equipment-remote-actions .MuiIconButton-root {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: var(--ag-background-color, #181c22);
+}
+
+.tv-grid-shell .tv-ag-grid-auto {
+  min-height: 120px;
+}
+
+/* 모바일·태블릿 카드 그리드 — 요약/상세 정렬 */
+.tv-grid-card-list .tv-grid-card-summary-field {
+  align-items: flex-start;
+}
+
+.tv-grid-card-list .tv-grid-card-summary-field--center {
+  align-items: center;
+}
+
+.tv-grid-card-list .tv-grid-card-summary-field--center .tv-grid-card-summary-label {
+  text-align: center;
+}
+
+.tv-grid-card-list .tv-grid-card-summary-field--center .tv-grid-card-field-value {
+  justify-content: center;
+}
+
+.tv-grid-card-list .tv-grid-card-field-value {
+  justify-content: flex-start;
+}
+
+.tv-grid-card-list .tv-grid-card-field-value > .MuiBox-root {
+  justify-content: flex-start !important;
+  width: auto;
+}
+
+.tv-grid-card-list .tv-grid-card-summary-field--center .tv-grid-card-field-value > .MuiBox-root {
+  justify-content: center !important;
+}
+
+.tv-grid-card-list .tv-grid-card-field-value .MuiChip-root {
+  margin: 0;
+}
+
+.tv-grid-card-list .tv-grid-card-actions {
+  margin-left: 0;
+}
+}
+
+/* Google Maps — 플릿 지도 캔버스·InfoWindow */
+.tv-fleet-map__canvas {
+  width: 100% !important;
+}
+
+/* embedded: 부모(Paper) 높이 안에만 그리기 — gm-style 100% 강제는 새로고침 시 viewport 확장 유발 */
+.tv-fleet-map:not(.tv-fleet-map--fullscreen) {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.tv-fleet-map:not(.tv-fleet-map--fullscreen) .tv-fleet-map__canvas {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+}
+
+.tv-fleet-map--fullscreen {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.tv-fleet-map--fullscreen .tv-fleet-map__canvas,
+.tv-fleet-map--fullscreen .tv-fleet-map__canvas > div,
+.tv-fleet-map--fullscreen .gm-style,
+.tv-fleet-map--fullscreen .gm-style > div,
+.tv-fleet-map--fullscreen .gm-style > div > div {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.tv-fleet-map--fullscreen .tv-fleet-map__canvas {
+  position: absolute !important;
+  inset: 0 !important;
+}
+
+.tv-fleet-map .gm-style-iw {
+  max-width: 340px !important;
+  opacity: 1 !important;
+}
+
+.tv-fleet-map .gm-style-iw-c {
+  padding: 0 !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  opacity: 1 !important;
+  filter: none !important;
+  box-shadow: 0 16px 40px rgba(17, 24, 39, 0.22) !important;
+  border: 1px solid #dde4ea !important;
+  overflow: hidden !important;
+}
+
+.tv-fleet-map .gm-style-iw-d {
+  overflow: visible !important;
+  max-height: none !important;
+  padding: 0 !important;
+  background: #ffffff !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+.tv-fleet-map .gm-style-iw-d > div {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+.tv-fleet-map .gm-style-iw-chr {
+  position: absolute !important;
+  top: 6px !important;
+  right: 6px !important;
+  width: 28px !important;
+  height: 28px !important;
+  z-index: 2;
+  opacity: 1 !important;
+}
+
+.tv-fleet-map .gm-style-iw-chr button {
+  width: 28px !important;
+  height: 28px !important;
+  opacity: 1 !important;
+}
+
+.tv-fleet-map .gm-style-iw-tc::after {
+  background: #ffffff !important;
+  opacity: 1 !important;
+  box-shadow: 0 2px 6px rgba(17, 24, 39, 0.14) !important;
+}
+
+/* 마커 위 오버레이 팝업 — OverlayView (즉시 표시, 지도와 함께 이동) */
+.tv-fleet-map-overlay-popup {
+  position: relative;
+  z-index: 200;
+  pointer-events: auto;
+  filter: drop-shadow(0 16px 40px rgba(17, 24, 39, 0.22));
+}
+
+.tv-fleet-map-overlay-popup__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 3;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #dde4ea;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #434a51;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.tv-fleet-map-overlay-popup__close:hover {
+  background: #f4f6f8;
+}
+
+.tv-fleet-map-overlay-popup .tv-fleet-map-info {
+  border-radius: 12px;
+  border: 1px solid #dde4ea;
+  overflow: visible;
+  box-shadow: none;
+}
+
+.tv-fleet-map-overlay-popup--portal {
+  max-width: min(320px, calc(100vw - 32px));
+}
+
+.tv-fleet-map-overlay-popup .tv-fleet-map-info__header {
+  padding-right: 40px;
+}
+
+.tv-fleet-map-overlay-popup::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  background: #ffffff;
+  border-right: 1px solid #dde4ea;
+  border-bottom: 1px solid #dde4ea;
+  transform: rotate(45deg);
+  z-index: -1;
+}
+
+[data-color-mode="dark"] .tv-fleet-map-overlay-popup {
+  filter: drop-shadow(0 16px 40px rgba(0, 0, 0, 0.5));
+}
+
+[data-color-mode="dark"] .tv-fleet-map-overlay-popup__close {
+  background: #111517;
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #cdd7e1;
+}
+
+[data-color-mode="dark"] .tv-fleet-map-overlay-popup__close:hover {
+  background: #1a1d21;
+}
+
+[data-color-mode="dark"] .tv-fleet-map-overlay-popup .tv-fleet-map-info {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+[data-color-mode="dark"] .tv-fleet-map-overlay-popup::after {
+  background: #111517;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.tv-fleet-map-info {
+  --status-color: #635bff;
+  box-sizing: border-box;
+  font-family: "Malgun Gothic", "맑은 고딕", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  min-width: 260px;
+  max-width: 320px;
+  background: #ffffff;
+  color: #111827;
+  opacity: 1;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.tv-fleet-map-info__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 36px 10px 14px;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--status-color) 18%, #ffffff) 0%,
+    #ffffff 100%
+  );
+  border-bottom: 1px solid #eef2f6;
+  border-left: 4px solid var(--status-color);
+}
+
+.tv-fleet-map-info__status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--status-color) 14%, #ffffff);
+  border: 1px solid color-mix(in srgb, var(--status-color) 35%, #ffffff);
+  color: var(--status-color);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.tv-fleet-map-info__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--status-color);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--status-color) 25%, transparent);
+  flex-shrink: 0;
+}
+
+.tv-fleet-map-info__dot--pulse {
+  animation: tv-fleet-dot-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes tv-fleet-dot-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--status-color) 25%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--status-color) 12%, transparent);
+  }
+}
+
+.tv-fleet-map-info__hint {
+  font-size: 11px;
+  font-weight: 500;
+  color: #667085;
+  white-space: normal;
+  text-align: right;
+  max-width: 120px;
+}
+
+.tv-fleet-map-info__body {
+  padding: 12px 14px 10px;
+}
+
+.tv-fleet-map-info__serial {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #111827 !important;
+}
+
+.tv-fleet-map-info__customer {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #212636 !important;
+}
+
+.tv-fleet-map-info__meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.tv-fleet-map-info__meta-item {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #f4f6f8;
+  border: 1px solid #eef2f6;
+  min-width: 0;
+}
+
+.tv-fleet-map-info__meta-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #667085;
+  margin-bottom: 3px;
+}
+
+.tv-fleet-map-info__meta-value {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #212636;
+  line-height: 1.35;
+  word-break: break-word;
+  overflow: visible;
+  white-space: normal;
+}
+
+.tv-fleet-map-info__ops {
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #fafcfd 0%, #f4f6f8 100%);
+  border: 1px solid #eef2f6;
+}
+
+.tv-fleet-map-info__ops-title {
+  margin: 0 0 8px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #667085;
+}
+
+.tv-fleet-map-info__ops-empty {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #ffffff;
+  border: 1px dashed #dde4ea;
+  font-size: 12px;
+  font-weight: 500;
+  color: #667085;
+  text-align: center;
+}
+
+.tv-fleet-map-info__ops-empty--warn {
+  color: #b76e00;
+  border-color: #fb9c0c55;
+  background: #fffaf0;
+}
+
+.tv-fleet-map-info__alarm {
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #ffffff;
+  border: 1px solid #eef2f6;
+  margin-bottom: 6px;
+}
+
+.tv-fleet-map-info__alarm--critical {
+  border-left: 3px solid #f04438;
+}
+
+.tv-fleet-map-info__alarm--warning {
+  border-left: 3px solid #fb9c0c;
+}
+
+.tv-fleet-map-info__alarm-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.tv-fleet-map-info__severity {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #f04438;
+}
+
+.tv-fleet-map-info__alarm--warning .tv-fleet-map-info__severity {
+  color: #b76e00;
+}
+
+.tv-fleet-map-info__ack {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #eef2f6;
+  color: #434a51;
+}
+
+.tv-fleet-map-info__alarm-msg {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #212636;
+  line-height: 1.4;
+  word-break: break-word;
+  overflow: visible;
+  white-space: normal;
+}
+
+.tv-fleet-map-info__alarm-meta {
+  margin: 0;
+  font-size: 11px;
+  color: #667085;
+}
+
+.tv-fleet-map-info__ticket {
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #ffffff;
+  border: 1px solid #dde4ea;
+  border-left: 3px solid #635bff;
+}
+
+.tv-fleet-map-info__ticket-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.tv-fleet-map-info__ticket-id {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #635bff;
+}
+
+.tv-fleet-map-info__ticket-stage {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #ebe9fe;
+  color: #432ad8;
+}
+
+.tv-fleet-map-info__ticket-symptom {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #434a51;
+  line-height: 1.4;
+  word-break: break-word;
+  overflow: visible;
+  white-space: normal;
+}
+
+.tv-fleet-map-info__ticket-meta {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: #667085;
+}
+
+.tv-fleet-map-info__coords {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: #fafcfd;
+  border: 1px dashed #dde4ea;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #434a51;
+}
+
+.tv-fleet-map-info__coords svg {
+  flex-shrink: 0;
+  color: var(--status-color);
+}
+
+.tv-fleet-map-info__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  border-top: 1px solid #eef2f6;
+}
+
+.tv-fleet-map-info__action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 8px;
+  background: #fafcfd;
+  color: #434a51;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  border-right: 1px solid #eef2f6;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.tv-fleet-map-info__action:last-child {
+  border-right: none;
+}
+
+.tv-fleet-map-info__action:hover {
+  background: #eef2f6;
+  color: #111827;
+}
+
+.tv-fleet-map-info__action--primary {
+  color: #635bff;
+  background: linear-gradient(180deg, #fafafd 0%, #f4f3ff 100%);
+}
+
+.tv-fleet-map-info__action--primary:hover {
+  background: #ebe9fe;
+  color: #432ad8;
+}
+
+/* Google Maps · InfoWindow — 다크 모드 */
+[data-color-mode="dark"] .tv-fleet-map .gm-style-iw-c {
+  background: #111517 !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-color-mode="dark"] .tv-fleet-map .gm-style-iw-d {
+  background: #111517 !important;
+}
+
+[data-color-mode="dark"] .tv-fleet-map .gm-style-iw-tc::after {
+  background: #111517 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35) !important;
+}
+
+[data-color-mode="dark"] .tv-fleet-map-info {
+  background: #111517;
+  color: #f9fafb;
+}
+
+[data-color-mode="dark"] .tv-fleet-map-info__header {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--status-color) 22%, #111517) 0%,
+    #111517 100%
+  );
+  border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-color-mode="dark"] .tv-fleet-map-info__status-pill {
+  background: color-mix(in srgb, var(--status-color) 18%, #111517);
+  border-color: color-mix(in srgb, var(--status-color) 40%, rgba(255, 255, 255, 0.2));
+}
+
+[data-color-mode="dark"] .tv-fleet-map-info__hint {
+  color: #9fa6ad;
+}
+
+[data-color-mode="dark"] .tv-fleet-map-info__serial {
+  color: #f9fafb !important;
+}
+
+[data-color-mode="dark"] .tv-fleet-map-info__customer {
+  color: #e5e7eb !important;
+}
+
+[data-color-mode="dark"] .tv-fleet-map-info__meta-item {
+  background: #1a1d21;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-color-mode="dark"] .tv-fleet-map-info__meta-label,
+[data-color-mode="dark"] .tv-fleet-map-info__ops-title,
+[data-color-mode="dark"] .tv-fleet-map-info__alarm-meta,
+[data-color-mode="dark"] .tv-fleet-map-info__ticket-meta {
+  color: #9fa6ad;
+}
+
+[data-color-mode="dark"] .tv-fleet-map-info__meta-value {
+  color: #e5e7eb;
+}
+
+[data-color-mode="dark"] .tv-fleet-map-info__ops {
+  background: linear-gradient(180deg, #14181c 0%, #1a1d21 100%);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-color-mode="dark"] .tv-fleet-map-info__ops-empty {
+  background: #111517;
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #9fa6ad;
+}
+
+[data-color-mode="dark"] .tv-fleet-map-info__ops-empty--warn {
+  color: #fdb022;
+  border-color: #fb9c0c55;
+  background: #1a1408;
+}
+
+[data-color-mode="dark"] .tv-fleet-map-info__alarm,
+[data-color-mode="dark"] .tv-fleet-map-info__ticket {
+  background: #111517;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-color-mode="dark"] .tv-fleet-map-info__alarm-msg,
+[data-color-mode="dark"] .tv-fleet-map-info__ticket-symptom {
+  color: #e5e7eb;
+}
+
+[data-color-mode="dark"] .tv-fleet-map-info__ack {
+  background: #252930;
+  color: #cdd7e1;
+}
+
+[data-color-mode="dark"] .tv-fleet-map-info__ticket-stage {
+  background: rgba(99, 91, 255, 0.2);
+  color: #c4b5fd;
+}
+
+[data-color-mode="dark"] .tv-fleet-map-info__coords {
+  background: #1a1d21;
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #cdd7e1;
+}
+
+[data-color-mode="dark"] .tv-fleet-map-info__actions {
+  border-top-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-color-mode="dark"] .tv-fleet-map-info__action {
+  background: #14181c;
+  color: #cdd7e1;
+  border-right-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-color-mode="dark"] .tv-fleet-map-info__action:hover {
+  background: #252930;
+  color: #f9fafb;
+}
+
+[data-color-mode="dark"] .tv-fleet-map-info__action--primary {
+  color: #a5b4fc;
+  background: linear-gradient(180deg, #1a1830 0%, #15132a 100%);
+}
+
+[data-color-mode="dark"] .tv-fleet-map-info__action--primary:hover {
+  background: rgba(99, 91, 255, 0.22);
+  color: #c4b5fd;
+}

@@ -1,0 +1,74 @@
+{
+  "rule_id": "rule_file_progress_v1",
+  "rule_code": "rule_file_progress_v1",
+  "rule_version": "1.0.0",
+  "spec_version": "1",
+  "deploy_version": "1.0.0",
+  "description": "event/file/progress — bytes_uploaded / percent",
+  "topic_match": [
+    {
+      "pattern": "tv/{env}/+/+/event/file/progress/json"
+    }
+  ],
+  "payload": {
+    "type": "json_to_json",
+    "format": {
+      "strict": false,
+      "max_depth": 24
+    },
+    "map": [
+      {
+        "from": "deviceId",
+        "to": "device_code",
+        "target_type": "string",
+        "required": true
+      },
+      {
+        "from": "request_code",
+        "to": "request_code",
+        "target_type": "string",
+        "required": true
+      },
+      {
+        "from": "bytes_uploaded",
+        "to": "bytes_uploaded",
+        "target_type": "int64",
+        "required": false
+      },
+      {
+        "from": "percent",
+        "to": "upload_percent",
+        "target_type": "number",
+        "required": false
+      },
+      {
+        "from": "device_timestamp",
+        "to": "device_timestamp",
+        "target_type": "int64",
+        "required": true
+      },
+      {
+        "from": "file_transfer_status",
+        "to": "file_transfer_status",
+        "target_type": "string",
+        "required": false,
+        "default": "IN_PROGRESS"
+      }
+    ],
+    "target": {
+      "document_model": "flat_json"
+    }
+  },
+  "targets": [
+    {
+      "collection": "files_history",
+      "unique_key": [
+        "device_code",
+        "request_code",
+        "device_timestamp",
+        "data_index"
+      ],
+      "on_duplicate": "skip"
+    }
+  ]
+}

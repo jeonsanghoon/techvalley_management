@@ -1,0 +1,33 @@
+# file/stream — 비디오 스트림 세그먼트 메타
+rule_id: rule_video_stream_v1
+rule_code: rule_video_stream_v1
+rule_version: "1.0.0"
+spec_version: "1"
+deploy_version: "1.0.0"
+description: "event/file/stream — video segment index·duration"
+topic_match:
+  - pattern: "tv/{env}/+/+/event/file/stream/json"
+payload:
+  type: json_to_json
+  format: { strict: false, max_depth: 24 }
+  map:
+    - { from: deviceId, to: device_code, target_type: string, required: true }
+    - { from: request_code, to: request_code, target_type: string, required: true }
+    - { from: upload_id, to: upload_id, target_type: string, required: false }
+    - { from: segment_index, to: segment_index, target_type: int32, required: true }
+    - { from: stream_seq, to: stream_seq, target_type: int64, required: true }
+    - { from: duration_ms, to: duration_ms, target_type: int32, required: false }
+    - { from: byte_range_start, to: byte_range_start, target_type: int64, required: false }
+    - { from: byte_range_end, to: byte_range_end, target_type: int64, required: false }
+    - { from: codec, to: codec, target_type: string, required: false }
+    - { from: etag, to: etag, target_type: string, required: false }
+    - { from: s3_key, to: s3_key, target_type: string, required: false }
+    - { from: device_timestamp, to: device_timestamp, target_type: int64, required: true }
+    - { from: data_index, to: data_index, target_type: int32, required: false, default: 0 }
+    - { from: file_transfer_status, to: file_transfer_status, target_type: string, required: false, default: SEGMENT_UPLOADED }
+  target:
+    document_model: flat_json
+targets:
+  - collection: files_history
+    unique_key: [device_code, request_code, device_timestamp, data_index]
+    on_duplicate: skip

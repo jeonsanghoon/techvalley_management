@@ -1,0 +1,10 @@
+{
+  "deviceId": "HK-2024-00158",
+  "device_timestamp": 1717654600000,
+  "data_index": 0,
+  "alert_code": "ALARM_TUBE_KV_HIGH",
+  "alarm_kind": "triggered",
+  "is_alarm": true,
+  "primary_alarm_code": "ALARM_TUBE_KV_HIGH",
+  "datas": [{ "key": "tube.kv", "value": 185.2, "value_type": "number" }]
+}

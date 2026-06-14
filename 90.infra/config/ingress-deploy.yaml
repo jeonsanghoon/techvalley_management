@@ -1,0 +1,240 @@
+# 테크밸리 파이프라인 배포 SSOT — Terraform·Lambda·manifest deploy_binding
+# IoT·IAM·레이크: config/infrastructure.yaml
+version: 1
+
+infrastructure_ref: config/infrastructure.yaml
+manifest_ref:
+  composed: 02.arch/config/manifest/01-data-platform.manifest.yaml
+
+project:
+  name: tv-ingress
+  aws_region: ap-northeast-2
+  environment: dev
+  tags:
+    Project: techvalley
+    ManagedBy: terraform
+
+partition_key:
+  field: device_code
+  terraform_expression: "${device_code}"
+
+lambda_package:
+  apps_root: ../../03.source/lambda/apps
+  bundle_dir: bundle
+  handler: lambda.handler
+  runtime: nodejs24.x
+  architecture: arm64
+
+lambdas:
+  stream_sync_consumer:
+    terraform_map_key: stream_sync_consumer
+    deploy_group: ingress
+    role: kds_consumer
+    memory_mb: 512
+    timeout_seconds: 60
+    environment:
+      PARTITION_KEY_FIELD: device_code
+      RULES_DIR: /var/task/rules
+      NORMALIZE_CONFIG_PATH: /var/task/config/normalize-config.default.yaml
+      FIREHOSE_STREAM_NAME: tv-ingress-dev-cold-stream-events
+      FIREHOSE_DISABLED: "false"
+
+  dlq_shard_processor:
+    terraform_map_key: dlq_shard_processor
+    deploy_group: ingress
+    role: kinesis_esm_dlq
+    memory_mb: 256
+    timeout_seconds: 120
+    environment:
+      PARTITION_KEY_FIELD: device_code
+      DLQ_GROUP_BY: shard_key
+
+  batch_cadence_runner:
+    terraform_map_key: batch_cadence_runner
+    deploy_group: batch
+    role: cadence_executor
+    memory_mb: 1024
+    timeout_seconds: 900
+    environment:
+      TV_BATCH_SCHEDULER: eventbridge
+      BATCH_CADENCE_CONFIG_PATH: /var/task/config/02-batch-cadence.yaml
+      BATCH_DLQ_COLLECTION: pipeline_dlq_events
+      DEVICE_CODE_FIELD: device_code
+
+  batch_dlq_replay:
+    terraform_map_key: batch_dlq_replay
+    deploy_group: batch
+    role: batch_dlq_replay
+    memory_mb: 512
+    timeout_seconds: 300
+    environment:
+      TV_BATCH_SCHEDULER: eventbridge
+      BATCH_DLQ_COLLECTION: pipeline_dlq_events
+      REPLAY_MODE: invoke_original_lambda
+      GROUP_BY_FIELD: cadence_id
+
+  payload_converter:
+    terraform_map_key: payload_converter
+    deploy_group: invoke_only
+    role: payload_convert
+    memory_mb: 512
+    timeout_seconds: 60
+    environment:
+      RULES_DIR: /var/task/rules
+
+  file_upload_orchestrator:
+    terraform_map_key: file_upload_orchestrator
+    deploy_group: ingress
+    role: media_upload_orchestrator
+    memory_mb: 512
+    timeout_seconds: 120
+    environment:
+      TV_MEDIA_BUCKET: tv-ingress-dev-tv-media-upload
+      MEDIA_UPLOAD_CONFIG_PATH: /var/task/config/media-upload.yaml
+      IOT_RESPONSE_TOPIC_TEMPLATE: "tv/{env}/{edge}/{device_code}/event/file/response/json"
+      PARTITION_KEY_FIELD: device_code
+
+  anomaly_scorer:
+    terraform_map_key: anomaly_scorer
+    deploy_group: ml
+    role: sagemaker_invoke
+    memory_mb: 512
+    timeout_seconds: 120
+    environment:
+      SAGEMAKER_ENDPOINT_NAME: tv-tube-multivariate-v3
+      ANOMALY_EVENTS_TABLE: anomaly_events
+
+  rule_recommender:
+    terraform_map_key: rule_recommender
+    deploy_group: ml
+    role: rule_recommender
+    memory_mb: 512
+    timeout_seconds: 60
+    environment:
+      RULE_RECOMMENDATIONS_TABLE: rule_recommendations
+
+  self_heal_orchestrator:
+    terraform_map_key: self_heal_orchestrator
+    deploy_group: ml
+    role: self_heal
+    memory_mb: 512
+    timeout_seconds: 300
+    environment:
+      SELF_HEAL_PLAYBOOKS_TABLE: self_heal_playbooks
+
+streams:
+  ingest_main:
+    enabled: true
+    manifest_stream_id: ingest_main
+    kinesis:
+      stream_mode: ON_DEMAND
+      shard_count: 8
+      retention_hours: 168
+    consumer:
+      lambda_ref: stream_sync_consumer
+      batch_size: 100
+      maximum_batching_window_in_seconds: 5
+      parallelization_factor: 1
+      starting_position: LATEST
+      bisect_batch_on_function_error: true
+      report_batch_item_failures: true
+      maximum_retry_attempts: 3
+      maximum_record_age_in_seconds: 604800
+    dlq:
+      enabled: true
+      sqs_queue_key: ingest_main_dlq
+      message_retention_seconds: 1209600
+      visibility_timeout_seconds: 300
+      processor:
+        lambda_ref: dlq_shard_processor
+        batch_size: 10
+        maximum_batching_window_in_seconds: 10
+        routing:
+          partition_key_field: device_code
+          group_by: shard_key
+
+  ingest_events_isolated:
+    enabled: false
+    manifest_stream_id: ingest_events_isolated
+    kinesis:
+      stream_mode: PROVISIONED
+      shard_count: 2
+      retention_hours: 168
+    consumer:
+      lambda_ref: stream_sync_consumer
+      batch_size: 50
+      maximum_batching_window_in_seconds: 3
+    dlq:
+      enabled: true
+      sqs_queue_key: ingest_events_isolated_dlq
+      processor:
+        lambda_ref: dlq_shard_processor
+        batch_size: 10
+
+batch:
+  scheduler:
+    kind: eventbridge
+    terraform_module: terraform/modules/eventbridge_lambda_schedule
+    runner_lambda_ref: batch_cadence_runner
+    schedule_expression_format: aws_eventbridge_cron
+  config_ref: 02.arch/config/02-batch-cadence.yaml
+  dlq:
+    storage: documentdb
+    collection: pipeline_dlq_events
+    replay_lambda_ref: batch_dlq_replay
+  runner_lambda_ref: batch_cadence_runner
+  dlq_replay_schedule:
+    enabled: false
+    schedule_expression: rate(30 minutes)
+  schedules:
+    - schedule_key: rollup_device_10min
+      cadence_id: rollup_device_10min
+      kind: telemetry_rollup
+      enabled: true
+      schedule_expression: cron(0/10 * * * ? *)
+      batch_cadence_cron_ref: "0 */10 * * * *"
+    - schedule_key: communication_quality_eval_10m
+      cadence_id: communication_quality_eval_10m
+      kind: communication_quality_eval
+      enabled: true
+      schedule_expression: cron(30/10 * * * ? *)
+      batch_cadence_cron_ref: "30 */10 * * * *"
+    - schedule_key: rollup_hourly
+      cadence_id: rollup_hourly
+      kind: telemetry_rollup
+      enabled: true
+      schedule_expression: cron(0 * * * ? *)
+      batch_cadence_cron_ref: "0 0 * * * *"
+    - schedule_key: rollup_daily
+      cadence_id: rollup_daily
+      kind: telemetry_rollup
+      enabled: true
+      schedule_expression: cron(5 0 * * ? *)
+      batch_cadence_cron_ref: "0 5 0 * * *"
+    - schedule_key: rollup_monthly
+      cadence_id: rollup_monthly
+      kind: telemetry_rollup
+      enabled: true
+      schedule_expression: cron(0 2 1 * ? *)
+    - schedule_key: fleet_hourly_export
+      cadence_id: fleet_hourly_export
+      kind: aurora_rollup
+      enabled: true
+      schedule_expression: cron(15 * * * ? *)
+      batch_cadence_cron_ref: "0 15 * * * *"
+
+ml:
+  eventbridge:
+    - schedule_key: anomaly_batch_scoring
+      lambda_ref: anomaly_scorer
+      enabled: true
+      schedule_expression: rate(5 minutes)
+    - event_pattern: tv.anomaly.detected
+      lambda_ref: rule_recommender
+      enabled: true
+    - event_pattern: tv.anomaly.detected
+      lambda_ref: self_heal_orchestrator
+      enabled: true
+      filter:
+        root_cause_hint: edge_client
+        min_confidence: 0.9

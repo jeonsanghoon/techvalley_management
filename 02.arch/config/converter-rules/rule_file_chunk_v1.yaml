@@ -1,0 +1,31 @@
+# file/chunk — 이미지 청크·멀티파트 파트 완료 메타
+rule_id: rule_file_chunk_v1
+rule_code: rule_file_chunk_v1
+rule_version: "1.0.0"
+spec_version: "1"
+deploy_version: "1.0.0"
+description: "event/file/chunk — part/chunk ETag·진행"
+topic_match:
+  - pattern: "tv/{env}/+/+/event/file/chunk/json"
+payload:
+  type: json_to_json
+  format: { strict: false, max_depth: 24 }
+  map:
+    - { from: deviceId, to: device_code, target_type: string, required: true }
+    - { from: request_code, to: request_code, target_type: string, required: true }
+    - { from: upload_id, to: upload_id, target_type: string, required: false }
+    - { from: part_number, to: part_number, target_type: int32, required: false }
+    - { from: chunk_index, to: chunk_index, target_type: int32, required: false }
+    - { from: total_chunks, to: total_chunks, target_type: int32, required: false }
+    - { from: etag, to: etag, target_type: string, required: false }
+    - { from: part_size_bytes, to: part_size_bytes, target_type: int64, required: false }
+    - { from: frame_timestamp_ms, to: frame_timestamp_ms, target_type: int64, required: false }
+    - { from: device_timestamp, to: device_timestamp, target_type: int64, required: true }
+    - { from: data_index, to: data_index, target_type: int32, required: false, default: 0 }
+    - { from: file_transfer_status, to: file_transfer_status, target_type: string, required: false, default: PART_UPLOADED }
+  target:
+    document_model: flat_json
+targets:
+  - collection: files_history
+    unique_key: [device_code, request_code, device_timestamp, data_index]
+    on_duplicate: skip

@@ -1,0 +1,61 @@
+iot_kds_lambda_pipeline:
+  version: 1
+  kinesis_partition_key:
+    sql: topic(4)
+    field: device_code
+    terraform_partition_key: ${device_code}
+  deploy_binding:
+    root: 02.arch/config
+    config_ref: 02.arch/config/ingress-deploy.yaml
+    terraform_dir: 90.infra/terraform
+    lambdas_dir: 03.source/lambda/apps
+    lambdas_core_package: 03.source/lambda/packages/pipeline-core
+    lambda_roles:
+      ingress: [stream_sync_consumer, dlq_shard_processor, file_upload_orchestrator]
+      batch: [batch_cadence_runner, batch_dlq_replay]
+      invoke_only: [payload_converter]
+      ml: [anomaly_scorer, rule_recommender, self_heal_orchestrator]
+    batch_scheduler:
+      kind: eventbridge
+      schedules_ref: 02.arch/config/ingress-deploy.yaml#batch.schedules
+  kinesis_data_streams:
+    streams:
+      - stream_id: ingest_main
+        enabled: true
+        deploy_ref: 02.arch/config/ingress-deploy.yaml#streams.ingest_main
+        deploy: { terraform_map_key: ingest_main }
+      - stream_id: ingest_events_isolated
+        enabled: false
+        deploy_ref: 02.arch/config/ingress-deploy.yaml#streams.ingest_events_isolated
+        deploy: { terraform_map_key: ingest_events_isolated }
+  iot_rules:
+    partition_key_ref: kinesis_partition_key
+    rules:
+      - id: iot_rule_periodic_telemetry
+        kds_stream_id: ingest_main
+        enabled: true
+        topic_filter: tv/+/+/+/periodic/telemetry/report/json
+      - id: iot_rule_event_telemetry
+        kds_stream_id: ingest_main
+        enabled: true
+        topic_filter: tv/+/+/+/event/telemetry/status/json
+      - id: iot_rule_event_alarm
+        kds_stream_id: ingest_main
+        enabled: true
+        topic_filter: tv/+/+/+/event/alarm/+/json
+      - id: iot_rule_event_control
+        kds_stream_id: ingest_main
+        enabled: true
+        topic_filter: tv/+/+/+/event/control/+/json
+      - id: iot_rule_event_fota
+        kds_stream_id: ingest_main
+        enabled: true
+        topic_filter: tv/+/+/+/event/fota/+/json
+      - id: iot_rule_ota
+        kds_stream_id: ingest_main
+        enabled: true
+        topic_filter: tv/+/+/+/+/ota/+/json
+      - id: iot_rule_event_file
+        kds_stream_id: ingest_main
+        enabled: true
+        topic_filter: tv/+/+/+/event/file/+/json

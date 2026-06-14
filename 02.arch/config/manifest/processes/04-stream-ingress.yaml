@@ -1,0 +1,27 @@
+stream_ingress:
+  normalize_config_path: 02.arch/config/normalize-config.default.yaml
+  analytics_lake:
+    enabled: true
+    lake_config_ref: 02.arch/config/schema/iceberg/lake-config.yaml
+    flow: firehose_to_s3_then_glue_to_iceberg
+    firehose:
+      enabled: true
+      stream_env: FIREHOSE_STREAM_NAME
+    iceberg:
+      catalog: glue
+      default_table_id: stream_fact_telemetry
+      partition_time_source:
+        column: created_at
+        link: documentdb.rdbms_time_series_link.links[id=server_persist_time]
+      tables_ref: 02.arch/config/schema/iceberg/tables.yaml
+  topic_routing_policy:
+    periodic_default_path: firehose_to_s3_glue_iceberg_only
+    kds_used_doc_and_firehose:
+      - periodic/telemetry/report
+      - event/telemetry/status
+      - event/alarm
+      - event/control
+      - event/fota
+      - event/file
+
+batch_config_ref: 02.arch/config/02-batch-cadence.yaml

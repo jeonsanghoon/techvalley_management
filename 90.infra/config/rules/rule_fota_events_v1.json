@@ -1,0 +1,76 @@
+{
+  "rule_id": "rule_fota_events_v1",
+  "rule_code": "rule_fota_events_v1",
+  "rule_version": "1.0.0",
+  "spec_version": "1",
+  "deploy_version": "1.0.0",
+  "description": "event/fota · ota — fota_history",
+  "topic_match": [
+    {
+      "pattern": "tv/{env}/+/+/event/fota/+/json"
+    },
+    {
+      "pattern": "tv/{env}/+/+/+/ota/+/json"
+    }
+  ],
+  "payload": {
+    "type": "json_to_json",
+    "format": {
+      "strict": false,
+      "max_depth": 24
+    },
+    "map": [
+      {
+        "from": "deviceId",
+        "to": "device_code",
+        "target_type": "string",
+        "required": true
+      },
+      {
+        "from": "request_code",
+        "to": "request_code",
+        "target_type": "string",
+        "required": true
+      },
+      {
+        "from": "fota_status",
+        "to": "fota_status",
+        "target_type": "string",
+        "required": true
+      },
+      {
+        "from": "fota_result_type",
+        "to": "fota_result_type",
+        "target_type": "string",
+        "required": false
+      },
+      {
+        "from": "device_timestamp",
+        "to": "device_timestamp",
+        "target_type": "int64",
+        "required": true
+      },
+      {
+        "from": "firmware_version",
+        "to": "firmware_version",
+        "target_type": "string",
+        "required": false
+      }
+    ],
+    "target": {
+      "document_model": "flat_json"
+    }
+  },
+  "targets": [
+    {
+      "collection": "fota_history",
+      "unique_key": [
+        "device_code",
+        "request_code",
+        "device_timestamp",
+        "data_index"
+      ],
+      "on_duplicate": "skip"
+    }
+  ]
+}

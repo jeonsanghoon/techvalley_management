@@ -1,0 +1,9 @@
+{
+  "deviceId": "HK-2024-00158",
+  "device_timestamp": 1717654500000,
+  "event_code": "CONNECTIVITY_LOST",
+  "data": [
+    { "key": "greengrass.connectivity", "value": "offline", "value_type": "string" },
+    { "key": "spool_usage_pct", "value": 24.5, "value_type": "number" }
+  ]
+}

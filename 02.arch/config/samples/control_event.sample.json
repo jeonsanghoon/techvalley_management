@@ -1,0 +1,8 @@
+{
+  "deviceId": "HK-2024-00158",
+  "request_code": "ctl_20260606_001",
+  "device_timestamp": 1717654800000,
+  "control_status": "success",
+  "control_result_type": "kv_offset_applied",
+  "command_code": "TUBE_KV_OFFSET"
+}

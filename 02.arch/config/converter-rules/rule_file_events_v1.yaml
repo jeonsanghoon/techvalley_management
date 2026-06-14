@@ -1,0 +1,24 @@
+# event/file — files_history (검사 이미지·로그 S3 멀티파트)
+rule_id: rule_file_events_v1
+rule_code: rule_file_events_v1
+rule_version: "1.0.0"
+spec_version: "1"
+deploy_version: "1.0.0"
+description: "event/file — Presigned multipart 업로드"
+topic_match:
+  - pattern: "tv/{env}/+/+/event/file/+/json"
+payload:
+  type: json_to_json
+  format: { strict: false, max_depth: 24 }
+  map:
+    - { from: deviceId, to: device_code, target_type: string, required: true }
+    - { from: request_code, to: request_code, target_type: string, required: true }
+    - { from: file_transfer_status, to: file_transfer_status, target_type: string, required: true }
+    - { from: file_transfer_result_type, to: file_transfer_result_type, target_type: string, required: false }
+    - { from: device_timestamp, to: device_timestamp, target_type: int64, required: true }
+  target:
+    document_model: flat_json
+targets:
+  - collection: files_history
+    unique_key: [device_code, request_code, device_timestamp, data_index]
+    on_duplicate: skip

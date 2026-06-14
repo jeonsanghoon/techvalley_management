@@ -1,0 +1,10 @@
+{
+  "deviceId": "HK-2024-00158",
+  "request_code": "LOG-20260613-001",
+  "file_kind": "application/gzip",
+  "upload_mode": "single_put",
+  "file_size_bytes": 2097152,
+  "device_timestamp": 1717654500000,
+  "data_index": 0,
+  "checksum_sha256": "abc123def456"
+}

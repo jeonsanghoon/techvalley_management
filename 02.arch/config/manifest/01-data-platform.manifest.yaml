@@ -1,0 +1,658 @@
+# 테크밸리 데이터 플랫폼 manifest (composed)
+# SSOT 원본: manifest/processes/*.yaml — npm run compose:manifest
+# 편집: processes/*.yaml 만 수정 · 본 파일은 compose 산출물
+version: 1
+composed_from:
+  - 00-platform-meta.yaml
+  - 01-ingress-pipeline.yaml
+  - 03-documentdb.yaml
+  - 04-stream-ingress.yaml
+  - 05-alarm-batch.yaml
+  - 06-postgres.yaml
+platform_manifest_registry:
+  default_entry_id: default
+  entries:
+    - id: default
+      is_default: true
+      manifest_file: 02.arch/config/manifest/01-data-platform.manifest.yaml
+config_format_policy:
+  continuous_runtime_yaml:
+    source_of_truth: 02.arch/config
+    paths:
+      - 02.arch/config/manifest/processes/_index.yaml
+      - 02.arch/config/manifest/processes/*.yaml
+      - 02.arch/config/02-batch-cadence.yaml
+      - 02.arch/config/normalize-config.default.yaml
+      - 02.arch/config/ingress-deploy.yaml
+  apply_once_deploy_json:
+    source_of_truth: 02.arch/config/rules/*.json
+    build: npm run rules:build
+iot_kds_lambda_pipeline:
+  version: 1
+  kinesis_partition_key:
+    sql: topic(4)
+    field: device_code
+    terraform_partition_key: ${device_code}
+  deploy_binding:
+    root: 02.arch/config
+    config_ref: 02.arch/config/ingress-deploy.yaml
+    terraform_dir: 90.infra/terraform
+    lambdas_dir: 03.source/lambda/apps
+    lambdas_core_package: 03.source/lambda/packages/pipeline-core
+    lambda_roles:
+      ingress:
+        - stream_sync_consumer
+        - dlq_shard_processor
+        - file_upload_orchestrator
+      batch:
+        - batch_cadence_runner
+        - batch_dlq_replay
+      invoke_only:
+        - payload_converter
+      ml:
+        - anomaly_scorer
+        - rule_recommender
+        - self_heal_orchestrator
+    batch_scheduler:
+      kind: eventbridge
+      schedules_ref: 02.arch/config/ingress-deploy.yaml#batch.schedules
+  kinesis_data_streams:
+    streams:
+      - stream_id: ingest_main
+        enabled: true
+        deploy_ref: 02.arch/config/ingress-deploy.yaml#streams.ingest_main
+        deploy:
+          terraform_map_key: ingest_main
+      - stream_id: ingest_events_isolated
+        enabled: false
+        deploy_ref: 02.arch/config/ingress-deploy.yaml#streams.ingest_events_isolated
+        deploy:
+          terraform_map_key: ingest_events_isolated
+  iot_rules:
+    partition_key_ref: kinesis_partition_key
+    rules:
+      - id: iot_rule_periodic_telemetry
+        kds_stream_id: ingest_main
+        enabled: true
+        topic_filter: tv/+/+/+/periodic/telemetry/report/json
+      - id: iot_rule_event_telemetry
+        kds_stream_id: ingest_main
+        enabled: true
+        topic_filter: tv/+/+/+/event/telemetry/status/json
+      - id: iot_rule_event_alarm
+        kds_stream_id: ingest_main
+        enabled: true
+        topic_filter: tv/+/+/+/event/alarm/+/json
+      - id: iot_rule_event_control
+        kds_stream_id: ingest_main
+        enabled: true
+        topic_filter: tv/+/+/+/event/control/+/json
+      - id: iot_rule_event_fota
+        kds_stream_id: ingest_main
+        enabled: true
+        topic_filter: tv/+/+/+/event/fota/+/json
+      - id: iot_rule_ota
+        kds_stream_id: ingest_main
+        enabled: true
+        topic_filter: tv/+/+/+/+/ota/+/json
+      - id: iot_rule_event_file
+        kds_stream_id: ingest_main
+        enabled: true
+        topic_filter: tv/+/+/+/event/file/+/json
+documentdb:
+  ingress_indexes_ssot: iot_kds_lambda_pipeline.integrated_ingress_schema_contract.routes[].documentdb.indexes
+  derives_from: iot_kds_lambda_pipeline.iot_rules.rules[].downstream.collection
+  database: iot_service
+  spec_reference: 02.arch/config/schema/documentdb/collection-contract.md
+  rdbms_time_series_link:
+    version: 1
+    loader: 03.source/lambda/packages/pipeline-core/rdbms-time-series-link.mjs
+    documentdb:
+      default_source_collections:
+        - periodic_telemetry
+        - device_notifications
+    links:
+      - id: device_code
+        documentdb:
+          field: device_code
+          type: string
+          required: true
+        postgres:
+          - table: device
+            column: device_code
+            usage: master_lookup
+          - table: communication_quality_rollup
+            column: device_code
+            usage: trace_snapshot
+          - table: communication_alarm_incident
+            column: device_code
+            usage: trace_snapshot
+      - id: rds_device_pk_fk
+        documentdb:
+          field: device_code
+        postgres:
+          - table: device
+            column: id
+            usage: master_pk
+          - table: communication_alarm_incident
+            column: device_id
+            usage: fk_optional_from_device_code
+          - table: communication_alarm_incident
+            column: device_code
+            usage: trace_snapshot
+          - table: notification
+            column: device_id
+            usage: fk_optional_from_device_code
+        resolve:
+          type: master_lookup
+          master_table: device
+          master_pk_column: id
+          lookup_column: device_code
+          source_link_id: device_code
+      - id: event_time_ms
+        documentdb:
+          field: device_timestamp
+          type: int64
+          semantic: utc_epoch_ms
+        postgres:
+          - table: communication_quality_rollup
+            column: source_window_start_ms
+            bound: window_start
+          - table: communication_quality_rollup
+            column: source_window_end_ms
+            bound: window_end
+          - table: communication_quality_rollup_site
+            column: source_window_start_ms
+            bound: window_start
+          - table: communication_quality_rollup_site
+            column: source_window_end_ms
+            bound: window_end
+      - id: ingest_bucket_10m
+        documentdb:
+          field: base_time
+          type: int64
+          format: yyyyMMddHHmm
+        postgres:
+          - table: communication_quality_rollup
+            column: source_created_10min_min
+            bound: bucket_min
+          - table: communication_quality_rollup
+            column: source_created_10min_max
+            bound: bucket_max
+          - table: communication_quality_rollup_site
+            column: source_created_10min_min
+            bound: bucket_min
+          - table: communication_quality_rollup_site
+            column: source_created_10min_max
+            bound: bucket_max
+      - id: server_persist_time
+        documentdb:
+          field: created_at
+          type: string
+          format: iso8601_utc
+        analytics_lake:
+          column: created_at
+        postgres: []
+      - id: doc_idempotency_key
+        documentdb:
+          composite_fields:
+            - device_code
+            - device_timestamp
+            - data_index
+          alt_field: _id
+        postgres:
+          - table: communication_quality_rollup
+            column: source_event_keys
+            usage: jsonb_array
+          - table: communication_quality_rollup
+            column: source_event_count
+            usage: aggregate_count
+    org_resolution:
+      - id: site_id
+        resolve:
+          type: master_join
+          master_table: device
+          master_column: site_id
+          lookup_column: device_code
+          source_link_id: device_code
+      - id: product_id
+        resolve:
+          type: master_join
+          master_table: device
+          master_column: product_id
+          lookup_column: device_code
+          source_link_id: device_code
+  rollup_hierarchy:
+    time_bucket_fields:
+      - base_time
+      - base_hour
+      - base_day
+      - base_month
+      - base_year
+    time_bucket_format: YYYYMMDDhh 또는 그레인별 YYYYMMDD / YYYYMM / YYYY
+  collections:
+    - name: periodic_telemetry
+      indexes:
+        - keys:
+            device_code: 1
+            created_at: -1
+          options:
+            name: idx_device_code_created_at_desc
+        - keys:
+            base_time: 1
+            created_at: -1
+          options:
+            name: idx_base_time_created_at_desc
+        - keys:
+            device_code: 1
+            device_timestamp: 1
+            data_index: 1
+          options:
+            name: uk_device_code_device_timestamp_data_index
+            unique: true
+        - keys:
+            base_hour: 1
+            created_at: -1
+          options:
+            name: idx_base_hour_created_at_desc
+    - name: rollup_cursor_periodic_telemetry
+      indexes:
+        - keys:
+            device_code: 1
+          options:
+            name: uk_rollup_cursor_device_code
+            unique: true
+    - name: device_meta
+      indexes:
+        - keys:
+            deviceId: 1
+            createdAt: -1
+          options:
+            name: idx_deviceId_createdAt_desc
+        - keys:
+            deviceId: 1
+            type: 1
+          options:
+            name: idx_deviceId_type
+    - name: device_notifications
+      indexes:
+        - keys:
+            device_code: 1
+            created_at: -1
+          options:
+            name: idx_device_code_created_at_desc
+        - keys:
+            device_code: 1
+            alert_code: 1
+            created_at: -1
+          options:
+            name: idx_device_alert_created_desc
+    - name: event_history
+      indexes:
+        - keys:
+            device_code: 1
+            created_at: -1
+          options:
+            name: idx_event_history_device_created_desc
+        - keys:
+            event_domain: 1
+            device_code: 1
+            created_at: -1
+          options:
+            name: idx_event_history_domain_device_created_desc
+        - keys:
+            event_domain: 1
+            device_code: 1
+            device_timestamp: 1
+            data_index: 1
+          options:
+            name: uk_event_history_idem
+            unique: true
+    - name: control_history
+      indexes:
+        - keys:
+            device_code: 1
+            created_at: -1
+          options:
+            name: idx_control_history_device_created_desc
+        - keys:
+            request_code: 1
+          options:
+            name: idx_control_history_request_code
+        - keys:
+            device_code: 1
+            request_code: 1
+            created_at: -1
+          options:
+            name: idx_control_history_device_request_created_desc
+        - keys:
+            device_code: 1
+            device_timestamp: 1
+            data_index: 1
+          options:
+            name: uk_control_history_idem
+            unique: true
+    - name: fota_history
+      indexes:
+        - keys:
+            device_code: 1
+            created_at: -1
+          options:
+            name: idx_fota_history_device_created_desc
+        - keys:
+            request_code: 1
+          options:
+            name: idx_fota_history_request_code
+        - keys:
+            device_code: 1
+            request_code: 1
+            created_at: -1
+          options:
+            name: idx_fota_history_device_request_created_desc
+        - keys:
+            device_code: 1
+            device_timestamp: 1
+            data_index: 1
+          options:
+            name: uk_fota_history_idem
+            unique: true
+    - name: files_history
+      indexes:
+        - keys:
+            device_code: 1
+            created_at: -1
+          options:
+            name: idx_files_history_device_created_desc
+        - keys:
+            file_kind: 1
+            device_code: 1
+            created_at: -1
+          options:
+            name: idx_files_history_kind_device_created_desc
+        - keys:
+            request_code: 1
+          options:
+            name: idx_files_history_request_code
+        - keys:
+            device_code: 1
+            request_code: 1
+            created_at: -1
+          options:
+            name: idx_files_history_device_request_created_desc
+        - keys:
+            edge_code: 1
+            device_code: 1
+            created_at: -1
+          options:
+            name: idx_files_history_edge_device_created_desc
+        - keys:
+            file_kind: 1
+            device_code: 1
+            device_timestamp: 1
+            data_index: 1
+          options:
+            name: uk_files_history_idem
+            unique: true
+    - name: stream_events_default
+      indexes:
+        - keys:
+            device_code: 1
+            created_at: -1
+          options:
+            name: idx_stream_events_default_device_created_desc
+    - name: pipeline_dlq_events
+      indexes:
+        - keys:
+            source: 1
+            created_at: -1
+          options:
+            name: idx_pipeline_dlq_source_created_desc
+        - keys:
+            status_type: 1
+            created_at: -1
+          options:
+            name: idx_pipeline_dlq_status_created_desc
+        - keys:
+            cadence_id: 1
+            created_at: -1
+          options:
+            name: idx_pipeline_dlq_cadence_created_desc
+        - keys:
+            device_code: 1
+            created_at: -1
+          options:
+            name: idx_pipeline_dlq_device_created_desc
+    - name: telemetry_rollups_device_10min
+      indexes:
+        - keys:
+            device_code: 1
+            base_time: 1
+          options:
+            name: uk_device_code_base_time
+            unique: true
+        - keys:
+            site_id: 1
+            base_time: 1
+          options:
+            name: idx_site_id_base_time
+        - keys:
+            product_id: 1
+            base_time: 1
+          options:
+            name: idx_product_id_base_time
+        - keys:
+            base_time: 1
+            updated_at: -1
+          options:
+            name: idx_base_time_updated_at_desc
+        - keys:
+            metric_values_kv.metric: 1
+            base_time: 1
+          options:
+            name: idx_metric_values_kv_metric_base_time
+    - name: telemetry_rollups_device_hour
+      indexes:
+        - keys:
+            device_code: 1
+            base_hour: 1
+          options:
+            name: uk_device_code_base_hour
+            unique: true
+        - keys:
+            site_id: 1
+            base_hour: 1
+          options:
+            name: idx_site_id_base_hour
+        - keys:
+            product_id: 1
+            base_hour: 1
+          options:
+            name: idx_product_id_base_hour
+        - keys:
+            base_hour: 1
+            updated_at: -1
+          options:
+            name: idx_base_hour_updated_at_desc
+        - keys:
+            metric_values_kv.metric: 1
+            base_hour: 1
+          options:
+            name: idx_metric_values_kv_metric_base_hour
+    - name: telemetry_rollups_device_day
+      indexes:
+        - keys:
+            device_code: 1
+            base_day: 1
+          options:
+            name: uk_device_code_base_day
+            unique: true
+        - keys:
+            site_id: 1
+            base_day: 1
+          options:
+            name: idx_site_id_base_day
+        - keys:
+            product_id: 1
+            base_day: 1
+          options:
+            name: idx_product_id_base_day
+        - keys:
+            base_day: 1
+            updated_at: -1
+          options:
+            name: idx_base_day_updated_at_desc
+        - keys:
+            metric_values_kv.metric: 1
+            base_day: 1
+          options:
+            name: idx_metric_values_kv_metric_base_day
+    - name: telemetry_rollups_device_month
+      indexes:
+        - keys:
+            device_code: 1
+            base_month: 1
+          options:
+            name: uk_device_code_base_month
+            unique: true
+        - keys:
+            site_id: 1
+            base_month: 1
+          options:
+            name: idx_site_id_base_month
+        - keys:
+            product_id: 1
+            base_month: 1
+          options:
+            name: idx_product_id_base_month
+        - keys:
+            base_month: 1
+            updated_at: -1
+          options:
+            name: idx_base_month_updated_at_desc
+        - keys:
+            metric_values_kv.metric: 1
+            base_month: 1
+          options:
+            name: idx_metric_values_kv_metric_base_month
+    - name: telemetry_rollups_device_year
+      indexes:
+        - keys:
+            device_code: 1
+            base_year: 1
+          options:
+            name: uk_device_code_base_year
+            unique: true
+        - keys:
+            site_id: 1
+            base_year: 1
+          options:
+            name: idx_site_id_base_year
+        - keys:
+            product_id: 1
+            base_year: 1
+          options:
+            name: idx_product_id_base_year
+        - keys:
+            base_year: 1
+            updated_at: -1
+          options:
+            name: idx_base_year_updated_at_desc
+        - keys:
+            metric_values_kv.metric: 1
+            base_year: 1
+          options:
+            name: idx_metric_values_kv_metric_base_year
+stream_ingress:
+  normalize_config_path: 02.arch/config/normalize-config.default.yaml
+  analytics_lake:
+    enabled: true
+    lake_config_ref: 02.arch/config/schema/iceberg/lake-config.yaml
+    flow: firehose_to_s3_then_glue_to_iceberg
+    firehose:
+      enabled: true
+      stream_env: FIREHOSE_STREAM_NAME
+    iceberg:
+      catalog: glue
+      default_table_id: stream_fact_telemetry
+      partition_time_source:
+        column: created_at
+        link: documentdb.rdbms_time_series_link.links[id=server_persist_time]
+      tables_ref: 02.arch/config/schema/iceberg/tables.yaml
+  topic_routing_policy:
+    periodic_default_path: firehose_to_s3_glue_iceberg_only
+    kds_used_doc_and_firehose:
+      - periodic/telemetry/report
+      - event/telemetry/status
+      - event/alarm
+      - event/control
+      - event/fota
+      - event/file
+batch_config_ref: 02.arch/config/02-batch-cadence.yaml
+alarm_notification_contract:
+  version: 1
+  execution_yaml_ref: 02.arch/config/02-batch-cadence.yaml
+  sensor_data_conversion:
+    normalize_config_path_ref: 02.arch/config/normalize-config.default.yaml
+    payload_rule_bundle:
+      location_hint: 02.arch/config/rules/*.json
+  batch_alarm:
+    backend:
+      service: batch_cadence_runner
+      scheduler: eventbridge
+    critical_sla_minutes: 15
+batch_converter_contract:
+  deploy_schedules_ref: 02.arch/config/ingress-deploy.yaml#batch.schedules
+postgres:
+  database: iot_analytics
+  ddl_root: 02.arch/config/schema/postgres
+  apply_order:
+    - 01-core-schema.sql
+    - 02-pipeline-alarm-notification.sql
+    - 04-tv-domain-extensions.sql
+    - 05-seed-dev.sql
+  optional_reference:
+    - 03-seed-reference.sql
+  table_groups:
+    core_master:
+      - user
+      - common_code
+      - company
+      - branch
+      - site
+      - product
+      - device
+    pipeline_alarm:
+      - alert
+      - notification
+      - communication_quality_rollup
+      - communication_quality_rollup_site
+      - communication_alarm_incident
+      - communication_alarm_incident_action
+      - notification_ruleset
+      - notification_rule
+    telemetry_rollup:
+      - telemetry_site_product_time_series
+      - telemetry_company_product_time_series
+    tv_domain:
+      - anomaly_events
+      - rule_recommendations
+      - self_heal_playbooks
+      - self_heal_executions
+      - model_registry_mirror
+      - service_ticket
+      - service_ticket_progress
+      - sla_fleet_snapshot
+      - equipment_log_tube
+      - equipment_log_detector
+      - equipment_log_body
+      - equipment_log_control
+      - equipment_log_firmware
+      - equipment_log_audit
+      - parts_order
+      - parts_schedule
+      - as_record
+      - installation
+  ui_mapping:
+    equipment: device
+    customer: company
+    notification_ruleset_mirror: notification_ruleset

@@ -1,0 +1,78 @@
+{
+  "rule_id": "rule_alarm_events_v1",
+  "rule_code": "rule_alarm_events_v1",
+  "rule_version": "1.0.0",
+  "spec_version": "1",
+  "deploy_version": "1.0.0",
+  "description": "event/alarm — device_notifications (테크밸리 A4)",
+  "topic_match": [
+    {
+      "pattern": "tv/{env}/+/+/event/alarm/+/json"
+    }
+  ],
+  "payload": {
+    "type": "json_to_json",
+    "format": {
+      "strict": false,
+      "max_depth": 24
+    },
+    "map": [
+      {
+        "from": "deviceId",
+        "to": "device_code",
+        "target_type": "string",
+        "required": true
+      },
+      {
+        "from": "device_timestamp",
+        "to": "device_timestamp",
+        "target_type": "int64",
+        "required": true
+      },
+      {
+        "from": "alert_code",
+        "to": "alert_code",
+        "target_type": "string",
+        "required": false
+      },
+      {
+        "from": "event_code",
+        "to": "event_code",
+        "target_type": "string",
+        "required": false
+      },
+      {
+        "from": "alarm_kind",
+        "to": "alarm_kind",
+        "target_type": "string",
+        "required": false
+      },
+      {
+        "from": "is_alarm",
+        "to": "is_alarm",
+        "target_type": "boolean",
+        "required": false
+      },
+      {
+        "from": "primary_alarm_code",
+        "to": "primary_alarm_code",
+        "target_type": "string",
+        "required": false
+      }
+    ],
+    "target": {
+      "document_model": "flat_json"
+    }
+  },
+  "targets": [
+    {
+      "collection": "device_notifications",
+      "unique_key": [
+        "device_code",
+        "device_timestamp",
+        "data_index"
+      ],
+      "on_duplicate": "skip"
+    }
+  ]
+}

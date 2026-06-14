@@ -1,0 +1,81 @@
+{
+  "rule_id": "rule_telemetry_events_v1",
+  "rule_code": "rule_telemetry_events_v1",
+  "rule_version": "1.0.0",
+  "spec_version": "1",
+  "deploy_version": "1.0.0",
+  "description": "event/telemetry — Greengrass connectivity 등",
+  "topic_match": [
+    {
+      "pattern": "tv/{env}/+/+/event/telemetry/status/json"
+    }
+  ],
+  "metric_kv_catalog": {
+    "source_array": "data",
+    "pivot": {
+      "into": "metric_values_kv",
+      "key_field": "key",
+      "value_field": "value",
+      "value_type_field": "value_type"
+    },
+    "columns": [
+      {
+        "key": "greengrass.connectivity",
+        "label": "GG 연결",
+        "value_type": "string"
+      },
+      {
+        "key": "spool_usage_pct",
+        "label": "Spooler %",
+        "value_type": "number"
+      }
+    ]
+  },
+  "payload": {
+    "type": "json_to_json",
+    "format": {
+      "strict": false,
+      "max_depth": 32
+    },
+    "map": [
+      {
+        "from": "deviceId",
+        "to": "device_code",
+        "target_type": "string",
+        "required": true
+      },
+      {
+        "from": "datas",
+        "to": "data",
+        "target_type": "array",
+        "required": false
+      },
+      {
+        "from": "device_timestamp",
+        "to": "device_timestamp",
+        "target_type": "int64",
+        "required": true
+      },
+      {
+        "from": "event_code",
+        "to": "event_code",
+        "target_type": "string",
+        "required": false
+      }
+    ],
+    "target": {
+      "document_model": "metric_values_kv"
+    }
+  },
+  "targets": [
+    {
+      "collection": "event_history",
+      "unique_key": [
+        "device_code",
+        "device_timestamp",
+        "event_code"
+      ],
+      "on_duplicate": "skip"
+    }
+  ]
+}

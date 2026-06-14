@@ -1,0 +1,14 @@
+{
+  "deviceId": "HK-2024-00158",
+  "request_code": "IMG-20260613-001",
+  "upload_id": "2~exampleMultipartUploadId",
+  "part_number": 3,
+  "chunk_index": 3,
+  "total_chunks": 12,
+  "etag": "\"d41d8cd98f00b204e9800998ecf8427e\"",
+  "part_size_bytes": 1048576,
+  "frame_timestamp_ms": 1717654322500,
+  "device_timestamp": 1717654322500,
+  "data_index": 2,
+  "file_transfer_status": "PART_UPLOADED"
+}

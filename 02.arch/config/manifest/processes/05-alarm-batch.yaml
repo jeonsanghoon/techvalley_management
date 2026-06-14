@@ -1,0 +1,15 @@
+batch_config_ref: 02.arch/config/02-batch-cadence.yaml
+
+alarm_notification_contract:
+  version: 1
+  execution_yaml_ref: 02.arch/config/02-batch-cadence.yaml
+  sensor_data_conversion:
+    normalize_config_path_ref: 02.arch/config/normalize-config.default.yaml
+    payload_rule_bundle:
+      location_hint: 02.arch/config/rules/*.json
+  batch_alarm:
+    backend: { service: batch_cadence_runner, scheduler: eventbridge }
+    critical_sla_minutes: 15
+
+batch_converter_contract:
+  deploy_schedules_ref: 02.arch/config/ingress-deploy.yaml#batch.schedules

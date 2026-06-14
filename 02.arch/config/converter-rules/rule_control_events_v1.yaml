@@ -1,0 +1,25 @@
+# event/control — control_history (A5 원격제어)
+rule_id: rule_control_events_v1
+rule_code: rule_control_events_v1
+rule_version: "1.0.0"
+spec_version: "1"
+deploy_version: "1.0.0"
+description: "event/control — Shadow·IoT Job 이력"
+topic_match:
+  - pattern: "tv/{env}/+/+/event/control/+/json"
+payload:
+  type: json_to_json
+  format: { strict: false, max_depth: 24 }
+  map:
+    - { from: deviceId, to: device_code, target_type: string, required: true }
+    - { from: request_code, to: request_code, target_type: string, required: true }
+    - { from: control_status, to: control_status, target_type: string, required: true }
+    - { from: control_result_type, to: control_result_type, target_type: string, required: false }
+    - { from: device_timestamp, to: device_timestamp, target_type: int64, required: true }
+    - { from: command_code, to: command_code, target_type: string, required: false }
+  target:
+    document_model: flat_json
+targets:
+  - collection: control_history
+    unique_key: [device_code, request_code, device_timestamp, data_index]
+    on_duplicate: skip

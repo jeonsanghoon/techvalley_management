@@ -1,0 +1,12 @@
+{
+  "deviceId": "HK-2024-00158",
+  "request_code": "LOG-20260613-001",
+  "upload_mode": "single_put",
+  "upload_id": null,
+  "etag": "\"finalEtagSinglePut\"",
+  "checksum_sha256": "abc123def456",
+  "s3_bucket": "tv-ingress-dev-tv-media-upload",
+  "s3_key": "media/logs/HK-2024-00158/LOG-20260613-001/export.tar.gz",
+  "device_timestamp": 1717654600000,
+  "file_transfer_status": "COMPLETED"
+}

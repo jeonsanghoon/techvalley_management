@@ -1,0 +1,14 @@
+{
+  "deviceId": "HK-2024-00158",
+  "request_code": "IMG-20260613-001",
+  "file_kind": "image/jpeg",
+  "upload_mode": "image_chunk",
+  "file_size_bytes": 12582912,
+  "chunk_size_bytes": 1048576,
+  "total_chunks": 12,
+  "part_size_bytes": 1048576,
+  "total_parts": 12,
+  "device_timestamp": 1717654320000,
+  "data_index": 0,
+  "checksum_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

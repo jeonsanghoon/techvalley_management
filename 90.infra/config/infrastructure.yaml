@@ -1,0 +1,140 @@
+# 테크밸리 AWS 인프라 스위치 — dev 기본
+version: 1
+
+manifest_ref:
+  composed: 02.arch/config/manifest/01-data-platform.manifest.yaml
+  processes_dir: 02.arch/config/manifest/processes
+
+deploy_refs:
+  ingress: 02.arch/config/ingress-deploy.yaml
+  process_local: 02.arch/config/process-deploy.yaml
+
+iot:
+  enabled: true
+  sql_version: "2016-03-23"
+  partition_key_expression: "${device_code}"
+  default_stream_key: ingest_main
+  default_tenant: tv
+
+lambda_iam_roles:
+  kds_consumer:
+    description: stream-sync-consumer — KDS read, Firehose Put (analytics enabled 시)
+    statements:
+      - Effect: Allow
+        Action:
+          - kinesis:DescribeStream
+          - kinesis:GetRecords
+          - kinesis:GetShardIterator
+          - kinesis:ListShards
+          - kinesis:ListStreams
+        Resource: "*"
+      - Effect: Allow
+        Action:
+          - firehose:PutRecord
+          - firehose:PutRecordBatch
+        Resource: "*"
+  kinesis_esm_dlq:
+    description: dlq-shard-processor — SQS from Kinesis failure destination
+    statements:
+      - Effect: Allow
+        Action:
+          - sqs:ReceiveMessage
+          - sqs:DeleteMessage
+          - sqs:GetQueueAttributes
+        Resource: "*"
+  cadence_executor:
+    description: batch-cadence-runner — DocumentDB read/write, Aurora
+    statements:
+      - Effect: Allow
+        Action:
+          - secretsmanager:GetSecretValue
+        Resource: "*"
+  batch_dlq_replay:
+    description: batch-dlq-replay — Doc DLQ + invoke runner
+    statements:
+      - Effect: Allow
+        Action:
+          - secretsmanager:GetSecretValue
+        Resource: "*"
+  payload_convert:
+    description: payload-converter — rules bundle only
+    statements: []
+  sagemaker_invoke:
+    description: anomaly-scorer — SageMaker Endpoint invoke
+    statements:
+      - Effect: Allow
+        Action:
+          - sagemaker:InvokeEndpoint
+        Resource: "*"
+  rule_recommender:
+    description: rule-recommender — Aurora write, optional Bedrock read
+    statements:
+      - Effect: Allow
+        Action:
+          - secretsmanager:GetSecretValue
+        Resource: "*"
+  self_heal:
+    description: self-heal-orchestrator — IoT Jobs create, Shadow update
+    statements:
+      - Effect: Allow
+        Action:
+          - iot:CreateJob
+          - iot:UpdateThingShadow
+        Resource: "*"
+  media_upload_orchestrator:
+    description: file-upload-orchestrator — S3 presign, multipart, IoT publish response
+    statements:
+      - Effect: Allow
+        Action:
+          - s3:PutObject
+          - s3:GetObject
+          - s3:AbortMultipartUpload
+          - s3:ListMultipartUploadParts
+          - s3:CreateMultipartUpload
+          - s3:CompleteMultipartUpload
+          - s3:UploadPart
+        Resource: "*"
+      - Effect: Allow
+        Action:
+          - iot:Publish
+        Resource: "*"
+      - Effect: Allow
+        Action:
+          - secretsmanager:GetSecretValue
+        Resource: "*"
+
+analytics_lake:
+  enabled: true
+  lake_config_ref: 02.arch/config/schema/iceberg/lake-config.yaml
+  s3:
+    bucket_suffix: tv-analytics-raw
+    force_destroy: false
+    landing_prefix: cold-stream-events/
+    dynamic_prefix: "cold-stream-events/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/"
+    errors_prefix: errors/firehose/cold-stream-events/
+    iceberg_warehouse_prefix: iceberg/warehouse/
+    media_prefix: media/
+    media_upload_bucket_suffix: tv-media-upload
+    lifecycle_landing_days: 7
+    lifecycle_errors_days: 30
+  firehose:
+    stream_suffix: cold-stream-events
+    destination: extended_s3
+    buffer_interval_seconds: 900
+    buffer_size_mb: 128
+    parquet_compression: SNAPPY
+  glue:
+    database_name: techvalley_analytics
+    default_table_id: stream_fact_telemetry
+    table_name: stream_fact_telemetry
+
+data_plane:
+  enabled: false
+  documentdb:
+    cluster_identifier_suffix: tv-doc
+    database_name: iot_service
+    ssm_parameter_prefix: /techvalley/dev/documentdb
+  rds:
+    ssm_parameter_prefix: /techvalley/dev/rds
+  secrets:
+    create_placeholders: true

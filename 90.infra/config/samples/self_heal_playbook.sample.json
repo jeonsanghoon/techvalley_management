@@ -1,0 +1,6 @@
+{
+  "playbook_id": "tube-recal-v2",
+  "trigger": { "root_cause_hint": "edge_client", "metric": "tube.kv", "severity": "warning" },
+  "edge_action": { "type": "shadow_update", "shadow_key": "tube.kv_offset" },
+  "success_criteria": { "drift_sigma_lt": 1, "within_minutes": 30 }
+}

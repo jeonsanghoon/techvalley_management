@@ -1,0 +1,183 @@
+# 테크밸리 배치 cadence — 의미·storage·depends_on SSOT
+# AWS cron SSOT: ingress-deploy.yaml#batch.schedules
+version: 1
+
+converter_contract:
+  yaml_converter_version: 1
+  transform_schema_version: 6
+
+sensor_telemetry_aggregation_root:
+  bucket_width_minutes: 10
+  canonical_doc_time_fields:
+    - base_time
+  canonical_pg_granularity_first: day
+  aligns_with_cadence: rollup_device_10min
+
+pipeline_design:
+  registration:
+    trigger: eventbridge_lambda_schedule
+    scheduler: eventbridge
+    deploy_schedules_ref: 02.arch/config/ingress-deploy.yaml#batch.schedules
+    runner_lambda_ref: batch_cadence_runner
+  stages:
+    - id: rollup_device_10min
+      role: ingest_sync
+      period_hint_minutes: 10
+    - id: communication_quality_eval_10m
+      role: communication_quality
+      depends_on: [rollup_device_10min]
+    - id: rollup_hourly
+      role: telemetry_rollup
+      depends_on: [rollup_device_10min]
+    - id: rollup_daily
+      role: telemetry_rollup
+      depends_on: [rollup_hourly]
+    - id: fleet_hourly_export
+      role: aurora_rollup
+      depends_on: [rollup_hourly]
+
+cadence_execution_policy:
+  scheduler: eventbridge
+  failure_handling:
+    mode: all_to_documentdb_dlq
+    dlq_target:
+      storage: documentdb
+      database: iot_service
+      collection: pipeline_dlq_events
+    replay_job: batch-dlq-replay
+
+cadences:
+  - id: rollup_device_10min
+    kind: telemetry_rollup
+    granularity: ten_minute
+    enabled: true
+    cron: "0 */10 * * * *"
+    storage:
+      documentdb:
+        read_collections: [periodic_telemetry]
+        write_collections: [telemetry_rollups_device_10min]
+    io_mapping:
+      source_collections: [periodic_telemetry]
+      source_key_fields: [device_code, device_timestamp, data_index]
+      source_time_field: device_timestamp
+      output_collections: [telemetry_rollups_device_10min]
+      output_upsert_key: [device_code, base_time]
+
+  - id: communication_quality_eval_10m
+    kind: communication_quality_eval
+    enabled: true
+    cron: "30 */10 * * * *"
+    depends_on: [rollup_device_10min]
+    storage:
+      documentdb:
+        read_collections: [telemetry_rollups_device_10min]
+      postgres:
+        write_tables: [communication_alarm_incident, communication_quality_rollups]
+
+  - id: rollup_hourly
+    kind: telemetry_rollup
+    granularity: hour
+    enabled: true
+    cron: "0 0 * * * *"
+    depends_on: [rollup_device_10min]
+    storage:
+      documentdb:
+        read_collections: [telemetry_rollups_device_10min]
+        write_collections: [telemetry_rollups_device_hour]
+
+  - id: rollup_daily
+    kind: telemetry_rollup
+    granularity: day
+    enabled: true
+    cron: "0 5 0 * * *"
+    depends_on: [rollup_hourly]
+    storage:
+      documentdb:
+        read_collections: [telemetry_rollups_device_hour]
+        write_collections: [telemetry_rollups_device_day]
+      postgres:
+        write_tables: [telemetry_site_product_time_series]
+
+  - id: rollup_monthly
+    kind: telemetry_rollup
+    granularity: month
+    enabled: true
+    cron: "0 2 1 * * *"
+    depends_on: [rollup_daily]
+    storage:
+      documentdb:
+        read_collections: [telemetry_rollups_device_day]
+        write_collections: [telemetry_rollups_device_month]
+
+  - id: fleet_hourly_export
+    kind: aurora_rollup
+    enabled: true
+    cron: "0 15 * * * *"
+    depends_on: [rollup_hourly]
+    storage:
+      postgres:
+        read_tables: [equipment, site, customer]
+        write_tables: [sla_fleet_snapshot]
+    batch_source_id: aurora.fleet_hourly_rollup
+
+  - id: equipment_log_export
+    kind: equipment_log
+    enabled: true
+    cron: "0 10 0 * * *"
+    depends_on: [rollup_daily]
+    storage:
+      documentdb:
+        read_collections: [event_history, control_history, fota_history, files_history]
+      postgres:
+        read_tables: [media_upload_session, media_upload_part, media_stream_segment]
+        write_tables:
+          - equipment_log_tube
+          - equipment_log_detector
+          - equipment_log_body
+          - equipment_log_control
+          - equipment_log_firmware
+          - equipment_log_media
+    batch_source_id: aurora.equipment_log_query
+
+  - id: media_upload_export
+    kind: media_upload
+    enabled: true
+    cron: "0 5/15 * * * *"
+    depends_on: []
+    storage:
+      documentdb:
+        read_collections: [files_history]
+      postgres:
+        read_tables: [media_upload_session]
+        write_tables: [equipment_log_media]
+    batch_source_id: aurora.media_upload_query
+
+  - id: dashboard_daily_aggregate
+    kind: dashboard
+    enabled: true
+    cron: "0 5 0 * * *"
+    depends_on: [rollup_daily]
+    storage:
+      postgres:
+        write_tables: [telemetry_site_product_time_series]
+    batch_source_id: aurora.dashboard_daily_aggregate
+
+  - id: alarm_daily_rollup
+    kind: alarm
+    enabled: true
+    cron: "0 5 0 * * *"
+    depends_on: [communication_quality_eval_10m]
+    storage:
+      postgres:
+        write_tables: [communication_alarm_incident]
+    batch_source_id: aurora.alarm_daily_rollup
+
+  - id: yield_daily_rollup
+    kind: yield
+    enabled: true
+    cron: "0 30 0 * * *"
+    depends_on: [rollup_daily]
+    storage:
+      iceberg:
+        write_tables: [yield_daily_rollup]
+    batch_source_id: iceberg.yield_daily_rollup

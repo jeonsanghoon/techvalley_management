@@ -1,0 +1,16 @@
+{
+  "deviceId": "HK-2024-00158",
+  "request_code": "VID-20260613-001",
+  "upload_id": "2~videoStreamUploadId",
+  "segment_index": 4,
+  "stream_seq": 1717654410000,
+  "duration_ms": 10000,
+  "byte_range_start": 33554432,
+  "byte_range_end": 50331647,
+  "codec": "mjpeg",
+  "etag": "\"abc123segmentetag\"",
+  "s3_key": "media/video-stream/HK-2024-00158/VID-20260613-001/seg_00004.mp4",
+  "device_timestamp": 1717654410000,
+  "data_index": 4,
+  "file_transfer_status": "SEGMENT_UPLOADED"
+}

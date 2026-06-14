@@ -1,0 +1,116 @@
+# 테크밸리 KDS → Lambda 정규화 SSOT
+# 토픽: tv/{env}/{edge}/{device}/{data_kind}/{domain}/{role}/json
+# X-ray 장비: tube · detector · yield
+version: 1
+
+timezone: Asia/Seoul
+
+topicSegmentNames:
+  - tenant
+  - environment
+  - edge
+  - device_code
+  - data_kind
+  - domain
+  - role
+  - format
+
+firehose:
+  enabled: true
+
+mongo:
+  enabled: true
+  database: iot_service
+  collection_fallback: stream_events_default
+  documentDbTopicFilters:
+    include:
+      - topic_filter: "'tv/+/+/+/periodic/telemetry/report/json'"
+        collection: periodic_telemetry
+        rule_code: rule_periodic_telemetry_v1
+        document_schema_anchor: tv-periodic-telemetry-v1
+        batch_read_cadence_ids:
+          - rollup_device_10min
+
+      - topic_filter: "'tv/+/+/+/event/telemetry/status/json'"
+        collection: event_history
+        rule_code: rule_telemetry_events_v1
+        document_schema_anchor: tv-telemetry-event-v1
+        batch_read_cadence_ids: []
+
+      - topic_filter: "'tv/+/+/+/event/alarm/+/json'"
+        collection: device_notifications
+        rule_code: rule_alarm_events_v1
+        document_schema_anchor: tv-alarm-event-v1
+        batch_read_cadence_ids: []
+
+      - topic_filter: "'tv/+/+/+/event/control/+/json'"
+        collection: control_history
+        rule_code: rule_control_events_v1
+        document_schema_anchor: tv-control-event-v1
+        batch_read_cadence_ids: []
+
+      - topic_filter: "'tv/+/+/+/event/fota/+/json'"
+        collection: fota_history
+        rule_code: rule_fota_events_v1
+        document_schema_anchor: tv-fota-event-v1
+        batch_read_cadence_ids: []
+
+      # file upload — role별 규칙 (구체적 필터 우선)
+      - topic_filter: "'tv/+/+/+/event/file/request/json'"
+        collection: files_history
+        rule_code: rule_file_request_v1
+        document_schema_anchor: tv-file-request-v1
+        batch_read_cadence_ids: [media_upload_export]
+
+      - topic_filter: "'tv/+/+/+/event/file/response/json'"
+        collection: files_history
+        rule_code: rule_file_response_v1
+        document_schema_anchor: tv-file-response-v1
+        batch_read_cadence_ids: []
+
+      - topic_filter: "'tv/+/+/+/event/file/chunk/json'"
+        collection: files_history
+        rule_code: rule_file_chunk_v1
+        document_schema_anchor: tv-file-chunk-v1
+        batch_read_cadence_ids: [media_upload_export]
+
+      - topic_filter: "'tv/+/+/+/event/file/stream/json'"
+        collection: files_history
+        rule_code: rule_video_stream_v1
+        document_schema_anchor: tv-video-stream-v1
+        batch_read_cadence_ids: [media_upload_export]
+
+      - topic_filter: "'tv/+/+/+/event/file/complete/json'"
+        collection: files_history
+        rule_code: rule_file_complete_v1
+        document_schema_anchor: tv-file-complete-v1
+        batch_read_cadence_ids: [media_upload_export]
+
+      - topic_filter: "'tv/+/+/+/event/file/abort/json'"
+        collection: files_history
+        rule_code: rule_file_abort_v1
+        document_schema_anchor: tv-file-abort-v1
+        batch_read_cadence_ids: []
+
+      - topic_filter: "'tv/+/+/+/event/file/progress/json'"
+        collection: files_history
+        rule_code: rule_file_progress_v1
+        document_schema_anchor: tv-file-progress-v1
+        batch_read_cadence_ids: []
+
+      - topic_filter: "'tv/+/+/+/event/file/+/json'"
+        collection: files_history
+        rule_code: rule_file_events_v1
+        document_schema_anchor: tv-file-event-v1
+        batch_read_cadence_ids: [media_upload_export]
+
+      - topic_filter: "'tv/+/+/+/+/ota/+/json'"
+        collection: fota_history
+        rule_code: rule_fota_events_v1
+        document_schema_anchor: tv-ota-topic-v1
+        batch_read_cadence_ids: []
+
+# 배포 동시 반영 (테크밸리 원칙):
+#   A) normalize-config.default.yaml
+#   B) manifest documentdb.collections
+#   C) 02-batch-cadence.yaml

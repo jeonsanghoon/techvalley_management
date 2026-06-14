@@ -1,0 +1,30 @@
+# file/response — Presigned URL 발행 (클라우드 → 엣지, Retained)
+rule_id: rule_file_response_v1
+rule_code: rule_file_response_v1
+rule_version: "1.0.0"
+spec_version: "1"
+deploy_version: "1.0.0"
+description: "event/file/response — Presigned URL·upload_id"
+topic_match:
+  - pattern: "tv/{env}/+/+/event/file/response/json"
+payload:
+  type: json_to_json
+  format: { strict: false, max_depth: 24 }
+  map:
+    - { from: deviceId, to: device_code, target_type: string, required: true }
+    - { from: request_code, to: request_code, target_type: string, required: true }
+    - { from: upload_mode, to: upload_mode, target_type: string, required: true }
+    - { from: upload_id, to: upload_id, target_type: string, required: false }
+    - { from: put_url, to: put_url, target_type: string, required: false }
+    - { from: part_urls, to: part_urls, target_type: json, required: false }
+    - { from: expires_in, to: expires_in, target_type: int32, required: true }
+    - { from: s3_bucket, to: s3_bucket, target_type: string, required: false }
+    - { from: s3_key, to: s3_key, target_type: string, required: false }
+    - { from: device_timestamp, to: device_timestamp, target_type: int64, required: true }
+    - { from: file_transfer_status, to: file_transfer_status, target_type: string, required: false, default: URL_ISSUED }
+  target:
+    document_model: flat_json
+targets:
+  - collection: files_history
+    unique_key: [device_code, request_code, device_timestamp, data_index]
+    on_duplicate: update

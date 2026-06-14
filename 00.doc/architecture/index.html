@@ -1,0 +1,6710 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>테크밸리 IoT — 아키텍처·YAML·DB 설계 가이드 (02.arch 전체)</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+:root{
+  --navy:#0B3D5C;--navy2:#062840;--accent:#1C7293;--accent2:#0e6a8a;
+  --sidebar-w:280px;--line:#D9E2E8;--ink:#1c2b33;--muted:#5b6b73;
+  --blue-bg:#E6F1FB;--green-bg:#EEF6EE;--amber-bg:#FAEEDA;--purple-bg:#EEE9F8;
+  --light:#EEF4F8;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+body{margin:0;font-family:"Malgun Gothic","맑은 고딕",-apple-system,sans-serif;color:var(--ink);background:#eef1f4;line-height:1.65;font-size:14px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.cover{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:36px 24px 32px;text-align:center}
+.cover h1{font-size:24px;margin:8px 0}
+.cover .sub{opacity:.9;margin:0;font-size:14px}
+.badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.badge{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);padding:4px 11px;border-radius:16px;font-size:11px}
+.layout{display:flex;max-width:1480px;margin:0 auto;align-items:flex-start}
+.sidebar{
+  width:var(--sidebar-w);flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto;
+  background:#fff;border-right:1px solid var(--line);padding:12px 0 40px;
+}
+.sidebar-head{padding:12px 16px 8px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.sidebar-head input{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px}
+.nav-group{margin:0 0 4px}
+.nav-group-title{font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--muted);padding:10px 16px 4px;text-transform:uppercase}
+.nav-group a{display:block;padding:5px 16px 5px 20px;font-size:12px;color:var(--ink);border-left:3px solid transparent;text-decoration:none;line-height:1.35}
+.nav-group a:hover{background:var(--light);color:var(--navy)}
+.nav-group a.active{border-left-color:var(--accent);background:var(--blue-bg);font-weight:600}
+.main{flex:1;min-width:0;padding:0 24px 60px}
+.doc-section{background:#fff;border:1px solid var(--line);border-radius:12px;padding:22px 26px;margin-top:18px}
+.source-tag{font-size:11px;color:var(--muted);margin:0 0 12px;padding:4px 8px;background:var(--light);border-radius:6px;display:inline-block}
+.step{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;background:var(--accent);color:#fff;border-radius:6px;font-size:12px;font-weight:700;margin-right:4px}
+.sec-desc{color:var(--muted);font-size:13px;margin:2px 0 14px}
+.md-content h1{font-size:20px;color:var(--navy);margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid var(--light)}
+.md-content h2{font-size:16px;color:var(--navy);margin:22px 0 8px;padding-left:8px;border-left:3px solid var(--accent)}
+.md-content h3{font-size:14px;color:var(--accent2);margin:16px 0 6px}
+.md-content h4{font-size:13px;color:var(--navy);margin:12px 0 4px}
+.md-content p,.md-content li{font-size:13.5px}
+.md-content table{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0}
+.md-content th,.md-content td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+.md-content thead th{background:var(--navy);color:#fff;font-weight:600;text-align:center;font-size:12px}
+.md-content tbody td:first-child{font-weight:600;background:var(--light)}
+.md-content code{background:#f1f5f8;border:1px solid #e2eaf0;border-radius:4px;padding:1px 5px;font-family:Consolas,monospace;font-size:11.5px}
+.md-content pre{background:#0e2233;color:#cfe3f2;padding:12px 14px;border-radius:8px;overflow-x:auto;font-size:11.5px;line-height:1.5;margin:8px 0}
+.md-content pre code{background:transparent;border:none;padding:0;color:inherit}
+.md-content blockquote{margin:8px 0;padding:8px 14px;border-left:4px solid var(--accent);background:var(--blue-bg);font-size:13px}
+.md-content ul,.md-content ol{padding-left:22px;margin:6px 0}
+.learn-box,.warn-box,.ok-box,.purple-box{border-radius:10px;padding:12px 16px;margin:10px 0;font-size:13px}
+.learn-box{background:var(--blue-bg);border:1px solid #b8d4ef}
+.ok-box{background:var(--green-bg);border:1px solid #a8c896}
+.mermaid{margin:10px 0;background:#fafcfd;border-radius:8px;padding:10px;font-size:12px}
+.tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:4px;font-weight:600}
+.tag-done{background:#d4edda;color:#155724}
+.tag-wip{background:#fff3cd;color:#856404}
+footer{text-align:center;color:var(--muted);font-size:11px;margin:28px 0 12px}
+@media(max-width:960px){.layout{flex-direction:column}.sidebar{width:100%;height:auto;position:relative;border-right:none;border-bottom:1px solid var(--line)}.main{padding:0 14px 40px}}
+@media print{.sidebar{display:none}.main{padding:0}}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<header class="cover">
+  <p style="letter-spacing:2px;font-size:11px;opacity:.8;margin:0">TECHVALLEY IoT · 02.arch FULL MIRROR</p>
+  <h1>테크밸리 IoT — 아키텍처·YAML·DB 설계 가이드</h1>
+  <p class="sub">02.arch Markdown 12종 + config/schema + Postgres 테이블 인벤토리 · MOBI yaml-design 탐색 패턴</p>
+  <div class="badges">
+    <span class="badge">tenant tv</span>
+    <span class="badge">device_code = S/N</span>
+    <span class="badge">YAML 4층 + predeploy</span>
+    <span class="badge">DocDB · Postgres · Iceberg</span>
+    <span class="badge">generated 2026-06-13</span>
+  </div>
+</header>
+
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-head">
+    <strong style="font-size:13px;color:var(--navy)">목차 (26 섹션)</strong>
+    <input type="search" id="navSearch" placeholder="섹션 검색…" autocomplete="off">
+  </div>
+<div class="nav-group" data-group="overview">
+  <div class="nav-group-title">개요</div>
+  <a href="#intro">★ 학습 경로</a>
+  <a href="#doc-01-platform-overview">① 플랫폼 개요</a>
+</div>
+<div class="nav-group" data-group="pipeline">
+  <div class="nav-group-title">데이터 처리 · 파이프라인</div>
+  <a href="#doc-02-data-pipeline">② AWS 파이프라인</a>
+</div>
+<div class="nav-group" data-group="media">
+  <div class="nav-group-title">미디어 · S3</div>
+  <a href="#doc-13-media-upload-pipeline">⑬ 미디어 업로드</a>
+  <a href="#doc-config-samples-mqtt-topics">MQTT 토픽 (file 포함)</a>
+</div>
+<div class="nav-group" data-group="edge">
+  <div class="nav-group-title">Greengrass · 엣지</div>
+  <a href="#doc-08-greengrass-offline-resilience">⑦ 오프라인 · 복구</a>
+</div>
+<div class="nav-group" data-group="ai">
+  <div class="nav-group-title">알람 · AI · 자가복구</div>
+  <a href="#doc-09-ai-anomaly-rules-and-edge-self-healing">⑧ AI · 룰 추천 · self-heal</a>
+</div>
+<div class="nav-group" data-group="storage">
+  <div class="nav-group-title">3-Tier Storage</div>
+  <a href="#doc-03-storage-tiers">③ 저장 Tier</a>
+</div>
+<div class="nav-group" data-group="backend">
+  <div class="nav-group-title">백엔드 · Lambda</div>
+  <a href="#doc-04-backend-services">④ 백엔드 MSA</a>
+  <a href="#doc-14-backend-frontend-design">⑭ UI · API · NestJS</a>
+</div>
+<div class="nav-group" data-group="yaml">
+  <div class="nav-group-title">YAML · 규칙 · Cadence</div>
+  <a href="#doc-05-yaml-and-rules">⑤ YAML 4층 · MQTT</a>
+  <a href="#doc-10-yaml-pipeline-deploy-automation">⑩ predeploy · Terraform</a>
+</div>
+<div class="nav-group" data-group="database">
+  <div class="nav-group-title">DB 설계</div>
+  <a href="#doc-06-schema-reference">⑥ 스키마 · UI 매핑</a>
+  <a href="#doc-12-database-design">⑫ DB 설계 SSOT</a>
+  <a href="#doc-config-schema-org-hierarchy">조직 · 자산 계층</a>
+  <a href="#doc-config-schema-documentdb-collection-contract">DocDB 컬렉션 계약</a>
+  <a href="#doc-config-schema-documentdb-document-schema-anchors">DocDB schema anchors</a>
+  <a href="#doc-config-schema-postgres-readme">Postgres DDL README</a>
+  <a href="#doc-gen-postgres-table-inventory">Postgres 테이블 인벤토리</a>
+  <a href="#doc-config-schema-iceberg-readme">Iceberg · S3 · Firehose</a>
+</div>
+<div class="nav-group" data-group="deploy">
+  <div class="nav-group-title">저장소 · 배포</div>
+  <a href="#doc-07-repo-and-deployment">⑦ Repo · CI/CD</a>
+  <a href="#doc-11-config-examples-reference">⑪ config 샘플 레퍼런스</a>
+  <a href="#doc-config-readme">config/ SSOT 인덱스</a>
+  <a href="#doc-config-local-readme">로컬 Podman compose</a>
+  <a href="#doc-config-samples-s3-object-layout-example">S3 객체 레이아웃 예시</a>
+  <a href="#status">구현 상태</a>
+</div>
+
+</aside>
+
+<main id="main">
+
+<section id="intro" class="doc-section" data-group="overview">
+  <h2><span class="step">★</span> 학습 경로 · SSOT 관계</h2>
+  <p class="sec-desc">본 페이지는 <code>02.arch/</code> Markdown·config 전체를 웹에서 탐색하기 위한 <b>완전 미러</b>입니다.</p>
+  <div class="learn-box">
+    <b>권장 순서:</b> ① 개요 → ② 파이프라인 → ③ Storage → ⑤ YAML → ⑥⑫ DB → ⑩ 배포 → ⑦ Greengrass → ⑧ AI
+  </div>
+  <table>
+    <thead><tr><th>자료</th><th>역할</th></tr></thead>
+    <tbody>
+      <tr><td class="k"><code>02.arch/*.md</code></td><td>아키텍처 서술 SSOT (본 HTML 원본)</td></tr>
+      <tr><td class="k"><code>02.arch/config/</code></td><td>YAML·JSON·DDL·샘플 SSOT</td></tr>
+      <tr><td class="k"><code>npm run build</code></td><td>Markdown 변경 후 본 HTML 재생성</td></tr>
+    </tbody>
+  </table>
+  <div class="ok-box"><b>갱신:</b> Markdown/config 수정 → <code>npm run build --prefix 00.doc/architecture</code></div>
+</section>
+
+
+<section id="doc-01-platform-overview" class="doc-section md-content" data-group="overview" data-source="01-platform-overview.md">
+  <p class="source-tag">SSOT: <code>02.arch/01-platform-overview.md</code></p>
+  <h1>01. 플랫폼 개요</h1>
+<h2>1.1 목적</h2>
+<p>테크밸리 IoT 서비스 플랫폼은 <strong>산업용 X-ray·검사 장비</strong>의 원격 관제·알람·서비스·원격제어를 위한 운영 시스템입니다.</p>
+<ul>
+<li><strong>포함 (Project A · IoT)</strong>: A1~A12 — 수집, 파이프라인, 관제, 알람, 원격진단/제어, 서비스 티켓, SLA, 장비·설치·고객, 부품·AS, 검사·수율, 리포트, 시스템 관리</li>
+<li><strong>포함 (IoT 운영 AI)</strong>: SageMaker 이상 센서 탐지, 룰셋 추천, 알림·경고·제어 연동, <strong>엣지 자가복구·OTA 제품 개선 루프</strong> (<a href="#doc-09-ai-anomaly-rules-and-edge-self-healing">09-ai-anomaly-rules-and-edge-self-healing.md</a>)</li>
+<li><strong>별도 (D · 지원 AI)</strong>: Bedrock + RAG — 매뉴얼·정비 이력 검색, 챗봇, 리포트 초안 (사람 확인 후 실행)</li>
+<li><strong>제외</strong>: Project B 제조 AI·MES 심화</li>
+</ul>
+<h2>1.2 조직·자산 계층</h2>
+<p>Warm Tier(Postgres) SSOT와 UI·배치 롤업의 <strong>조직 트리</strong>는 아래 4단계입니다.</p>
+<pre><code>company (회사)
+  └── branch (지점·지사)
+        └── site (조직·현장 — org_level_type)
+              └── device (단말, device_code = S/N)
+                    └── Greengrass v2 (엣지) → IoT Core Thing
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>계층</th>
+<th>RDS 테이블</th>
+<th>업무 키</th>
+<th>UI·문서 매핑</th>
+<th>예시</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>회사</strong></td>
+<td><code>company</code></td>
+<td><code>code</code></td>
+<td>customers (고객사)</td>
+<td>COMP-DEMO-001</td>
+</tr>
+<tr>
+<td><strong>지점</strong></td>
+<td><code>branch</code></td>
+<td><code>code</code></td>
+<td>조직·지사 관리</td>
+<td>본사 지점 · 수도권 지사</td>
+</tr>
+<tr>
+<td><strong>현장</strong></td>
+<td><code>site</code></td>
+<td><code>code</code></td>
+<td>installation · site 필터</td>
+<td>화성 Campus A (<code>org_level_type=3</code>)</td>
+</tr>
+<tr>
+<td><strong>장비</strong></td>
+<td><code>device</code></td>
+<td><code>device_code</code></td>
+<td>equipment</td>
+<td>HK-2024-00158</td>
+</tr>
+<tr>
+<td><strong>엣지</strong></td>
+<td>—</td>
+<td>MQTT <code>topic(4)</code></td>
+<td>Greengrass Core</td>
+<td><code>device_code</code>와 동일</td>
+</tr>
+</tbody></table>
+<h3>site.org_level_type (S0015)</h3>
+<p><code>site</code>는 <strong>본사·지사·현장</strong>을 한 테이블에 등록합니다 (<code>01-core-schema.sql</code>).</p>
+<table>
+<thead>
+<tr>
+<th>값</th>
+<th>의미</th>
+<th>FK 규칙</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>1</code></td>
+<td>본사 (headquarters)</td>
+<td><code>company_id</code> 필수</td>
+</tr>
+<tr>
+<td><code>2</code></td>
+<td>지사 (branch office)</td>
+<td><code>branch_id</code> 필수</td>
+</tr>
+<tr>
+<td><code>3</code></td>
+<td>현장 (field site)</td>
+<td><code>branch_id</code> 선택 — <strong>device.site_id</strong> 는 보통 이 레벨</td>
+</tr>
+</tbody></table>
+<p><code>branch</code> 마스터는 <code>company</code> 하위 지점(본사 지점·일반 지사)이며, <code>site(org_level=2)</code> 와 연동됩니다.</p>
+<h3>MQTT·파이프라인과의 관계</h3>
+<p>토픽 8세그먼트에는 <strong>company/branch/site 코드가 없습니다</strong> — <code>device</code>(=<code>device_code</code>)만 carries합니다.</p>
+<pre><code>{tenant}/{env}/{edge}/{device}/{data_kind}/{domain}/{role}/json
+</code></pre>
+<p><code>stream_sync_consumer</code> 적재 시 manifest <code>rdbms_time_series_link</code> 로 <code>device</code> → <code>site_id</code> → (branch·company) 를 <strong>조인·스냅샷</strong>합니다.<br>KDS PartitionKey·DocDB UK는 <code>device_code</code> 기준 (<a href="#doc-12-database-design">12-database-design.md</a> §12.1).</p>
+<p><strong>서비스 권역</strong>(UI): 한국 · 동아시아 · 유럽 · 멕시코 · 전세계 — 플릿 지도·KPI 집계 필터에 사용 (<code>locale/settings.ts</code>).</p>
+<h2>1.3 WBS ↔ 도메인 매핑</h2>
+<table>
+<thead>
+<tr>
+<th>WBS</th>
+<th>도메인</th>
+<th>핵심 AWS·앱</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A1</td>
+<td>IoT 데이터 수집</td>
+<td>Greengrass, IoT Core, 엣지 스풀</td>
+</tr>
+<tr>
+<td>A2</td>
+<td>데이터 파이프라인·저장</td>
+<td>Kinesis, Lambda, 3-Tier</td>
+</tr>
+<tr>
+<td>A3</td>
+<td>통합 관제</td>
+<td>배치 롤업, 대시보드 KPI</td>
+</tr>
+<tr>
+<td>A4</td>
+<td>이상 알람·룰셋</td>
+<td>EventBridge, SNS/SES, <strong>SageMaker + 룰 추천</strong></td>
+</tr>
+<tr>
+<td>A5</td>
+<td>원격진단·원격제어</td>
+<td>IoT Jobs, Device Shadow, <strong>엣지 자가복구</strong>, OTA Job UI</td>
+</tr>
+<tr>
+<td>A6~A7</td>
+<td>서비스 티켓·진행·SLA</td>
+<td>Aurora 배치 스냅샷</td>
+</tr>
+<tr>
+<td>A8</td>
+<td>검사·수율</td>
+<td>Iceberg 일별 롤업</td>
+</tr>
+<tr>
+<td>A9</td>
+<td>company·branch·site·device (장비·현장·고객)</td>
+<td>Aurora 마스터 + 배치 플릿</td>
+</tr>
+<tr>
+<td>A10~A11</td>
+<td>부품·AS</td>
+<td>Aurora 트랜잭션</td>
+</tr>
+<tr>
+<td>A12</td>
+<td>시스템 관리</td>
+<td>Cognito, RBAC, IoT X.509</td>
+</tr>
+</tbody></table>
+<h2>1.4 UI 데이터 범위 (batch vs realtime)</h2>
+<p>프론트엔드는 <strong><code>DataScope</code></strong> 로 조회 계약을 구분합니다 (<code>03.source/frontend/src/lib/data/scope.ts</code>).</p>
+<table>
+<thead>
+<tr>
+<th>scope</th>
+<th>의미</th>
+<th>대표 화면</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>batch</code></td>
+<td>배치 Job 완료 시각(<code>asOf</code>) 기준 스냅샷</td>
+<td>대시보드, 알람 목록, SLA, 장비 마스터, 장비 로그</td>
+</tr>
+<tr>
+<td><code>realtime</code></td>
+<td>Hot Tier / 스트림 최신값</td>
+<td>메트릭 스트림, 데이터 파이프라인 하단 실시간 패널, 원격제어</td>
+</tr>
+</tbody></table>
+<p><strong>원칙</strong>: 대시보드 KPI·플릿 지도·알람 패널은 <strong>배치 롤업만</strong> 반영. 실시간 MQTT 스트림은 <strong>메트릭 스트림·Hot Tier 모니터링</strong> 전용.</p>
+<h2>1.5 수집 라이프사이클 (UI 4단계)</h2>
+<pre><code>① 수집·파이프라인 → ② 실시간 Hot → ③ Warm 조회 → ④ 배치 관제
+   data-pipeline      metric-stream    equipment-logs    dashboard
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>단계</th>
+<th>storageTier</th>
+<th>dataScope</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>①</td>
+<td>—</td>
+<td>mixed</td>
+</tr>
+<tr>
+<td>②</td>
+<td>Hot</td>
+<td>realtime</td>
+</tr>
+<tr>
+<td>③</td>
+<td>Warm</td>
+<td>batch</td>
+</tr>
+<tr>
+<td>④</td>
+<td>—</td>
+<td>batch</td>
+</tr>
+</tbody></table>
+<h2>1.6 장비 텔레메트리 도메인</h2>
+<table>
+<thead>
+<tr>
+<th>구분</th>
+<th>Warm Tier 카테고리</th>
+<th>Hot 스트림 (metric-stream)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>튜브</td>
+<td>kV/mA, 수명, 캘리브레이션</td>
+<td><code>#periodic</code> tube.kv</td>
+</tr>
+<tr>
+<td>디텍터</td>
+<td>온도, 캘리브레이션</td>
+<td>temp, yield</td>
+</tr>
+<tr>
+<td>본체</td>
+<td>Greengrass, 가동시간</td>
+<td>—</td>
+</tr>
+<tr>
+<td>알람</td>
+<td>발생·해제·룰 매칭</td>
+<td><code>#event</code></td>
+</tr>
+<tr>
+<td>원격제어</td>
+<td>Shadow, IoT Job</td>
+<td><code>#control</code></td>
+</tr>
+<tr>
+<td>펌웨어</td>
+<td>OTA, 버전, <strong>Job 배포</strong></td>
+<td><code>#firmware</code> · <code>settings-firmware</code></td>
+</tr>
+</tbody></table>
+<p>Warm Tier 장비 로그는 <strong>카테고리별 분리 조회</strong> — 통합 시간순 타임라인 없음.</p>
+<h2>1.7 보안·인증 (요약)</h2>
+<table>
+<thead>
+<tr>
+<th>주체</th>
+<th>방식</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>운영 사용자</td>
+<td>Cognito / OIDC JWT + 앱 RBAC (admin · engineer · cs · customer)</td>
+</tr>
+<tr>
+<td>IoT 장비</td>
+<td>X.509, JITP/JITR, Thing Policy, Topic ACL</td>
+</tr>
+<tr>
+<td>엣지·원격제어</td>
+<td>Greengrass v2, IoT Jobs, Shadow (Fail-safe 인터락)</td>
+</tr>
+<tr>
+<td>API</td>
+<td>API Gateway Authorizer, Secrets Manager, KMS</td>
+</tr>
+</tbody></table>
+<p>상세: 기능정의서 §⑤ 인증·보안(AWS).</p>
+
+</section>
+
+<section id="doc-02-data-pipeline" class="doc-section md-content" data-group="pipeline" data-source="02-data-pipeline.md">
+  <p class="source-tag">SSOT: <code>02.arch/02-data-pipeline.md</code></p>
+  <h1>02. AWS 데이터 파이프라인</h1>
+<h2>2.1 전체 흐름</h2>
+<div class="mermaid">flowchart TB
+  subgraph edge [A1 엣지]
+    GG[Greengrass v2] --> IOT[AWS IoT Core]
+  end
+
+  subgraph realtime [실시간 Hot + Cold staging]
+    IOT --> RULE[IoT Topic Rule]
+    RULE --> KDS[Kinesis Data Streams]
+    KDS --> L1[stream_sync_consumer]
+    L1 --> DOCW[(DocumentDB Writer)]
+    L1 --> FH[Kinesis Firehose]
+    FH --> S3[S3 Parquet landing]
+    S3 --> GLUE[Glue Spark]
+    GLUE --> ICE[(Iceberg Cold)]
+  end
+
+  subgraph batch [배치 Warm + 관제]
+    EB[EventBridge Schedule] --> L2[batch_cadence_runner]
+    L2 --> DOCR[(DocumentDB Reader)]
+    L2 --> RDSW[(Aurora Writer)]
+    L2 --> ROLL[fleet_hourly_rollup 등]
+  end
+
+  subgraph fail [장애]
+    L1 -.-> SQS[SQS Realtime DLQ]
+    SQS --> L3[dlq_shard_processor]
+    L2 -.-> DLQ2[pipeline_dlq_events]
+  end
+
+  subgraph media [미디어 · S3]
+    RULE -->|&quot;file/request invoke&quot;| ORCH[file_upload_orchestrator]
+    ORCH --> S3M[S3 media bucket]
+    ORCH --> RDSM[(Aurora media_upload_session)]
+  end
+
+  subgraph ml [AI A4/A5]
+    KDS --> L4[anomaly_scorer]
+    L4 --> SM[SageMaker Endpoint]
+    SM --> ANOM[(anomaly_events)]
+    ANOM --> REC[rule_recommender]
+    REC --> EB2[EventBridge tv.anomaly.*]
+    EB2 --> DASH
+  end
+
+  DOCW --> DOCR
+  ROLL --> DASH[대시보드·알람·SLA UI]
+  RDSW --> BI[리포트·SLA·장비 로그]
+</div>
+<h2>2.2 AWS 서비스 역할</h2>
+<table>
+<thead>
+<tr>
+<th>서비스</th>
+<th>테크밸리 역할</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>IoT Core</strong></td>
+<td>MQTTS, Thing/Policy, Topic Rule → KDS</td>
+</tr>
+<tr>
+<td><strong>Greengrass v2</strong></td>
+<td>엣지 수집·스풀·OTA 컴포넌트</td>
+</tr>
+<tr>
+<td><strong>Kinesis Data Streams</strong></td>
+<td>수집 버퍼 (PartitionKey=<code>device_code</code> / 장비 S/N)</td>
+</tr>
+<tr>
+<td><strong>Lambda</strong></td>
+<td>정규화·변환·Hot/Cold 적재·배치 롤업</td>
+</tr>
+<tr>
+<td><strong>DocumentDB</strong></td>
+<td>Hot — 원천·이벤트·단기 롤업</td>
+</tr>
+<tr>
+<td><strong>Kinesis Firehose</strong></td>
+<td>정규화 레코드 → S3 Parquet</td>
+</tr>
+<tr>
+<td><strong>S3</strong></td>
+<td>Firehose landing, FOTA·미디어, errors prefix</td>
+</tr>
+<tr>
+<td><strong>Glue Spark + Catalog</strong></td>
+<td>Parquet → Iceberg 커밋·컴팩션</td>
+</tr>
+<tr>
+<td><strong>Aurora PostgreSQL</strong></td>
+<td>Warm — site·branch·company·장비 롤업, 티켓·SLA·알람 팩트</td>
+</tr>
+<tr>
+<td><strong>EventBridge</strong></td>
+<td>알람 룰, 배치 cadence, Iceberg 유지보수</td>
+</tr>
+<tr>
+<td><strong>SNS / SES</strong></td>
+<td>Critical 알람 15분 SLA 1차 대응 알림</td>
+</tr>
+<tr>
+<td><strong>SageMaker</strong></td>
+<td>이상 탐지 inference·Feature Store·Edge Manager (<a href="#doc-09-ai-anomaly-rules-and-edge-self-healing">09-ai-anomaly-rules-and-edge-self-healing.md</a>)</td>
+</tr>
+<tr>
+<td><strong>S3 (media)</strong></td>
+<td>검사 이미지·비디오 스트림·로그 — Presigned single/multipart (<a href="#doc-13-media-upload-pipeline">13-media-upload-pipeline.md</a>)</td>
+</tr>
+<tr>
+<td><strong>SQS</strong></td>
+<td>실시간 처리 DLQ</td>
+</tr>
+<tr>
+<td><strong>Cognito</strong></td>
+<td>운영 포털 인증</td>
+</tr>
+<tr>
+<td><strong>CloudWatch / CloudTrail</strong></td>
+<td>지연·오류·감사</td>
+</tr>
+</tbody></table>
+<h2>2.3 표준 실시간 경로 (Hot + Cold)</h2>
+<ol>
+<li>장비 → <strong>IoT Core</strong> (Topic Rule SQL 필터)</li>
+<li><strong>KDS PutRecord</strong> (내구성 버퍼)</li>
+<li><strong><code>stream_sync_consumer</code> Lambda</strong><ul>
+<li>토픽 8세그먼트 파싱 + <code>normalize-config</code> 매칭</li>
+<li><code>rules/{rule_code}.json</code> 변환 (tube.kv, temp, yield 등)</li>
+<li><strong>DocumentDB Writer</strong> upsert (Hot)</li>
+<li><strong>Firehose PutRecordBatch</strong> (동일 정규화 출력 → Cold 경로)</li>
+</ul>
+</li>
+<li>실패 레코드 → <strong>SQS DLQ</strong> → <code>dlq_shard_processor</code></li>
+</ol>
+<h3>조직 스냅샷 (device → site → branch → company)</h3>
+<p>MQTT에는 org 코드가 없고 <strong><code>device_code</code>만</strong> 전달됩니다. Hot 적재 시 DocDB 문서에 <code>site_id</code>·<code>customer_id</code>(=<code>company.code</code>)를 denormalize하고, Warm 배치는 device → site → <strong>branch</strong> → company grain으로 롤업합니다 (<a href="#doc-config-schema-org-hierarchy">org-hierarchy.md</a>).</p>
+<p><strong>금지</strong>: KDS → Firehose <strong>병렬 직접 소비</strong> (미변환 Raw가 Iceberg에 섞임).<br>예외: 감사용 RAW 아카이브는 <strong>별도 IoT Rule → 전용 Firehose</strong> (Runbook).</p>
+<h2>2.4 표준 배치 경로 (Warm + 관제 롤업)</h2>
+<p>EventBridge → <strong><code>batch_cadence_runner</code></strong> → DocumentDB Reader 읽기 → Aurora Writer / Doc 롤업 적재.</p>
+<h3>테크밸리 UI 연동 배치 Job</h3>
+<table>
+<thead>
+<tr>
+<th>Job ID (scope.ts)</th>
+<th>산출</th>
+<th>UI 소비</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>aurora.fleet_hourly_rollup</code></td>
+<td>플릿 상태·지역 집계</td>
+<td>대시보드 지도·KPI</td>
+</tr>
+<tr>
+<td><code>aurora.dashboard_daily_aggregate</code></td>
+<td>일별 KPI</td>
+<td>대시보드 차트</td>
+</tr>
+<tr>
+<td><code>aurora.alarm_daily_rollup</code></td>
+<td>알람 추세</td>
+<td>알람·대시보드 패널</td>
+</tr>
+<tr>
+<td><code>iceberg.yield_daily_rollup</code></td>
+<td>수율 일별</td>
+<td>검사·대시보드 수율</td>
+</tr>
+<tr>
+<td><code>aurora.equipment_log_query</code></td>
+<td>Warm 카테고리별 로그</td>
+<td>장비 로그</td>
+</tr>
+<tr>
+<td><code>aurora.collection_daily_stats</code></td>
+<td>수집 통계</td>
+<td>데이터 파이프라인</td>
+</tr>
+<tr>
+<td><code>documentdb.pipeline_tier_snapshot</code></td>
+<td>Tier 상태</td>
+<td>파이프라인 Tier 설정</td>
+</tr>
+</tbody></table>
+<h3>디바이스 시간 롤업 (DocumentDB)</h3>
+<pre><code>periodic_telemetry → 10min → hour → day → month → year
+(telemetry_rollups_device_*)
+</code></pre>
+<h3>Site·Branch·Company 팩트 (Aurora)</h3>
+<ul>
+<li><strong>일 grain</strong>: DocumentDB 디바이스 «일» 롤업을 <code>site_id</code>·<code>product_id</code>로 합산 → site → <strong>branch</strong> → company 체인</li>
+<li><strong>월·연</strong>: RDS 내 직전 grain만 입력 (원시 로우 직접 집계 금지)</li>
+</ul>
+<h2>2.5 배치 스케줄 (기준)</h2>
+<table>
+<thead>
+<tr>
+<th>schedule_key</th>
+<th>용도</th>
+<th>EventBridge cron</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>rollup_device_10min</code></td>
+<td>디바이스 10분 롤업</td>
+<td><code>cron(0/10 * * * ? *)</code></td>
+</tr>
+<tr>
+<td><code>rollup_hourly</code></td>
+<td>시간 롤업 + <strong>fleet_hourly</strong></td>
+<td><code>cron(0 * * * ? *)</code></td>
+</tr>
+<tr>
+<td><code>rollup_daily</code></td>
+<td>일 롤업 + dashboard/alarm daily</td>
+<td><code>cron(5 0 * * ? *)</code></td>
+</tr>
+<tr>
+<td><code>rollup_monthly</code></td>
+<td>월 롤업</td>
+<td><code>cron(0 2 1 * ? *)</code></td>
+</tr>
+<tr>
+<td><code>communication_quality_eval_10m</code></td>
+<td>통신품질·알람 입력</td>
+<td><code>cron(30/10 * * * ? *)</code></td>
+</tr>
+</tbody></table>
+<h2>2.6 알람 파이프라인</h2>
+<table>
+<thead>
+<tr>
+<th>유형</th>
+<th>경로</th>
+<th>저장</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Raw 알림</strong></td>
+<td>스트림 Lambda <code>alerts_raw</code></td>
+<td>DocumentDB Hot</td>
+</tr>
+<tr>
+<td><strong>임계·복합 룰</strong></td>
+<td>EventBridge Rule</td>
+<td>SNS/SES + 티켓 트리거</td>
+</tr>
+<tr>
+<td><strong>집계 알림</strong></td>
+<td>배치 cadence (10min/hour 롤업 입력)</td>
+<td>Aurora <code>communication_alarm_incident</code>, <code>notification</code></td>
+</tr>
+</tbody></table>
+<p>Critical SLA: 알람 발생(EventBridge) 시점 기준 <strong>15분 내 1차 대응</strong> (UI·기능정의서).</p>
+<p><strong>SageMaker 이상 탐지</strong> (임계 룰 보완): KDS/Lambda <code>anomaly_scorer</code> → SageMaker Endpoint → <code>anomaly_events</code> → 룰 추천·EventBridge <code>tv.anomaly.detected</code>. 상세: <a href="#doc-09-ai-anomaly-rules-and-edge-self-healing">09-ai-anomaly-rules-and-edge-self-healing.md</a> §9.3~9.5.</p>
+<h2>2.7 Greengrass 오프라인·복구 (A1)</h2>
+<p>네트워크 단절 시 <strong>MQTT Disk Spooler(50MB)</strong> · 엣지 로컬 저장 → 온라인 복귀 후 IoT Jobs·큐 메시지·미전송 파일 순차 동기화.</p>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>요약</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Spooler</td>
+<td>QoS 1 MQTT 디스크 큐, 재시작 후 유지, 복귀 시 자동 publish</td>
+</tr>
+<tr>
+<td>IoT Jobs (OTA)</td>
+<td>오프라인 중 클라우드 <strong>QUEUED</strong>, 복귀 시 <code>notify-next</code></td>
+</tr>
+<tr>
+<td>대용량 파일</td>
+<td>로컬 <code>files/</code> 적재 → 복귀 후 Presigned 멀티파트 업로드</td>
+</tr>
+<tr>
+<td>URL 만료</td>
+<td>OTA CF URL(24h)·S3 Presigned(1h) — 재요청 토픽 + Lambda 재발급</td>
+</tr>
+</tbody></table>
+<p>상세 시퀀스·Runbook: <strong><a href="#doc-08-greengrass-offline-resilience">08-greengrass-offline-resilience.md</a></strong> (hiCAMS 패턴 테크밸리 적용).</p>
+<h2>2.8 원격진단·원격제어 (A5)</h2>
+<table>
+<thead>
+<tr>
+<th>기능</th>
+<th>AWS</th>
+<th>dataScope</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>원격진단 Job</td>
+<td>Greengrass + IoT Jobs</td>
+<td>batch (결과 스냅샷) + Hot edge</td>
+</tr>
+<tr>
+<td>kV/mA 보정·안전모드</td>
+<td>Device Shadow, IoT Jobs</td>
+<td>realtime (<code>iot.jobs + device.shadow</code>)</td>
+</tr>
+<tr>
+<td>OTA</td>
+<td>Greengrass OTA, Shadow 롤백</td>
+<td>펌웨어 메트릭 + 설정 화면</td>
+</tr>
+<tr>
+<td><strong>엣지 자가복구</strong></td>
+<td>IoT Jobs + self_heal_playbooks</td>
+<td>SageMaker <code>edge_client</code> 분류 시 자동 Job (<a href="#doc-09-ai-anomaly-rules-and-edge-self-healing">09</a> §9.6)</td>
+</tr>
+</tbody></table>
+<h2>2.9 버퍼·DLQ 보존</h2>
+<table>
+<thead>
+<tr>
+<th>구간</th>
+<th>보존</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>KDS</td>
+<td>7일</td>
+</tr>
+<tr>
+<td>SQS Realtime DLQ</td>
+<td>14일</td>
+</tr>
+<tr>
+<td>Firehose landing S3</td>
+<td>7일 (Iceberg 커밋 후 Lifecycle 삭제)</td>
+</tr>
+<tr>
+<td>Firehose errors prefix</td>
+<td>30일</td>
+</tr>
+<tr>
+<td>배치 DLQ</td>
+<td>DocumentDB <code>pipeline_dlq_events</code></td>
+</tr>
+</tbody></table>
+<h2>2.10 MQTT 토픽 (8세그먼트 SSOT)</h2>
+<pre><code>{tenant}/{env}/{edge}/{device}/{data_kind}/{domain}/{role}/json
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>세그먼트</th>
+<th>테크밸리 예</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>data_kind</td>
+<td><code>periodic</code> · <code>event</code></td>
+</tr>
+<tr>
+<td>domain</td>
+<td><code>telemetry</code> · <code>fota</code> · <code>control</code> · <code>alarm</code></td>
+</tr>
+<tr>
+<td>role</td>
+<td><code>report</code> · <code>command</code> · <code>status</code></td>
+</tr>
+</tbody></table>
+<p>IoT Rule PartitionKey: <strong><code>device_code</code></strong> (= 장비 S/N).<br>상세·금지 패턴: <a href="#doc-05-yaml-and-rules">05-yaml-and-rules.md</a>.</p>
+
+</section>
+
+<section id="doc-13-media-upload-pipeline" class="doc-section md-content" data-group="media" data-source="13-media-upload-pipeline.md">
+  <p class="source-tag">SSOT: <code>02.arch/13-media-upload-pipeline.md</code></p>
+  <h1>13. 미디어 업로드 파이프라인 (이미지·비디오·S3)</h1>
+<p>검사 <strong>이미지 청크</strong>, <strong>비디오 스트림</strong>, <strong>S3 단일 PUT / 멀티파트</strong> 업로드 SSOT입니다.<br>MQTT는 <strong>메타·제어만</strong> — 바이너리는 <strong>Presigned URL → S3 직접 PUT</strong>.</p>
+<h2>13.1 설계 원칙</h2>
+<table>
+<thead>
+<tr>
+<th>원칙</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>MQTT ≠ 페이로드</strong></td>
+<td>이미지/영상 바이트는 S3만 — 토픽은 request·chunk·progress·complete</td>
+</tr>
+<tr>
+<td><strong>device_code</strong></td>
+<td><code>request_code</code> + <code>device_code</code> + <code>device_timestamp</code> 멱등</td>
+</tr>
+<tr>
+<td><strong>오프라인</strong></td>
+<td>엣지 <code>files/</code> 로컬 적재 → 복귀 후 동일 MQTT 시퀀스 (<a href="#doc-08-greengrass-offline-resilience">08-greengrass-offline-resilience.md</a>)</td>
+</tr>
+<tr>
+<td><strong>URL 만료</strong></td>
+<td>1h Presigned — <code>file/request</code> 재발행 + <code>AbortMultipartUpload</code></td>
+</tr>
+<tr>
+<td><strong>Hot</strong></td>
+<td>DocumentDB <code>files_history</code></td>
+</tr>
+<tr>
+<td><strong>Warm</strong></td>
+<td>Aurora <code>media_upload_session</code> · <code>media_upload_part</code> · <code>equipment_log_media</code></td>
+</tr>
+</tbody></table>
+<p>설정 SSOT: <a href="./config/media-upload.yaml"><code>config/media-upload.yaml</code></a></p>
+<h3>13.1.1 전체 아키텍처 (AWS)</h3>
+<p>MQTT는 <strong>메타·제어만</strong> — 바이너리는 Presigned URL로 <strong>S3 직접 PUT</strong>. 웹 문서에서 AWS 서비스 아이콘이 자동 적용됩니다.</p>
+<div class="mermaid">flowchart TB
+  subgraph edge [A1 엣지]
+    GG[Greengrass v2 · 검사 장비]
+  end
+
+  subgraph iot [IoT · file/* 토픽]
+    IOT[AWS IoT Core]
+    RULE[IoT Topic Rule · file/*]
+  end
+
+  subgraph realtime [실시간 Hot]
+    KDS[Kinesis Data Streams]
+    SYNC[stream_sync_consumer Lambda]
+    DOC[(DocumentDB files_history)]
+  end
+
+  subgraph upload [Presign · S3 바이너리]
+    ORCH[file_upload_orchestrator Lambda]
+    S3[S3 media bucket]
+  end
+
+  subgraph warm [Warm Tier]
+    RDS[(Aurora media_upload_session)]
+    PART[(Aurora media_upload_part)]
+    ELM[(equipment_log_media)]
+  end
+
+  subgraph batch [배치 집계]
+    EB[EventBridge Schedule]
+    BATCH[batch_cadence_runner Lambda]
+  end
+
+  GG -->|&quot;file/request · chunk · stream · complete&quot;| IOT
+  IOT --> RULE
+  RULE -->|&quot;PutRecord&quot;| KDS
+  RULE -->|&quot;invoke file/request&quot;| ORCH
+  ORCH -->|&quot;Presigned PutObject / Multipart&quot;| S3
+  ORCH -->|&quot;file/response Retained&quot;| IOT
+  IOT --> GG
+  GG -->|&quot;HTTP PUT · UploadPart&quot;| S3
+  KDS --> SYNC --> DOC
+  ORCH --> RDS
+  SYNC --> PART
+  EB --> BATCH --> ELM
+</div>
+<h2>13.2 업로드 모드</h2>
+<table>
+<thead>
+<tr>
+<th>모드</th>
+<th><code>upload_mode</code></th>
+<th>조건</th>
+<th>S3 API</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>단일 PUT</strong></td>
+<td><code>single_put</code></td>
+<td><code>file_size_bytes</code> ≤ 5MB (기본)</td>
+<td><code>PutObject</code> Presigned</td>
+</tr>
+<tr>
+<td><strong>멀티파트</strong></td>
+<td><code>multipart</code></td>
+<td>이미지·로그·대용량</td>
+<td><code>CreateMultipartUpload</code> + <code>UploadPart</code></td>
+</tr>
+<tr>
+<td><strong>이미지 청크</strong></td>
+<td><code>image_chunk</code></td>
+<td>검사 프레임 순차 업로드</td>
+<td>멀티파트 + <code>chunk_index</code> 메타</td>
+</tr>
+<tr>
+<td><strong>비디오 스트림</strong></td>
+<td><code>video_stream</code></td>
+<td>MJPEG/H.264 세그먼트</td>
+<td>멀티파트 + <code>segment_index</code> · <code>stream_seq</code></td>
+</tr>
+</tbody></table>
+<h2>13.3 MQTT 토픽 (domain <code>file</code>)</h2>
+<pre><code>tv/{env}/{edge}/{device}/event/file/{role}/json
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>role</th>
+<th>방향</th>
+<th>용도</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>request</code></td>
+<td>↑</td>
+<td>업로드 시작 (single/multipart/chunk/stream 선언)</td>
+</tr>
+<tr>
+<td><code>response</code></td>
+<td>↓</td>
+<td>Presigned URL(들) — Lambda 발행, <strong>Retained</strong></td>
+</tr>
+<tr>
+<td><code>chunk</code></td>
+<td>↑</td>
+<td>이미지 청크·파트 완료 메타 (ETag, part_number)</td>
+</tr>
+<tr>
+<td><code>stream</code></td>
+<td>↑</td>
+<td>비디오 스트림 세그먼트 메타</td>
+</tr>
+<tr>
+<td><code>progress</code></td>
+<td>↑</td>
+<td>진행률 (선택)</td>
+</tr>
+<tr>
+<td><code>complete</code></td>
+<td>↑</td>
+<td>CompleteMultipartUpload 또는 single 완료</td>
+</tr>
+<tr>
+<td><code>abort</code></td>
+<td>↑</td>
+<td>AbortMultipartUpload</td>
+</tr>
+</tbody></table>
+<p><code>file_kind</code> 예: <code>image/jpeg</code>, <code>image/png</code>, <code>video/mp4</code>, <code>video/mjpeg-stream</code>, <code>inspection_log</code></p>
+<h2>13.4 단일 PUT 프로세스</h2>
+<div class="mermaid">flowchart LR
+  subgraph edge [엣지]
+    DEV[Greengrass v2 · 장비]
+  end
+
+  subgraph iot [IoT Core]
+    IOT[AWS IoT Core]
+    RULE[IoT Topic Rule]
+    KDS[Kinesis Data Streams]
+  end
+
+  subgraph lambda [Lambda]
+    ORCH[file_upload_orchestrator]
+    SYNC[stream_sync_consumer]
+  end
+
+  subgraph storage [저장]
+    S3[S3 media bucket]
+    DOC[(DocumentDB files_history)]
+    RDS[(Aurora media_upload_session)]
+  end
+
+  DEV -->|&quot;① file/request single_put&quot;| IOT
+  IOT --> RULE
+  RULE --> KDS
+  RULE -->|&quot;invoke&quot;| ORCH
+  KDS --> SYNC
+  ORCH -->|&quot;② presign PutObject&quot;| S3
+  ORCH -->|&quot;③ file/response Retained&quot;| IOT
+  IOT --> DEV
+  DEV -->|&quot;④ HTTP PUT 바이너리&quot;| S3
+  DEV -->|&quot;⑤ file/complete etag&quot;| IOT
+  SYNC -->|&quot;PENDING → COMPLETED&quot;| DOC
+  ORCH -->|&quot;session COMPLETED&quot;| RDS
+</div>
+<h2>13.5 멀티파트 프로세스 (이미지·대용량)</h2>
+<div class="mermaid">flowchart TB
+  DEV[Greengrass v2 · 장비] -->|&quot;① file/request multipart&quot;| IOT[AWS IoT Core]
+  IOT -->|&quot;invoke&quot;| ORCH[file_upload_orchestrator Lambda]
+  ORCH -->|&quot;CreateMultipartUpload&quot;| S3[S3 media bucket]
+  ORCH -->|&quot;② file/response upload_id part_urls&quot;| IOT
+  IOT --> DEV
+
+  DEV -->|&quot;③ PUT part_urls n&quot;| S3
+  DEV -->|&quot;④ file/chunk part_number etag&quot;| IOT
+  IOT --> KDS[Kinesis Data Streams]
+  KDS --> SYNC[stream_sync_consumer Lambda]
+  SYNC --> DOC[(DocumentDB files_history)]
+  SYNC --> PART[(Aurora media_upload_part)]
+
+  DEV -->|&quot;⑤ file/complete parts&quot;| IOT
+  IOT --> ORCH
+  ORCH -->|&quot;CompleteMultipartUpload&quot;| S3
+  ORCH --> RDS[(Aurora media_upload_session COMPLETED)]
+</div>
+<h2>13.6 이미지 청크 업로드</h2>
+<p>검사 SW가 프레임 단위로 촬영·업로드할 때:</p>
+<div class="mermaid">flowchart LR
+  subgraph edge [검사 SW · 엣지]
+    CAM[Greengrass · 검사 카메라]
+    BUF[로컬 프레임 버퍼]
+    CAM --> BUF
+  end
+
+  subgraph mqtt [MQTT image_chunk]
+    IOT[AWS IoT Core]
+  end
+
+  subgraph orch [Presign · 멀티파트]
+    ORCH[file_upload_orchestrator Lambda]
+    S3[S3 media/images]
+  end
+
+  subgraph hot [Hot]
+    KDS[Kinesis Data Streams]
+    SYNC[stream_sync_consumer Lambda]
+    DOC[(DocumentDB chunk_index total_chunks)]
+  end
+
+  BUF -->|&quot;file/request image_chunk&quot;| IOT
+  IOT --> ORCH
+  ORCH -->|&quot;file/response upload_id&quot;| IOT
+  IOT --> CAM
+  CAM -->|&quot;UploadPart per frame&quot;| S3
+  CAM -->|&quot;file/chunk chunk_index etag&quot;| IOT
+  IOT --> KDS --> SYNC --> DOC
+  CAM -->|&quot;file/complete checksum_sha256&quot;| IOT
+  ORCH -->|&quot;CompleteMultipartUpload&quot;| S3
+</div>
+<ol>
+<li><code>request</code>: <code>upload_mode=image_chunk</code>, <code>file_kind=image/jpeg</code>, <code>total_chunks</code>, <code>chunk_size_bytes</code></li>
+<li><code>response</code>: 멀티파트 <code>upload_id</code> + 파트 URL (청크 수만큼 또는 동적 재요청)</li>
+<li>각 프레임: 로컬 버퍼 → S3 파트 PUT → <code>file/chunk</code> (<code>chunk_index</code>, <code>part_number</code>, <code>etag</code>)</li>
+<li><code>complete</code>: 최종 조립·<code>checksum_sha256</code> 검증</li>
+</ol>
+<p>DocumentDB <code>files_history</code> 필드: <code>chunk_index</code>, <code>total_chunks</code>, <code>frame_timestamp_ms</code></p>
+<h2>13.7 비디오 스트림 업로드</h2>
+<p>Live/준실시간 검사 녹화:</p>
+<div class="mermaid">flowchart TB
+  subgraph edge [Live 녹화 · 엣지]
+    ENC[Greengrass · MJPEG/H.264 인코더]
+  end
+
+  subgraph mqtt [MQTT video_stream]
+    IOT[AWS IoT Core]
+  end
+
+  subgraph upload [세그먼트 멀티파트]
+    ORCH[file_upload_orchestrator Lambda]
+    S3[S3 media/video-stream]
+  end
+
+  subgraph meta [Hot 메타]
+    KDS[Kinesis Data Streams]
+    SYNC[stream_sync_consumer Lambda]
+    SEG[(Aurora media_stream_segment)]
+  end
+
+  subgraph cold [Cold 감사 선택]
+    GLUE[Glue Spark]
+    ICE[(Iceberg Cold archive)]
+  end
+
+  ENC -->|&quot;file/request video_stream&quot;| IOT
+  IOT --> ORCH
+  ORCH -->|&quot;file/response segment_urls&quot;| IOT
+  IOT --> ENC
+  ENC -->|&quot;PUT seg_n.mp4&quot;| S3
+  ENC -->|&quot;file/stream segment_index stream_seq&quot;| IOT
+  IOT --> KDS --> SYNC --> SEG
+  ENC -->|&quot;file/complete&quot;| IOT
+  ORCH -->|&quot;CompleteMultipartUpload&quot;| S3
+  S3 -.->|&quot;배치 아카이브&quot;| GLUE --> ICE
+</div>
+<ol>
+<li><code>request</code>: <code>upload_mode=video_stream</code>, <code>codec=mjpeg|h264</code>, <code>segment_duration_sec</code></li>
+<li><code>response</code>: 스트림 세션 <code>upload_id</code>, 초기 <code>segment_urls[]</code></li>
+<li>세그먼트마다: <code>file/stream</code> (<code>segment_index</code>, <code>stream_seq</code>, <code>duration_ms</code>, <code>byte_range</code>)</li>
+<li>S3 PUT 후 <code>file/chunk</code> 또는 <code>file/progress</code></li>
+<li><code>complete</code>: 스트림 종료 — Glue/Iceberg 감사 아카이브(선택)</li>
+</ol>
+<p>S3 prefix: <code>media/video-stream/{device_code}/{request_code}/seg_{index}.mp4</code></p>
+<h2>13.8 Lambda 역할</h2>
+<table>
+<thead>
+<tr>
+<th>Lambda</th>
+<th>트리거</th>
+<th>역할</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>stream_sync_consumer</code></td>
+<td>KDS</td>
+<td>MQTT → rules → DocDB <code>files_history</code></td>
+</tr>
+<tr>
+<td><strong><code>file_upload_orchestrator</code></strong></td>
+<td>IoT Rule <code>file/request</code> invoke + (선택) EventBridge</td>
+<td>Presigned·Create/Complete/Abort Multipart, Aurora session</td>
+</tr>
+<tr>
+<td><code>batch_cadence_runner</code></td>
+<td>EventBridge</td>
+<td><code>equipment_log_media</code> · 세션 집계</td>
+</tr>
+</tbody></table>
+<h2>13.9 S3 레이아웃</h2>
+<pre><code>s3://{media_bucket}/
+  media/images/{device_code}/{request_code}/object.jpg
+  media/images/{device_code}/{request_code}/parts/...
+  media/video-stream/{device_code}/{request_code}/seg_00001.mp4
+  media/logs/{device_code}/{request_code}/export.tar.gz
+  errors/media-upload/{device_code}/...
+</code></pre>
+<p>로컬 MinIO: <code>config/local/minio-init.sh</code> — <code>tv-media-upload</code> 버킷</p>
+<h2>13.10 실패·재시도</h2>
+<table>
+<thead>
+<tr>
+<th>상황</th>
+<th>처리</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Presigned 403/만료</td>
+<td><code>file/request</code> + <code>reason=url_expired</code> → Abort 이전 upload_id</td>
+</tr>
+<tr>
+<td>파트 실패</td>
+<td><code>file/chunk</code> status=failed → 동일 part_number URL 재발급</td>
+</tr>
+<tr>
+<td>오프라인</td>
+<td>엣지 <code>files/</code> 보관 → 복귀 후 request부터 재개 (<a href="#doc-08-greengrass-offline-resilience">08</a> §8.4.3)</td>
+</tr>
+<tr>
+<td>stuck PENDING</td>
+<td>배치 알람 + Runbook Abort</td>
+</tr>
+</tbody></table>
+<h2>13.11 UI 연동</h2>
+<table>
+<thead>
+<tr>
+<th>화면</th>
+<th>데이터</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>equipment-logs</td>
+<td><code>equipment_log_media</code> — image/video 카테고리</td>
+</tr>
+<tr>
+<td>inspection</td>
+<td>검사 프레임·녹화 목록</td>
+</tr>
+<tr>
+<td>data-pipeline</td>
+<td>업로드 세션 lag·실패율</td>
+</tr>
+</tbody></table>
+<h2>13.12 관련 문서·설정</h2>
+<ul>
+<li><a href="#doc-02-data-pipeline">02-data-pipeline.md</a> · <a href="#doc-05-yaml-and-rules">05-yaml-and-rules.md</a> §5.9 file</li>
+<li><a href="#doc-08-greengrass-offline-resilience">08-greengrass-offline-resilience.md</a> §8.4.3</li>
+<li><a href="./config/media-upload.yaml">config/media-upload.yaml</a></li>
+<li><a href="./config/converter-rules/">config/converter-rules/rule_file_*.yaml</a></li>
+<li><a href="./config/samples/">config/samples/file_*.sample.json</a></li>
+</ul>
+
+</section>
+
+<section id="doc-config-samples-mqtt-topics" class="doc-section md-content" data-group="media" data-source="config/samples/mqtt-topics.md">
+  <p class="source-tag">SSOT: <code>02.arch/config/samples/mqtt-topics.md</code></p>
+  <h1>테크밸리 MQTT 토픽 예시 (8세그먼트)</h1>
+<h2>패턴</h2>
+<pre><code>{tenant}/{env}/{edge}/{device}/{data_kind}/{domain}/{role}/json
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>세그먼트</th>
+<th>테크밸리 예</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>tenant</td>
+<td><code>tv</code></td>
+</tr>
+<tr>
+<td>env</td>
+<td><code>dev</code> · <code>stg</code> · <code>prd</code></td>
+</tr>
+<tr>
+<td>edge</td>
+<td>Greengrass Thing (예: <code>GG-HW-001</code>)</td>
+</tr>
+<tr>
+<td>device</td>
+<td>장비 S/N (예: <code>HK-2024-00158</code>)</td>
+</tr>
+<tr>
+<td>data_kind</td>
+<td><code>periodic</code> · <code>event</code></td>
+</tr>
+<tr>
+<td>domain</td>
+<td><code>telemetry</code> · <code>fota</code> · <code>control</code> · <code>alarm</code> · <code>file</code> · <code>ota</code></td>
+</tr>
+<tr>
+<td>role</td>
+<td><code>report</code> · <code>status</code> · <code>command</code> · <code>chunk</code> · <code>cf-url-request</code></td>
+</tr>
+<tr>
+<td>format</td>
+<td><code>json</code></td>
+</tr>
+</tbody></table>
+<h2>주기 텔레메트리 (metric-stream #periodic)</h2>
+<pre><code>tv/prd/GG-HW-001/HK-2024-00158/periodic/telemetry/report/json
+</code></pre>
+<p>페이로드 예 (장비 → Greengrass → IoT Core):</p>
+<pre><code class="language-json">{
+  &quot;deviceId&quot;: &quot;HK-2024-00158&quot;,
+  &quot;device_timestamp&quot;: 1717654320000,
+  &quot;data_index&quot;: 0,
+  &quot;datas&quot;: [
+    { &quot;key&quot;: &quot;tube.kv&quot;, &quot;value&quot;: 160.2, &quot;value_type&quot;: &quot;number&quot; },
+    { &quot;key&quot;: &quot;tube.ma&quot;, &quot;value&quot;: 3.8, &quot;value_type&quot;: &quot;number&quot; },
+    { &quot;key&quot;: &quot;detector.temp_c&quot;, &quot;value&quot;: 42.1, &quot;value_type&quot;: &quot;number&quot; },
+    { &quot;key&quot;: &quot;yield_pct&quot;, &quot;value&quot;: 97.4, &quot;value_type&quot;: &quot;number&quot; }
+  ]
+}
+</code></pre>
+<h2>이벤트·알람 (#event)</h2>
+<pre><code>tv/prd/GG-HW-001/HK-2024-00158/event/telemetry/status/json
+tv/prd/GG-HW-001/HK-2024-00158/event/alarm/triggered/json
+</code></pre>
+<h2>OTA (#firmware)</h2>
+<pre><code>tv/prd/GG-HW-001/HK-2024-00158/event/fota/status/json
+tv/prd/GG-HW-001/HK-2024-00158/+/ota/cf-url-request/json
+tv/prd/GG-HW-001/HK-2024-00158/+/ota/progress/json
+</code></pre>
+<h2>원격제어 (#control)</h2>
+<pre><code>tv/prd/GG-HW-001/HK-2024-00158/event/control/command/json
+tv/prd/GG-HW-001/HK-2024-00158/event/control/result/json
+</code></pre>
+<h2>미디어 업로드 — 이미지·비디오·S3 (#file)</h2>
+<p>상세: <a href="#doc-13-media-upload-pipeline">13-media-upload-pipeline.md</a></p>
+<pre><code>tv/prd/GG-HW-001/HK-2024-00158/event/file/request/json
+tv/prd/GG-HW-001/HK-2024-00158/event/file/response/json
+tv/prd/GG-HW-001/HK-2024-00158/event/file/chunk/json
+tv/prd/GG-HW-001/HK-2024-00158/event/file/stream/json
+tv/prd/GG-HW-001/HK-2024-00158/event/file/progress/json
+tv/prd/GG-HW-001/HK-2024-00158/event/file/complete/json
+tv/prd/GG-HW-001/HK-2024-00158/event/file/abort/json
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>upload_mode</th>
+<th>용도</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>single_put</code></td>
+<td>5MB 이하 로그·소형 파일</td>
+</tr>
+<tr>
+<td><code>multipart</code></td>
+<td>대용량 단일 객체</td>
+</tr>
+<tr>
+<td><code>image_chunk</code></td>
+<td>검사 프레임 청크</td>
+</tr>
+<tr>
+<td><code>video_stream</code></td>
+<td>MJPEG/H.264 세그먼트</td>
+</tr>
+</tbody></table>
+<h2>IoT Rule PartitionKey</h2>
+<p><code>device_code</code> = topic(4) = 장비 S/N</p>
+<h2>UI hash 매핑</h2>
+<table>
+<thead>
+<tr>
+<th>UI hash</th>
+<th>topic 예</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>#periodic</code></td>
+<td><code>.../periodic/telemetry/report/json</code></td>
+</tr>
+<tr>
+<td><code>#event</code></td>
+<td><code>.../event/telemetry/status/json</code></td>
+</tr>
+<tr>
+<td><code>#firmware</code></td>
+<td><code>.../event/fota/status/json</code></td>
+</tr>
+<tr>
+<td><code>#control</code></td>
+<td><code>.../event/control/result/json</code></td>
+</tr>
+</tbody></table>
+
+</section>
+
+<section id="doc-08-greengrass-offline-resilience" class="doc-section md-content" data-group="edge" data-source="08-greengrass-offline-resilience.md">
+  <p class="source-tag">SSOT: <code>02.arch/08-greengrass-offline-resilience.md</code></p>
+  <h1>08. Greengrass 오프라인·복구 프로세스</h1>
+<p>기능정의서 A1(네트워크 단절 시 <strong>스풀·재동기화</strong>)과 <a href="https://hd-ksoe.vercel.app/">hiCAMS 아키텍처</a>의 Greengrass V2 오프라인 패턴을 <strong>테크밸리 장비 엣지</strong> 기준으로 정리한 SSOT입니다.</p>
+<h2>8.1 엣지 구성 (현장 · 장비)</h2>
+<p>조직: <code>company</code> → <code>branch</code> → <code>site</code>(현장) → <code>device</code> → Greengrass (<a href="#doc-config-schema-org-hierarchy">org-hierarchy.md</a>)</p>
+<div class="mermaid">flowchart TB
+  subgraph org [조직 · 현장]
+    SITE[site 현장 org_level=3]
+  end
+  subgraph equipment [장비 · 엣지]
+    DEV[device device_code]
+    GG[Greengrass v2]
+    DEV --> GG
+  end
+  SITE --> DEV
+</div>
+<div class="mermaid">flowchart LR
+  subgraph equipment [장비 / 현장]
+    APP[장비 본체 SW\n튜브·디텍터·수집]
+    GG[Greengrass v2 Nucleus\nDisk Spooler]
+    LOCAL[(엣지 로컬 저장\nMinIO 또는 Stream Manager)]
+    APP <-->|IPC / REST| GG
+    APP --> LOCAL
+    GG --> LOCAL
+  end
+
+  GG <-->|MQTTS QoS1\n오프라인 큐| IOT[AWS IoT Core]
+  IOT --> KDS[KDS → Lambda → Hot/Cold]
+</div>
+<table>
+<thead>
+<tr>
+<th>컴포넌트</th>
+<th>역할 (테크밸리)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Greengrass Nucleus</strong></td>
+<td>Thing 인증서·TLS, IPC 허브, <strong>Disk Spooler</strong>, 자동 재연결</td>
+</tr>
+<tr>
+<td><strong>OTA Controller</strong> (GG 컴포넌트)</td>
+<td>IoT Jobs 수신 → 펌웨어·컴포넌트 배포</td>
+</tr>
+<tr>
+<td><strong>Stream / Upload 컴포넌트</strong></td>
+<td>대용량(검사 이미지·로그) S3 멀티파트 업로드</td>
+</tr>
+<tr>
+<td><strong>장비 본체 SW</strong></td>
+<td>tube.kv·디텍터·주기 보고 생성, GG IPC로 MQTT 발행</td>
+</tr>
+<tr>
+<td><strong>엣지 로컬 저장</strong></td>
+<td>오프라인 중 펌웨어 tar·미전송 파일·버퍼 보관</td>
+</tr>
+</tbody></table>
+<p>UI 연동: 알람 «Greengrass 연결 끊김 — 스풀 버퍼 N MB», 장비 로그 <strong>본체</strong> 카테고리(Greengrass·가동시간), <code>equipment</code> 상태 <code>offline</code> / <code>safe_mode</code>.</p>
+<h2>8.2 Nucleus Disk Spooler (MQTT 큐잉)</h2>
+<p>오프라인·불안정 네트워크에서 <strong>MQTT 유실 방지</strong>의 1차 수단입니다.</p>
+<pre><code class="language-yaml"># Greengrass Nucleus config (기준값 — hiCAMS·테크밸리 공통)
+mqtt:
+  spooler:
+    storageType: Disk          # 재시작 후에도 유지
+    maxSizeInBytes: 52428800   # 50MB
+    keepQos0WhenOffline: false # QoS 0는 오프라인 시 폐기
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>동작</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>저장 대상</strong></td>
+<td>QoS <strong>1</strong> MQTT (주기 텔레메트리, 이벤트, OTA/file 상태, 알람)</td>
+</tr>
+<tr>
+<td><strong>용량 초과</strong></td>
+<td>FIFO 또는 정책에 따라 오래된 메시지 drop — CloudWatch·엣지 알람</td>
+</tr>
+<tr>
+<td><strong>재시작</strong></td>
+<td>Disk 저장이므로 GG 프로세스 재기동 후에도 큐 유지</td>
+</tr>
+<tr>
+<td><strong>온라인 복귀</strong></td>
+<td>Nucleus 자동 재연결 → <strong>큐에 쌓인 QoS 1 메시지 순차 발행</strong></td>
+</tr>
+</tbody></table>
+<p>QoS 0(일회성 heartbeat 등)은 오프라인 시 저장하지 않음 — 실시간성만 필요한 low-priority에만 사용.</p>
+<h2>8.3 오프라인 → 온라인 복귀 시나리오</h2>
+<p>hiCAMS «오프라인 → 온라인 복귀 시나리오»를 테크밸리 도메인에 매핑한 표입니다.</p>
+<table>
+<thead>
+<tr>
+<th>상태</th>
+<th>동작</th>
+<th>보장 수단</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>오프라인 중 IoT Jobs 생성</strong> (OTA·원격진단)</td>
+<td>클라우드에서 Job <strong>QUEUED</strong> 유지</td>
+<td>IoT Jobs 상태 관리</td>
+</tr>
+<tr>
+<td><strong>오프라인 중 텔레메트리·이벤트 발생</strong></td>
+<td>Disk Spooler(50MB)에 MQTT 큐잉</td>
+<td>GG Nucleus Spooler</td>
+</tr>
+<tr>
+<td><strong>오프라인 중 대용량 파일 적재</strong></td>
+<td>엣지 로컬 <code>files/</code> 버킷에 저장</td>
+<td>MinIO / Stream Manager</td>
+</tr>
+<tr>
+<td><strong>온라인 복귀 (일반)</strong></td>
+<td>Pending Jobs 자동 수신(<code>notify-next</code>), 큐 메시지 자동 발행</td>
+<td>GG 자동 재연결</td>
+</tr>
+<tr>
+<td><strong>온라인 복귀 — Signed URL 만료</strong></td>
+<td>Retained/로컬 <code>expires_in</code> 확인 → 만료 시 <strong>재요청 토픽</strong> 발행</td>
+<td>엣지 재요청 + Lambda 재발급</td>
+</tr>
+<tr>
+<td><strong>온라인 복귀 — 미업로드 파일</strong></td>
+<td><code>file/request</code> 재발행 → 새 Presigned URL → 업로드 재개</td>
+<td>S3 멀티파트 재시작</td>
+</tr>
+<tr>
+<td><strong>복귀 후 클라우드 반영</strong></td>
+<td>KDS → Lambda → DocumentDB Hot · Aurora Warm</td>
+<td>기존 실시간 파이프라인</td>
+</tr>
+</tbody></table>
+<h3>복귀 후 처리 순서 (권장)</h3>
+<pre><code>1. Nucleus TLS 재연결
+2. IoT Jobs notify-next 수신 (대기 중 OTA·진단 Job)
+3. Disk Spooler 적재 MQTT 순차 publish (발생 시각·seq 메타 유지)
+4. 엣지 로컬 files/ 스캔 → 미전송 건 file/request
+5. (선택) communication_quality 배치가 gap·지연 감지 → 알람 해제/티켓 업데이트
+</code></pre>
+<h2>8.4 데이터 종류별 오프라인 처리</h2>
+<h3>8.4.1 주기·이벤트 텔레메트리 (A1)</h3>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>토픽</strong></td>
+<td><code>tv/{env}/{edge}/{device}/periodic/telemetry/report/json</code> 등</td>
+</tr>
+<tr>
+<td><strong>오프라인</strong></td>
+<td>GG Spooler에 QoS 1로 적재 (tube.kv, temp, yield)</td>
+</tr>
+<tr>
+<td><strong>복귀</strong></td>
+<td>시간순 publish → IoT Rule → KDS → Lambda → <strong>DocumentDB Hot</strong></td>
+</tr>
+<tr>
+<td><strong>UI</strong></td>
+<td>메트릭 스트림은 복귀 후 catch-up; 대시보드 KPI는 <strong>배치 롤업</strong>만 반영</td>
+</tr>
+<tr>
+<td><strong>주의</strong></td>
+<td>KDS 보존(7일) &lt; 장기 오프라인이면 Spooler 용량·로컬 ring buffer 정책 필요</td>
+</tr>
+</tbody></table>
+<h3>8.4.2 OTA · Greengrass 컴포넌트 (A1 · settings/firmware)</h3>
+<table>
+<thead>
+<tr>
+<th>단계</th>
+<th>오프라인</th>
+<th>온라인 복귀</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Job 생성</td>
+<td>클라우드 <strong>QUEUED</strong></td>
+<td><code>notify-next</code> → jobDocument의 <code>signed_url</code>로 다운로드</td>
+</tr>
+<tr>
+<td>다운로드 중 단절</td>
+<td>CF/로컬 partial 파일</td>
+<td>checksum 실패 시 재다운로드</td>
+</tr>
+<tr>
+<td>URL 만료 (24h)</td>
+<td>—</td>
+<td><code>event/ota/cf-url-request/json</code> → Lambda → <strong>Retained</strong> <code>cf-url-response</code></td>
+</tr>
+<tr>
+<td>설치 완료</td>
+<td>상태 MQTT Spooler 적재</td>
+<td><code>$aws/things/.../jobs/.../update</code> + 커스텀 <code>ota/status</code> → Aurora</td>
+</tr>
+</tbody></table>
+<p><strong>핵심</strong>: 정상 OTA는 jobDocument에 <strong>CF Signed URL</strong> 포함 — 별도 MQTT 왕복 없이 즉시 다운로드. 만료·403 시에만 재요청.</p>
+<h3>8.4.3 대용량 파일 (검사 이미지 · 로그 export · files_history)</h3>
+<p>MQTT는 <strong>제어·메타만</strong> — 페이로드 본문은 <strong>Presigned PUT</strong>으로 S3 직접 업로드 (hiCAMS file 도메인 패턴).</p>
+<pre><code>오프라인:  장비 SW → 엣지 files/ 로컬 PUT
+온라인:    file/request/json → Lambda CreateMultipartUpload
+           file/response/json (upload_id, part_urls, expires_in: 3600)
+           MinIO/files GET → S3 PUT (파트별)
+           file/complete/json → Lambda CompleteMultipartUpload → Aurora files COMPLETED
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>URL 유형</th>
+<th>유효시간</th>
+<th>만료 시</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>OTA CF Signed URL</td>
+<td>86400s (24h)</td>
+<td><code>ota/cf-url-request</code> → Retained 덮어쓰기</td>
+</tr>
+<tr>
+<td>S3 Presigned (파트)</td>
+<td>3600s (1h)</td>
+<td><code>file/request</code> 재발행 + <strong>AbortMultipartUpload</strong>(이전 upload_id)</td>
+</tr>
+</tbody></table>
+<h3>8.4.4 원격제어 · Shadow (A5)</h3>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>오프라인 동작</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Shadow desired</strong></td>
+<td>클라우드에 저장, 디바이스 offline 시 delta 미전달</td>
+</tr>
+<tr>
+<td><strong>복귀</strong></td>
+<td>GG가 Shadow sync → desired delta 적용 → reported 갱신</td>
+</tr>
+<tr>
+<td><strong>IoT Jobs (제어)</strong></td>
+<td>QUEUED 유지, 복귀 후 실행 — Fail-safe 인터락은 <strong>엣지 로컬</strong>에서 우선</td>
+</tr>
+</tbody></table>
+<p>UI <code>remote-control</code>은 Hot Tier — 연결 끊김 시 «오프라인» 표시, 명령 큐는 클라우드 Job/Shadow에 보관.</p>
+<h2>8.5 URL 만료·재요청 흐름</h2>
+<div class="mermaid">sequenceDiagram
+  participant Edge as Greengrass (엣지)
+  participant IOT as IoT Core
+  participant L as Lambda
+  participant Target as CloudFront / S3
+
+  Note over Edge,Target: 정상 — URL 유효
+  Edge->>Target: GET/PUT (signed URL)
+  Target-->>Edge: 200 OK
+
+  Note over Edge,Target: 만료 — 로컬 타이머 또는 HTTP 403
+  Edge->>IOT: ota/cf-url-request 또는 file/request (reason=url_expired)
+  IOT->>L: KDS 트리거
+  alt OTA
+    L->>IOT: cf-url-response Retained=true (새 URL)
+  else File upload
+    L->>Target: AbortMultipartUpload (이전 upload_id)
+    L->>IOT: file/response (새 upload_id, part_urls)
+  end
+  IOT-->>Edge: 새 URL 수신
+  Edge->>Target: 재시도 성공
+</div>
+<h2>8.6 엣지 로컬 저장소 (MinIO / Stream Manager)</h2>
+<p>hiCAMS MinIO 2버킷 패턴을 테크밸리에 적용합니다.</p>
+<table>
+<thead>
+<tr>
+<th>버킷 (로컬)</th>
+<th>용도</th>
+<th>오프라인</th>
+<th>온라인 복귀</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>firmware/</strong></td>
+<td>Greengrass OTA tar·컴포넌트 아티팩트</td>
+<td>CF 다운로드 완료까지 로컬 보관</td>
+<td>Webhook → 배포 오케스트레이션 → <code>docker load</code> / GG deploy</td>
+</tr>
+<tr>
+<td><strong>files/</strong></td>
+<td>검사 이미지, 튜브 로그 export, 대용량 첨부</td>
+<td><strong>로컬 PUT 계속 가능</strong></td>
+<td>GG Upload 컴포넌트 → S3 멀티파트</td>
+</tr>
+<tr>
+<td><strong>spool/</strong> (선택)</td>
+<td>Stream Manager ring buffer</td>
+<td>KDS 초과분·고빈도 주기</td>
+<td>GG → MQTT 재전송</td>
+</tr>
+</tbody></table>
+<p>로컬 저장 용량·디스크 임계치는 <strong>본체</strong> Warm 로그·알람(«스풀 버퍼 2.4MB» 등)과 연동해 모니터링.</p>
+<h2>8.7 클라우드·UI 반영</h2>
+<table>
+<thead>
+<tr>
+<th>관측</th>
+<th>저장·표시</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>GG connectivity</td>
+<td>Device Shadow <code>connectivity</code>, CloudWatch IoT</td>
+</tr>
+<tr>
+<td>Spooler 사용량</td>
+<td>엣지 메트릭 → <code>communication_quality_rollups</code></td>
+</tr>
+<tr>
+<td>마지막 telemetry 시각</td>
+<td>DocumentDB Hot → 플릿 지도 <code>offline</code></td>
+</tr>
+<tr>
+<td>복귀 후 backlog drain</td>
+<td>Hot lagMs 감소, <code>data-pipeline</code> 실시간 패널</td>
+</tr>
+<tr>
+<td>장기 단절 SLA</td>
+<td>EventBridge → <code>communication_alarm_incident</code> → 티켓</td>
+</tr>
+</tbody></table>
+<p><strong>배치 vs 실시간</strong>: 오프라인 기간 KPI·알람 집계는 복귀 후 <strong>hourly/daily 롤업</strong>에 반영. 실시간 화면은 복구 직후 catch-up 구간을 lag으로 표시.</p>
+<h2>8.8 MQTT 토픽 (오프라인·복구 관련)</h2>
+<p>테크밸리 8세그먼트 (<code>05-yaml-and-rules.md</code> 참고). <code>tenant</code>는 플랫폼 코드 <code>tv</code> — <strong>회사(<code>company.code</code>)는 토픽에 넣지 않습니다</strong> (조직은 <code>device</code> 마스터 조인).</p>
+<table>
+<thead>
+<tr>
+<th>domain</th>
+<th>role</th>
+<th>방향</th>
+<th>용도</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ota</code></td>
+<td><code>cf-url-request</code></td>
+<td>↑</td>
+<td>CF Signed URL 재발급 요청</td>
+</tr>
+<tr>
+<td><code>ota</code></td>
+<td><code>cf-url-response</code></td>
+<td>↓ Retained</td>
+<td>재발급 URL (OTA만 Retained)</td>
+</tr>
+<tr>
+<td><code>ota</code></td>
+<td><code>progress</code> / <code>status</code></td>
+<td>↑</td>
+<td>OTA 진행·완료 (Spooler 경유 가능)</td>
+</tr>
+<tr>
+<td><code>file</code></td>
+<td><code>request</code> / <code>response</code> / <code>chunk</code> / <code>stream</code> / <code>progress</code> / <code>complete</code> / <code>abort</code></td>
+<td>↑↓</td>
+<td>S3 단일·멀티파트·이미지청크·비디오 (<a href="#doc-13-media-upload-pipeline">13</a>)</td>
+</tr>
+<tr>
+<td><code>telemetry</code></td>
+<td><code>report</code></td>
+<td>↑</td>
+<td>주기·이벤트 (Spooler 경유)</td>
+</tr>
+<tr>
+<td><code>alarm</code></td>
+<td><code>{kind}</code></td>
+<td>↑</td>
+<td>연결 끊김·Spooler 임계 등</td>
+</tr>
+</tbody></table>
+<p>IoT Jobs 시스템 토픽 (<code>$aws/things/{thing}/jobs/notify-next</code>)은 Nucleus가 <strong>자동 구독</strong> — 오프라인 Job은 복귀 시 자동 전달.</p>
+<h2>8.9 운영 Runbook (요약)</h2>
+<ol>
+<li><strong>단기 단절 (&lt; Spooler 50MB)</strong>: 자동 복구 대기 — 수동 개입 불필요</li>
+<li><strong>Spooler 임계 80%</strong>: 현장 네트워크 점검, 알람 «Greengrass 연결 끊김» 확인</li>
+<li><strong>Spooler full</strong>: QoS1 drop 정책 발동 — 우선순위(알람 &gt; event &gt; periodic) 재정렬 검토</li>
+<li><strong>장기 단절 (&gt; KDS 7일)</strong>: 엣지 로컬 files/·ring buffer 확인, 현장 USB/export 또는 네트워크 복구 후 <strong>수동 replay</strong> Runbook</li>
+<li><strong>OTA URL 만료</strong>: Job <code>IN_PROGRESS</code> + 403 → cf-url-request 자동 — 24h 내 현장 복구 권장</li>
+<li><strong>파일 upload stuck</strong>: Aurora <code>files.status=PENDING</code> + upload_id → Abort 후 재요청</li>
+</ol>
+<h2>8.10 참고 출처</h2>
+<ul>
+<li><a href="https://hd-ksoe.vercel.app/">hiCAMS 시스템 아키텍처 — 오프라인 → 온라인 복귀</a> (Disk Spooler 50MB, IoT Jobs QUEUED, URL 재발급)</li>
+<li>테크밸리 기능정의서 A1: «네트워크 단절 시 스풀·재동기화»</li>
+<li><a href="#doc-02-data-pipeline">02-data-pipeline.md</a> — KDS·Lambda·Hot 경로</li>
+<li><a href="#doc-05-yaml-and-rules">05-yaml-and-rules.md</a> — ota/file 도메인 토픽</li>
+<li><a href="#doc-09-ai-anomaly-rules-and-edge-self-healing">09-ai-anomaly-rules-and-edge-self-healing.md</a> — SageMaker <code>edge_client</code> 분류 시 OTA·self-heal Job 연동, 제품 개선 루프</li>
+</ul>
+
+</section>
+
+<section id="doc-09-ai-anomaly-rules-and-edge-self-healing" class="doc-section md-content" data-group="ai" data-source="09-ai-anomaly-rules-and-edge-self-healing.md">
+  <p class="source-tag">SSOT: <code>02.arch/09-ai-anomaly-rules-and-edge-self-healing.md</code></p>
+  <h1>09. AI 이상 감지 · 룰셋 추천 · 엣지 자가복구</h1>
+<p>테크밸리 IoT 플랫폼의 <strong>운영 AI</strong> SSOT입니다.<br>기능정의서 <strong>A4(알람·룰셋)·A5(원격진단/제어)</strong> 와 연계하며, 제안서 <strong>D(Bedrock·RAG)</strong> 는 보조·설명 계층으로 분리합니다.</p>
+<h2>9.1 AI 계층 구분</h2>
+<table>
+<thead>
+<tr>
+<th>계층</th>
+<th>기술</th>
+<th>역할</th>
+<th>범위</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>운영 AI (본 문서)</strong></td>
+<td><strong>Amazon SageMaker</strong></td>
+<td>센서 이상 탐지, 룰셋 추천, 자동/반자동 알림·제어 트리거</td>
+<td><strong>IoT A4/A5 — 포함</strong></td>
+</tr>
+<tr>
+<td><strong>엣지 AI</strong></td>
+<td>SageMaker Edge Manager / GG 컴포넌트</td>
+<td>현장 단독 이상 판정·자가복구 Job</td>
+<td><strong>A1/A5 — 포함</strong></td>
+</tr>
+<tr>
+<td><strong>지원 AI (D)</strong></td>
+<td>Bedrock + RAG</td>
+<td>매뉴얼·정비 이력 검색, 조치 문구·리포트 초안, 챗봇</td>
+<td>별도 영역, <strong>사람 확인 후</strong> 실행</td>
+</tr>
+<tr>
+<td><strong>제외</strong></td>
+<td>제조 AI·MES 심화</td>
+<td>공정·LOT 최적화 등 Project B</td>
+<td>본 아키텍처 범위 밖</td>
+</tr>
+</tbody></table>
+<p><strong>원칙</strong>: SageMaker가 <strong>수치 이상·패턴</strong>을 감지하고, Bedrock은 <strong>설명·문서·추천 문구</strong>를 보강. 최종 룰 배포·원격제어·티켓 확정은 <strong>RBAC + 정책(자동/승인)</strong> 으로 통제.</p>
+<h2>9.2 전체 흐름</h2>
+<div class="mermaid">flowchart TB
+  subgraph ingest [수집]
+    EDGE[Greengrass + 장비 SW]
+    IOT[IoT Core → KDS → Hot/Warm/Cold]
+    EDGE --> IOT
+  end
+
+  subgraph ml [SageMaker]
+    FS[Feature Store / 배치 피처]
+    TRAIN[학습·재학습 Pipeline]
+    INF_CLOUD[실시간·배치 Inference]
+    INF_EDGE[Edge Manager — 엣지 모델]
+    FS --> TRAIN --> INF_CLOUD
+    TRAIN --> INF_EDGE
+  end
+
+  subgraph detect [이상·룰]
+    ANOM[이상 점수·구간·메트릭]
+    REC[룰셋 추천 Engine]
+    RULES[alarm-rules / EventBridge]
+    ANOM --> REC --> RULES
+  end
+
+  subgraph act [알림·경고·제어]
+    SNS[SNS / SES / 대시보드]
+    EB[EventBridge]
+    RC[원격제어 Shadow / Job]
+    TK[서비스 티켓]
+    RULES --> EB --> SNS
+    RULES --> RC
+    RULES --> TK
+  end
+
+  subgraph heal [엣지 자가복구 · 제품 개선]
+    CLASS[원인 분류: edge vs cloud]
+    OTA[GG OTA / IoT Jobs]
+    FIX[로컬 remediation]
+    FEED[피드백 → 모델·펌웨어]
+    CLASS --> OTA
+    CLASS --> FIX
+    OTA --> FEED
+    FIX --> FEED
+  end
+
+  IOT --> FS
+  IOT --> INF_CLOUD
+  INF_CLOUD --> ANOM
+  INF_EDGE --> ANOM
+  ANOM --> CLASS
+  REC -.Bedrock 설명.-> REC
+</div>
+<h2>9.3 SageMaker — 이상 센서 데이터 감지</h2>
+<h3>9.3.1 대상 메트릭 (테크밸리)</h3>
+<table>
+<thead>
+<tr>
+<th>도메인</th>
+<th>메트릭 예</th>
+<th>UI·로그</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>튜브</td>
+<td><code>tube.kv</code>, <code>tube.ma</code>, drift, 수명</td>
+<td>metric-stream <code>#periodic</code>, 장비 로그 <strong>튜브</strong></td>
+</tr>
+<tr>
+<td>디텍터</td>
+<td><code>detector.temp_c</code>, dead pixel proxy, yield</td>
+<td><strong>디텍터</strong>, inspection</td>
+</tr>
+<tr>
+<td>본체</td>
+<td>Greengrass connectivity, spool usage, uptime</td>
+<td><strong>본체</strong>, 알람</td>
+</tr>
+<tr>
+<td>통신</td>
+<td>message gap, <code>ReplicaLag</code> proxy, spool buffer</td>
+<td>data-pipeline, SLA</td>
+</tr>
+</tbody></table>
+<h3>9.3.2 데이터 소스·피처</h3>
+<table>
+<thead>
+<tr>
+<th>용도</th>
+<th>소스</th>
+<th>갱신</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>학습·재학습</td>
+<td>Iceberg <code>stream_fact_telemetry</code>, Aurora rollups</td>
+<td>일/주 배치</td>
+</tr>
+<tr>
+<td>실시간 추론 입력</td>
+<td>DocumentDB Hot <code>periodic_telemetry</code>, KDS 스트림</td>
+<td>초~분</td>
+</tr>
+<tr>
+<td>Feature Store</td>
+<td>SageMaker Feature Group (device_code, metric, window stats)</td>
+<td>stream/batch ingest</td>
+</tr>
+</tbody></table>
+<h3>9.3.3 모델·배포 패턴</h3>
+<table>
+<thead>
+<tr>
+<th>패턴</th>
+<th>적용</th>
+<th>AWS</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>다변량 이상</strong></td>
+<td>tube.kv + temp + yield 동시 drift</td>
+<td>Random Cut Forest / DeepAR / custom autoencoder</td>
+</tr>
+<tr>
+<td><strong>시계열 baseline</strong></td>
+<td>장비·Site별 seasonality</td>
+<td>SageMaker Canvas 또는 Processing Job</td>
+</tr>
+<tr>
+<td><strong>클라우드 실시간</strong></td>
+<td>KDS/Lambda 후 SageMaker <strong>Endpoint</strong> invoke</td>
+<td>Lambda <code>anomaly_scorer</code></td>
+</tr>
+<tr>
+<td><strong>배치 스코oring</strong></td>
+<td>hourly rollup 후 이상 구간 태깅</td>
+<td>EventBridge → SageMaker Batch Transform</td>
+</tr>
+<tr>
+<td><strong>엣지</strong></td>
+<td>네트워크 단절·저지연 판정</td>
+<td><strong>SageMaker Edge Manager</strong> + GG 컴포넌트</td>
+</tr>
+</tbody></table>
+<h3>9.3.4 이상 출력 스키마 (표준)</h3>
+<pre><code class="language-json">{
+  &quot;anomaly_id&quot;: &quot;anom-20260606-001&quot;,
+  &quot;device_code&quot;: &quot;HK-2024-00158&quot;,
+  &quot;site_id&quot;: &quot;site-001&quot;,
+  &quot;detected_at&quot;: &quot;2026-06-06T14:12:00+09:00&quot;,
+  &quot;model_id&quot;: &quot;tv-tube-multivariate-v3&quot;,
+  &quot;anomaly_score&quot;: 0.92,
+  &quot;severity_hint&quot;: &quot;critical&quot;,
+  &quot;metrics&quot;: [
+    { &quot;name&quot;: &quot;tube.kv&quot;, &quot;value&quot;: 142.1, &quot;baseline&quot;: 120.0, &quot;z_score&quot;: 3.8 }
+  ],
+  &quot;pattern&quot;: &quot;sudden_spike&quot;,
+  &quot;root_cause_hint&quot;: &quot;edge_client&quot;,
+  &quot;confidence&quot;: 0.87
+}
+</code></pre>
+<p>저장: Aurora <code>anomaly_events</code>, DocumentDB Hot(단기), Iceberg(학습 피드백).</p>
+<h2>9.4 룰셋 추천</h2>
+<p>SageMaker 이상 탐지 결과 → <strong>추천 룰 후보</strong> 생성 → 운영자 승인 → EventBridge·알람 룰 반영.</p>
+<h3>9.4.1 추천 파이프라인</h3>
+<pre><code>anomaly_events (신규·반복 패턴)
+  → Rule Recommendation Service
+       ├─ 유사 과거 알람·AS 이력 조회 (Aurora)
+       ├─ (선택) Bedrock: 임계·복합 조건 자연어 → JSON 초안 + 근거
+       └─ rule_recommendations 레코드 생성
+  → alarm-rules UI: 검토 · 수정 · 승인 · 배포
+  → notification_ruleset_mirror + EventBridge Rule 업데이트
+</code></pre>
+<h3>9.4.2 추천 룰 예시</h3>
+<table>
+<thead>
+<tr>
+<th>이상 패턴</th>
+<th>추천 룰 (초안)</th>
+<th>severity</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>tube.kv drift &gt; 3σ 지속 10min</td>
+<td><code>tube.kv &gt; baseline + 4 AND duration &gt; 600s</code></td>
+<td>warning → critical</td>
+</tr>
+<tr>
+<td>detector temp + dead pixel proxy</td>
+<td>복합: temp &gt; 65°C AND yield drop &gt; 5%</td>
+<td>critical</td>
+</tr>
+<tr>
+<td>Greengrass spool &gt; 80% + gap</td>
+<td>connectivity alarm + 티켓 자동</td>
+<td>warning</td>
+</tr>
+<tr>
+<td>반복 edge_client 분류</td>
+<td>OTA 컴포넌트 업데이트 Job + 모니터링 룰</td>
+<td>info</td>
+</tr>
+</tbody></table>
+<h3>9.4.3 승인·거버넌스</h3>
+<table>
+<thead>
+<tr>
+<th>단계</th>
+<th>주체</th>
+<th>결과</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>draft</code></td>
+<td>AI + engineer</td>
+<td>UI alarm-rules «추천» 탭</td>
+</tr>
+<tr>
+<td><code>approved</code></td>
+<td>admin/engineer RBAC</td>
+<td>EventBridge·ruleset 배포</td>
+</tr>
+<tr>
+<td><code>rejected</code></td>
+<td>—</td>
+<td>피드백 → 재학습 negative sample</td>
+</tr>
+<tr>
+<td><code>auto_approved</code></td>
+<td>정책 (low-risk only)</td>
+<td>예: info급 connectivity만</td>
+</tr>
+</tbody></table>
+<p><strong>금지</strong>: Critical 룰·원격 kV/mA 제어 룰의 <strong>무승인 자동 배포</strong>.</p>
+<h2>9.5 알림 · 경고 · 제어</h2>
+<p>기능정의서 A4·원격 해결 가능성 판정·UI <code>remote-diagnosis</code> / <code>alarms</code> / <code>remote-control</code> 과 연결.</p>
+<h3>9.5.1 severity → 액션 매트릭스</h3>
+<table>
+<thead>
+<tr>
+<th>severity</th>
+<th>알림</th>
+<th>경고 UI</th>
+<th>제어</th>
+<th>티켓</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>info</strong></td>
+<td>대시보드·로그</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>warning</strong></td>
+<td>SNS(엔지니어), alarm 목록</td>
+<td>metric-stream 하이라이트</td>
+<td>Shadow 제안(승인)</td>
+<td>선택</td>
+</tr>
+<tr>
+<td><strong>critical</strong></td>
+<td>SNS+SES, SLA 15분</td>
+<td>EMG·원격진단</td>
+<td><strong>즉시 원격가능</strong> 시 Job/Shadow</td>
+<td>자동 접수</td>
+</tr>
+</tbody></table>
+<h3>9.5.2 제어 정책 (Fail-safe)</h3>
+<table>
+<thead>
+<tr>
+<th>조건</th>
+<th>자동 제어 허용</th>
+<th>예</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>root_cause_hint=cloud</code></td>
+<td>제한적</td>
+<td>알람만, 제어는 사람</td>
+</tr>
+<tr>
+<td><code>root_cause_hint=edge_client</code> + 신뢰도 ≥ 0.9 + 정책 on</td>
+<td><strong>엣지 자가복구 Job</strong></td>
+<td>spool flush script, GG restart</td>
+</tr>
+<tr>
+<td>tube drift + «즉시 원격가능»</td>
+<td>kV/mA 보정 Job</td>
+<td>remote-control (A5)</td>
+</tr>
+<tr>
+<td>dead pixel &gt; threshold</td>
+<td>제어 불가</td>
+<td>티켓·부품 발주</td>
+</tr>
+</tbody></table>
+<p>모든 자동 제어: <strong>Shadow reported 검증</strong> → 실패 시 safe_mode + 티켓.</p>
+<h3>9.5.3 EventBridge 연동</h3>
+<table>
+<thead>
+<tr>
+<th>이벤트</th>
+<th>source</th>
+<th>target</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>tv.anomaly.detected</code></td>
+<td>SageMaker/Lambda</td>
+<td>SNS, alarm_events, rule recommender</td>
+</tr>
+<tr>
+<td><code>tv.rule.recommendation.created</code></td>
+<td>Rule Service</td>
+<td>alarm-rules UI notification</td>
+</tr>
+<tr>
+<td><code>tv.control.auto.executed</code></td>
+<td>Remote Service</td>
+<td>감사 로그, equipment-logs <strong>원격제어</strong></td>
+</tr>
+<tr>
+<td><code>tv.edge.self_heal.started</code></td>
+<td>GG / IoT Jobs</td>
+<td>OTA progress, dashboard</td>
+</tr>
+</tbody></table>
+<h2>9.6 엣지 자가복구 · 제품 개선 루프</h2>
+<p><strong>클라이언트(엣지·장비 SW) 이슈</strong>는 현장 방문 없이 <strong>OTA·컴포넌트 업데이트</strong>로 해결하고, 결과를 제품에 반영하는 <strong>지속 개선</strong> 구조입니다.</p>
+<h3>9.6.1 원인 분류</h3>
+<table>
+<thead>
+<tr>
+<th>분류</th>
+<th><code>root_cause_hint</code></th>
+<th>대응</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>엣지·클라이언트</strong></td>
+<td><code>edge_client</code></td>
+<td>GG OTA, 로컬 script, 장비 SW patch</td>
+</tr>
+<tr>
+<td><strong>네트워크</strong></td>
+<td><code>network</code></td>
+<td>Spooler·재동기화 (<a href="#doc-08-greengrass-offline-resilience">08-greengrass-offline-resilience.md</a>)</td>
+</tr>
+<tr>
+<td><strong>센서·하드웨어</strong></td>
+<td><code>hardware</code></td>
+<td>티켓·부품 (A10/A11)</td>
+</tr>
+<tr>
+<td><strong>클라우드·설정</strong></td>
+<td><code>cloud_config</code></td>
+<td>룰·파라미터 수정</td>
+</tr>
+</tbody></table>
+<p>분류: SageMaker 다변량 모델 + 엣지 진단 Job(<code>remote-diagnosis</code>) + (선택) Bedrock 설명.</p>
+<h3>9.6.2 자가복구 실행 (edge_client)</h3>
+<div class="mermaid">sequenceDiagram
+  participant SM as SageMaker
+  participant CP as Control Plane
+  participant IOT as IoT Core
+  participant GG as Greengrass
+  participant APP as 장비 본체 SW
+
+  SM->>CP: anomaly (edge_client, score≥0.9)
+  CP->>CP: self_heal_policy 매칭
+  alt OTA fix available
+    CP->>IOT: IoT Job (component/firmware)
+    IOT->>GG: notify-next
+    GG->>GG: download → deploy → restart
+    GG->>APP: health check
+    APP-->>GG: OK / FAIL
+    GG->>IOT: ota/status SUCCEEDED|FAILED
+  else local remediation
+    CP->>IOT: IoT Job (run script: spool flush, recalibrate)
+    GG->>APP: execute
+  end
+  CP->>CP: anomaly resolved? → feedback
+</div>
+<p>OTA 경로: <a href="#doc-08-greengrass-offline-resilience">08-greengrass-offline-resilience.md</a> §8.4.2.</p>
+<h3>9.6.3 제품 개선 사이클 (Continuous Improvement)</h3>
+<pre><code>① 현장 이상·알람·AS 이력 수집 (Warm/Cold)
+② SageMaker: 반복 edge_client 패턴·fix 성공률 분석
+③ 엔지니어링: 근본 수정 → firmware/component 새 버전 (GitLab CI → S3/CF)
+④ canary 배포: site·Thing Group 일부 → 모니터링
+⑤ 성공률·이상률 개선 확인 → 전체 플릿 rollout
+⑥ 모델·룰·self_heal_policy 버전 갱신 (MLflow / Model Registry)
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>산출물</th>
+<th>저장</th>
+<th>UI</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>firmwares</code> / GG component version</td>
+<td>Aurora + S3</td>
+<td>settings/firmware</td>
+</tr>
+<tr>
+<td><code>self_heal_playbooks</code></td>
+<td>Aurora JSON</td>
+<td>admin (신규)</td>
+</tr>
+<tr>
+<td><code>fix_effectiveness</code></td>
+<td>Iceberg</td>
+<td>reports</td>
+</tr>
+<tr>
+<td>OTA campaign</td>
+<td><code>ota_campaigns</code></td>
+<td>equipment 펌웨어 탭</td>
+</tr>
+</tbody></table>
+<p><strong>목표</strong>: 동일 <code>edge_client</code> 알람의 <strong>재발률 감소</strong>, MTTR 단축, 현장 출동 감소.</p>
+<h3>9.6.4 자가복구 정책 예 (<code>self_heal_playbooks</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>playbook_id</th>
+<th>트리거</th>
+<th>엣지 액션</th>
+<th>성공 판정</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>gg-spool-flush-v1</code></td>
+<td>spool &gt; 80% + connectivity restore</td>
+<td>Job: flush + resync</td>
+<td>10min 내 telemetry gap 해소</td>
+</tr>
+<tr>
+<td><code>tube-recal-v2</code></td>
+<td>kv drift warning, edge_client</td>
+<td>Shadow kV offset + local cal</td>
+<td>drift &lt; 1σ within 30min</td>
+</tr>
+<tr>
+<td><code>gg-component-restart-v1</code></td>
+<td>repeated MQTT publish fail</td>
+<td>GG nucleus soft restart</td>
+<td>connectivity=online 5min</td>
+</tr>
+<tr>
+<td><code>firmware-hotfix-v1.2.1</code></td>
+<td>known bug signature</td>
+<td>OTA tar (canary group)</td>
+<td>anomaly rate ↓ 7d</td>
+</tr>
+</tbody></table>
+<p>실패 시: safe_mode → 티켓 → Bedrock RAG 조치 가이드(D3) 핸드오프.</p>
+<h2>9.7 Bedrock·RAG 연동 (D — 보조)</h2>
+<table>
+<thead>
+<tr>
+<th>SageMaker (운영 AI)</th>
+<th>Bedrock (지원 AI)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>이상 score·패턴·수치</td>
+<td>«왜 tube drift인가» 설명</td>
+</tr>
+<tr>
+<td>룰 JSON 초안 (structured)</td>
+<td>매뉴얼·AS 유사 사례 인용</td>
+</tr>
+<tr>
+<td>edge vs hardware 분류 feature</td>
+<td>챗봇 트러블슈팅 단계</td>
+</tr>
+<tr>
+<td>—</td>
+<td>서비스 리포트 초안</td>
+</tr>
+</tbody></table>
+<p>Bedrock 호출: IAM Role + Guardrails, PII 마스킹 (기능정의서 §⑤).<br><strong>실제 제어·룰 배포는 SageMaker/Rule Service 경로만</strong> — Bedrock은 read-only advisory.</p>
+<h2>9.8 UI·WBS 매핑</h2>
+<table>
+<thead>
+<tr>
+<th>화면</th>
+<th>AI 기능</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>/alarms</code></td>
+<td>SageMaker 기반 이상 + 기존 임계 룰</td>
+</tr>
+<tr>
+<td><code>/alarm-rules</code></td>
+<td><strong>룰셋 추천</strong> 승인·배포</td>
+</tr>
+<tr>
+<td><code>/remote-diagnosis</code></td>
+<td>Edge Job + SageMaker finding 통합</td>
+</tr>
+<tr>
+<td><code>/remote-control</code></td>
+<td>자동/수동 제어, self-heal 결과</td>
+</tr>
+<tr>
+<td><code>/metric-stream</code></td>
+<td>실시간 anomaly overlay</td>
+</tr>
+<tr>
+<td><code>/data-pipeline</code></td>
+<td>모델 lag·inference health</td>
+</tr>
+<tr>
+<td><code>/settings/firmware</code></td>
+<td>OTA canary·self-heal 연계</td>
+</tr>
+<tr>
+<td>(D) 진단 챗봇</td>
+<td>Bedrock RAG — 별도 모듈</td>
+</tr>
+</tbody></table>
+<p>WBS: <strong>A4</strong> (룰·알람), <strong>A5</strong> (진단·제어·자가복구), <strong>M4</strong> (Lambda inference), <strong>M6</strong> (티켓 연계), <strong>신규 AI</strong> (SageMaker pipeline).</p>
+<h2>9.9 AWS 리소스 (목표)</h2>
+<table>
+<thead>
+<tr>
+<th>리소스</th>
+<th>용도</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SageMaker Feature Store</td>
+<td>device×metric 피처</td>
+</tr>
+<tr>
+<td>SageMaker Pipelines</td>
+<td>학습·재학습 CI</td>
+</tr>
+<tr>
+<td>SageMaker Endpoint / Batch</td>
+<td>실시간·배치 inference</td>
+</tr>
+<tr>
+<td>SageMaker Model Registry</td>
+<td>버전·canary</td>
+</tr>
+<tr>
+<td>SageMaker Edge Manager</td>
+<td>GG 엣지 모델 배포</td>
+</tr>
+<tr>
+<td>S3 <code>ml-artifacts/</code></td>
+<td>모델·학습 데이터</td>
+</tr>
+<tr>
+<td>Lambda <code>anomaly_scorer</code>, <code>rule_recommender</code></td>
+<td>KDS·EventBridge 연동</td>
+</tr>
+<tr>
+<td>EventBridge</td>
+<td><code>tv.anomaly.*</code>, <code>tv.self_heal.*</code></td>
+</tr>
+<tr>
+<td>Aurora</td>
+<td><code>anomaly_events</code>, <code>rule_recommendations</code>, <code>self_heal_playbooks</code>, <code>self_heal_executions</code></td>
+</tr>
+<tr>
+<td>Bedrock (선택)</td>
+<td>설명·RAG — D 영역</td>
+</tr>
+</tbody></table>
+<h2>9.10 스키마 (요약)</h2>
+<table>
+<thead>
+<tr>
+<th>테이블/컬렉션</th>
+<th>용도</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>anomaly_events</code></td>
+<td>SageMaker inference 결과</td>
+</tr>
+<tr>
+<td><code>rule_recommendations</code></td>
+<td>추천 룰 draft/approved/rejected</td>
+</tr>
+<tr>
+<td><code>self_heal_playbooks</code></td>
+<td>edge_client 자동복구 시나리오</td>
+</tr>
+<tr>
+<td><code>self_heal_executions</code></td>
+<td>Job 실행·성공률·피드백</td>
+</tr>
+<tr>
+<td><code>model_registry_mirror</code></td>
+<td>배포 모델 버전·지표</td>
+</tr>
+<tr>
+<td><code>fix_effectiveness_daily</code></td>
+<td>Iceberg — 제품 개선 KPI</td>
+</tr>
+</tbody></table>
+<p>상세 UI 매핑: <a href="#doc-06-schema-reference">06-schema-reference.md</a>.</p>
+<h2>9.11 운영·안전</h2>
+<ul>
+<li><strong>Human-in-the-loop</strong>: Critical 알람·kV 제어·신규 Critical 룰은 승인 필수</li>
+<li><strong>Canary</strong>: OTA·self_heal playbook은 Thing Group canary → 전체</li>
+<li><strong>Rollback</strong>: GG Shadow rollback, firmware DEPRECATED (기능정의서 OTA)</li>
+<li><strong>감사</strong>: CloudTrail + <code>equipment-logs</code> <strong>감사</strong> + 원격제어 이력</li>
+<li><strong>모델 드리프트</strong>: 주간 재학습, anomaly false positive rate 모니터링</li>
+</ul>
+<h2>9.12 참고</h2>
+<ul>
+<li>기능정의서 A4(이상 알람·룰셋), A5(원격진단/제어), D(Bedrock·RAG)</li>
+<li><a href="#doc-02-data-pipeline">02-data-pipeline.md</a> — KDS·Hot 입력</li>
+<li><a href="#doc-08-greengrass-offline-resilience">08-greengrass-offline-resilience.md</a> — OTA·Job</li>
+<li>UI mock: <code>remote-diagnosis.ts</code>, <code>alarms</code>, <code>alarm-rules</code></li>
+</ul>
+
+</section>
+
+<section id="doc-03-storage-tiers" class="doc-section md-content" data-group="storage" data-source="03-storage-tiers.md">
+  <p class="source-tag">SSOT: <code>02.arch/03-storage-tiers.md</code></p>
+  <h1>03. 3-Tier Storage 및 데이터 생명주기</h1>
+<h2>3.1 Tier 요약 (테크밸리 기준)</h2>
+<p>기능정의서·운영 UI <strong>기준정보</strong>입니다. 운영 성숙도에 따라 Hot 90일 등으로 확장 가능하나, <strong>UI·제안서 정합</strong>은 아래를 SSOT로 합니다.</p>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>저장소</th>
+<th>대표 데이터</th>
+<th>표준 보존</th>
+<th>UI 표기</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Hot</strong></td>
+<td>Amazon DocumentDB</td>
+<td>실시간 텔레메트리, 이벤트, Shadow 스냅샷, 단기 롤업</td>
+<td><strong>7일</strong> (기능정의서)</td>
+<td><code>DocumentDB</code></td>
+</tr>
+<tr>
+<td><strong>Warm</strong></td>
+<td>Aurora PostgreSQL</td>
+<td>장비 로그 조회, site·플릿 롤업, 티켓·SLA·알람 팩트</td>
+<td><strong>7~90일</strong></td>
+<td><code>Aurora PostgreSQL</code></td>
+</tr>
+<tr>
+<td><strong>Cold</strong></td>
+<td>Iceberg on S3</td>
+<td>수율·장기 분석·감사 아카이브</td>
+<td><strong>90일+</strong></td>
+<td><code>Iceberg / S3</code></td>
+</tr>
+</tbody></table>
+<p>프론트 mock (<code>pipelineStatuses</code>)와 동일:</p>
+<pre><code class="language-744:768:03.source/frontend/src/lib/mock-data.ts">export const pipelineStatuses: PipelineStatus[] = [
+  {
+    tier: &quot;Hot&quot;,
+    store: &quot;DocumentDB&quot;,
+    retention: &quot;7일&quot;,
+    ...
+  },
+  {
+    tier: &quot;Warm&quot;,
+    store: &quot;Aurora PostgreSQL&quot;,
+    retention: &quot;7~90일&quot;,
+    ...
+  },
+  {
+    tier: &quot;Cold&quot;,
+    store: &quot;Iceberg / S3&quot;,
+    retention: &quot;90일+&quot;,
+    ...
+  },
+];
+</code></pre>
+<h3>구현 확장 참고</h3>
+<p>운영 성숙도에 따라 Hot <strong>90일</strong>, Warm <strong>730일</strong>, Cold 감사 <strong>7년</strong> 등으로 세분화 가능. 변경 시 본 문서·mock·i18n을 함께 갱신.</p>
+<h2>3.2 Tier별 상세</h2>
+<h3>Hot — DocumentDB</h3>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Writer</strong></td>
+<td><code>stream_sync_consumer</code>, 장비 등록 API, 알람 Raw 적재</td>
+</tr>
+<tr>
+<td><strong>Reader</strong></td>
+<td>배치 ETL 입력, 관리 API GET (Writer 부하 분리)</td>
+</tr>
+<tr>
+<td><strong>주요 컬렉션</strong></td>
+<td><code>periodic_telemetry</code>, <code>event_history</code>, <code>control_history</code>, <code>fota_history</code>, <code>telemetry_rollups_device_*</code></td>
+</tr>
+<tr>
+<td><strong>TTL</strong></td>
+<td>원천 텔레메트리·롤링 purge (보존 만료 후 삭제 또는 Cold 확인 후 삭제)</td>
+</tr>
+<tr>
+<td><strong>UI</strong></td>
+<td>메트릭 스트림, 데이터 파이프라인 실시간 패널, 원격제어 Hot 상태</td>
+</tr>
+</tbody></table>
+<p><strong>REALTIME_SOURCES</strong> (<code>scope.ts</code>):</p>
+<ul>
+<li><code>documentdb.telemetry_hot</code> — 플릿 Live</li>
+<li><code>kinesis.metric_stream</code> — 주기·이벤트·펌웨어·제어 스트림</li>
+</ul>
+<h3>Warm — Aurora PostgreSQL</h3>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Writer</strong></td>
+<td><code>batch_cadence_runner</code> INSERT/UPSERT</td>
+</tr>
+<tr>
+<td><strong>Reader</strong></td>
+<td>BI·리포트, SLA, 장비 로그 배치 조회</td>
+</tr>
+<tr>
+<td><strong>주요 테이블</strong></td>
+<td><code>telemetry_{site,branch,company}_product_time_series</code>, <code>communication_quality_rollup_{device,site,branch}</code>, 티켓·SLA 팩트</td>
+</tr>
+<tr>
+<td><strong>롤업 grain</strong></td>
+<td>device → site → <strong>branch</strong> → company (<a href="#doc-config-schema-org-hierarchy">org-hierarchy.md</a>)</td>
+</tr>
+<tr>
+<td><strong>UI</strong></td>
+<td>장비 로그(카테고리별), SLA, 서비스 티켓/진행, 대시보드 배치 KPI</td>
+</tr>
+</tbody></table>
+<p><strong>BATCH_SOURCES</strong> (Warm/Aurora·Iceberg 조회):</p>
+<ul>
+<li><code>aurora.fleet_hourly_rollup</code></li>
+<li><code>aurora.equipment_log_query</code></li>
+<li><code>aurora.alarm_daily_rollup</code></li>
+<li><code>iceberg.yield_daily_rollup</code> (Cold이나 UI는 «일별 롤업» 배치 스냅샷으로 표시)</li>
+</ul>
+<h3>Cold — S3 + Iceberg</h3>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>유입</strong></td>
+<td>Lambda → Firehose → S3 landing → Glue Spark → Iceberg</td>
+</tr>
+<tr>
+<td><strong>용도</strong></td>
+<td>수율 LOT 트레이서빌리티, 장기 통계, 레거시 검사 SW 이관</td>
+</tr>
+<tr>
+<td><strong>분석</strong></td>
+<td>Athena (읽기 전용)</td>
+</tr>
+<tr>
+<td><strong>UI</strong></td>
+<td>검사·수율, 리포트, 대시보드 수율 차트 (<code>Iceberg daily rollup</code>)</td>
+</tr>
+</tbody></table>
+<h2>3.3 생명주기 단계</h2>
+<pre><code>1. Ingest    MQTT/HTTP → IoT Rule → KDS → Lambda
+2. Process   YAML/JSON 규칙 정규화, DLQ 분기
+3. Hot       DocumentDB 실시간·단기 롤업
+4. Batch     EventBridge → Doc Reader → Aurora + Doc 상위 grain
+5. Cold      Firehose → S3 → Iceberg (동일 정규화 계약)
+6. Purge     TTL · Lifecycle · 파티션 drop · Legal hold
+</code></pre>
+<p><strong>티어 승격</strong>: Hot DocumentDB → (배치) → Warm Aurora + Doc 롤업; Cold는 실시간 경로에서 <strong>병행 적재</strong> (순차 «승격»이 아닌 이중 기록).</p>
+<h2>3.4 UI 화면별 Tier·Scope</h2>
+<table>
+<thead>
+<tr>
+<th>화면</th>
+<th>Tier</th>
+<th>scope</th>
+<th>asOf 의미</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>대시보드</td>
+<td>Warm(롤업) + Cold(수율)</td>
+<td>batch</td>
+<td>hourly/daily Job 완료 시각</td>
+</tr>
+<tr>
+<td>데이터 파이프라인 상단</td>
+<td>Warm + Hot 스냅샷</td>
+<td>mixed</td>
+<td>배치 + Tier snapshot</td>
+</tr>
+<tr>
+<td>데이터 파이프라인 하단</td>
+<td>Hot</td>
+<td>realtime</td>
+<td>Kinesis·Doc Hot lag</td>
+</tr>
+<tr>
+<td>메트릭 스트림</td>
+<td>Hot</td>
+<td>realtime</td>
+<td>스트림 수신 시각</td>
+</tr>
+<tr>
+<td>장비 로그</td>
+<td>Warm</td>
+<td>batch</td>
+<td>카테고리별 배치 조회</td>
+</tr>
+<tr>
+<td>알람</td>
+<td>Warm (스냅샷)</td>
+<td>batch</td>
+<td>hourly snapshot</td>
+</tr>
+<tr>
+<td>원격제어</td>
+<td>Hot</td>
+<td>realtime</td>
+<td>Shadow/Job 동기화</td>
+</tr>
+<tr>
+<td>SLA</td>
+<td>Warm</td>
+<td>batch</td>
+<td>fleet hourly</td>
+</tr>
+</tbody></table>
+<h2>3.5 CQRS 엔드포인트</h2>
+<table>
+<thead>
+<tr>
+<th>DB</th>
+<th>Writer 연결</th>
+<th>Reader 연결</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>DocumentDB</td>
+<td>Lambda 적재, POST/PUT API</td>
+<td>GET API, 배치 ETL, 콘솔 목록</td>
+</tr>
+<tr>
+<td>Aurora</td>
+<td>배치 ETL, 트랜잭션 API</td>
+<td>BI, SLA, 리포트 Read Replica</td>
+</tr>
+</tbody></table>
+<p>복제 지연(<code>ReplicaLag</code>) 모니터링 — «방금 쓴 값 즉시 확인» 화면만 Primary fallback.</p>
+<h2>3.6 레거시·외부 이관 (기능정의서)</h2>
+<table>
+<thead>
+<tr>
+<th>소스</th>
+<th>대상 Tier</th>
+<th>방식</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Legacy 검사 SW·수율 DB</td>
+<td>Cold (Iceberg)</td>
+<td>Glue 배치 표준화</td>
+</tr>
+<tr>
+<td>서비스/AS 이력</td>
+<td>Hot → Warm</td>
+<td>정규화·티켓 연속성</td>
+</tr>
+<tr>
+<td>Legacy MES</td>
+<td>Aurora (제조 연동, B)</td>
+<td>DMS·CDC — IoT 범위 외</td>
+</tr>
+</tbody></table>
+
+</section>
+
+<section id="doc-04-backend-services" class="doc-section md-content" data-group="backend" data-source="04-backend-services.md">
+  <p class="source-tag">SSOT: <code>02.arch/04-backend-services.md</code></p>
+  <h1>04. 백엔드 서비스 및 Lambda</h1>
+<h2>4.1 서비스 경계 (MSA)</h2>
+<p>테크밸리 백엔드는 <strong>도메인별 독립 배포</strong>를 목표로 합니다. API Gateway 뒤 Lambda 또는 ECS Fargate.</p>
+<table>
+<thead>
+<tr>
+<th>서비스</th>
+<th>책임</th>
+<th>주요 API</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Fleet</strong></td>
+<td>company·branch·site·device 마스터, 플릿 스냅샷</td>
+<td><code>/customers</code>, <code>/installation</code>, <code>/equipment</code></td>
+</tr>
+<tr>
+<td><strong>Pipeline</strong></td>
+<td>수집 상태, Tier 스냅샷, KDS lag</td>
+<td><code>/data-pipeline</code></td>
+</tr>
+<tr>
+<td><strong>Telemetry</strong></td>
+<td>메트릭 스트림 구독, Hot 조회</td>
+<td><code>/metric-stream</code></td>
+</tr>
+<tr>
+<td><strong>Logs</strong></td>
+<td>Warm Tier 카테고리별 이력</td>
+<td><code>/equipment-logs</code></td>
+</tr>
+<tr>
+<td><strong>Alarm</strong></td>
+<td>알람·룰·EventBridge</td>
+<td><code>/alarms</code>, <code>/alarm-rules</code></td>
+</tr>
+<tr>
+<td><strong>Remote</strong></td>
+<td>진단 Job, Shadow, IoT Jobs, <strong>엣지 자가복구</strong></td>
+<td><code>/remote-diagnosis</code>, <code>/remote-control</code></td>
+</tr>
+<tr>
+<td><strong>AI Ops</strong></td>
+<td>SageMaker inference, 룰 추천, self-heal 정책</td>
+<td><code>/alarms</code>, <code>/alarm-rules</code>, (admin playbooks)</td>
+</tr>
+<tr>
+<td><strong>Service</strong></td>
+<td>티켓·진행·SLA</td>
+<td><code>/service-tickets</code>, <code>/service-progress</code>, <code>/sla</code></td>
+</tr>
+<tr>
+<td><strong>Inspection</strong></td>
+<td>수율·알고리즘·LOT</td>
+<td><code>/inspection</code></td>
+</tr>
+<tr>
+<td><strong>Parts &amp; AS</strong></td>
+<td>부품·정비</td>
+<td><code>/parts-*</code>, <code>/as</code></td>
+</tr>
+<tr>
+<td><strong>Admin</strong></td>
+<td>사용자·코드·메뉴 RBAC·IoT 인증</td>
+<td><code>/admin/*</code></td>
+</tr>
+<tr>
+<td><strong>AuthZ</strong></td>
+<td>Cognito 연동, JWT claim, RBAC</td>
+<td>공통 미들웨어</td>
+</tr>
+</tbody></table>
+<p>현재 <strong><code>03.source/beckend/</code></strong> 는 구현 예정. <strong>UI·API·NestJS 컨텍스트 설계 SSOT</strong>: <a href="#doc-14-backend-frontend-design">14-backend-frontend-design.md</a> (FOTA Lite 참고 구현). 프론트는 mock + <code>DataScope</code> 메타로 계약을 고정.</p>
+<h2>4.2 Lambda 앱 (파이프라인)</h2>
+<p>테크밸리 파이프라인 Lambda는 <strong><code>03.source/lambda/</code></strong> 에 구현합니다.</p>
+<table>
+<thead>
+<tr>
+<th>app</th>
+<th>트리거</th>
+<th>역할</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>stream-sync-consumer</code></td>
+<td>KDS ESM</td>
+<td>decode → normalize → convert → DocDB + Firehose</td>
+</tr>
+<tr>
+<td><code>dlq-shard-processor</code></td>
+<td>SQS</td>
+<td>실시간 DLQ shard 재처리</td>
+</tr>
+<tr>
+<td><code>batch-cadence-runner</code></td>
+<td>EventBridge</td>
+<td>cadence YAML 실행, Aurora·Doc 롤업</td>
+</tr>
+<tr>
+<td><code>batch-dlq-replay</code></td>
+<td>EventBridge(선택)</td>
+<td><code>pipeline_dlq_events</code> 재실행</td>
+</tr>
+<tr>
+<td><code>payload-converter</code></td>
+<td>Invoke</td>
+<td>규칙 JSON 단건 변환(미리보기)</td>
+</tr>
+<tr>
+<td><strong><code>file-upload-orchestrator</code></strong></td>
+<td>IoT <code>file/request</code> · KDS</td>
+<td>S3 Presigned·멀티파트·<code>file/response</code> (<a href="#doc-13-media-upload-pipeline">13</a>)</td>
+</tr>
+<tr>
+<td><code>anomaly-scorer</code></td>
+<td>KDS (fork) / EventBridge</td>
+<td>SageMaker invoke → <code>anomaly_events</code></td>
+</tr>
+<tr>
+<td><code>rule-recommender</code></td>
+<td>EventBridge <code>tv.anomaly.detected</code></td>
+<td>룰 초안 → <code>rule_recommendations</code></td>
+</tr>
+<tr>
+<td><code>self-heal-orchestrator</code></td>
+<td>EventBridge + 정책</td>
+<td>edge_client → IoT Job / OTA (<a href="#doc-09-ai-anomaly-rules-and-edge-self-healing">09</a>)</td>
+</tr>
+</tbody></table>
+<p><strong>런타임</strong>: Node.js 24.x, ESM <code>.mjs</code>, NestJS + <code>@techvalley/pipeline-core</code> (공통 라이브러리명 가칭).</p>
+<h3>pipeline-core 모듈</h3>
+<table>
+<thead>
+<tr>
+<th>모듈</th>
+<th>기능</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>kinesis-decode</code></td>
+<td>KDS 레코드 디코드</td>
+</tr>
+<tr>
+<td><code>normalize/*</code></td>
+<td>토픽 필터, 8세그먼트 라우팅</td>
+</tr>
+<tr>
+<td><code>converter/*</code></td>
+<td>rules JSON 로드·페이로드 변환</td>
+</tr>
+<tr>
+<td><code>documentdb-sink</code> / <code>firehose-sink</code></td>
+<td>Hot + Cold 동시 적재</td>
+</tr>
+<tr>
+<td><code>documentdb-batch</code> / <code>postgres-batch</code></td>
+<td>배치 롤업</td>
+</tr>
+<tr>
+<td><code>cadence-executor</code></td>
+<td><code>02-batch-cadence.yaml</code> 실행</td>
+</tr>
+<tr>
+<td><code>batch-dlq*</code></td>
+<td>배치 DLQ 기록·재생</td>
+</tr>
+</tbody></table>
+<h2>4.3 API 설계 원칙</h2>
+<ul>
+<li><strong>인증</strong>: Cognito JWT — claim: <code>role</code>, <code>companyId</code> · <code>branchId</code> · <code>siteId</code>(조직 스코프), <code>scope</code></li>
+<li><strong>RBAC</strong>: <code>menu-catalog.ts</code> VIEW_ACCESS ↔ API scope 1:1</li>
+<li><strong>batch API</strong>: 응답에 <code>asOf</code>, <code>source</code>, <code>refreshInterval</code> 포함 (<code>DataSourceMeta</code>)</li>
+<li><strong>realtime API</strong>: WebSocket 또는 SSE (메트릭 스트림); KPI API와 분리</li>
+<li><strong>멱등</strong>: POST 티켓·원격 Job — <code>Idempotency-Key</code></li>
+<li><strong>연동 (B↔A)</strong>: EventBridge <code>order.confirmed</code>, <code>shipment.*</code> — IoT 범위 외, 별도 어댑터</li>
+</ul>
+<h2>4.4 프론트엔드 (현재)</h2>
+<p>상세: <a href="#doc-14-backend-frontend-design">14-backend-frontend-design.md</a> — 관리 콘솔 vs 서비스 웹, UI↔API 매핑, FOTA Job.</p>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>경로</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>프레임워크</td>
+<td>Next.js 16 App Router</td>
+</tr>
+<tr>
+<td>UI</td>
+<td>MUI + AG Grid Enterprise</td>
+</tr>
+<tr>
+<td>i18n</td>
+<td>ko / en, KST 기준 시각</td>
+</tr>
+<tr>
+<td>배포</td>
+<td>Vercel (<code>03.source/frontend</code>)</td>
+</tr>
+</tbody></table>
+<p>백엔드 API 연동 시 <code>src/lib/data/batch/*</code>, <code>src/lib/data/realtime/*</code> mock을 API 클라이언트로 교체.</p>
+<h2>4.5 로컬·E2E (계획)</h2>
+<p><strong><code>90.infra/local/</code></strong> Podman compose — <a href="./config/local/docker-compose.yml">02.arch/config/local/docker-compose.yml</a></p>
+<table>
+<thead>
+<tr>
+<th>서비스</th>
+<th>포트</th>
+<th>용도</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>DocumentDB Local</td>
+<td>27000</td>
+<td>Hot</td>
+</tr>
+<tr>
+<td>PostgreSQL 16</td>
+<td>25432</td>
+<td>Aurora Warm</td>
+</tr>
+<tr>
+<td>MinIO</td>
+<td>19010</td>
+<td>S3 호환</td>
+</tr>
+</tbody></table>
+<p>E2E: <code>99.output</code> 스타일 샘플 YAML + 스크립트 (테크밸리용 별도 구성 예정).</p>
+<h2>4.6 Observability</h2>
+<table>
+<thead>
+<tr>
+<th>대상</th>
+<th>메트릭·로그</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>KDS → Lambda</td>
+<td>IteratorAge, ErrorRate, Duration</td>
+</tr>
+<tr>
+<td>Firehose</td>
+<td>DeliveryToS3, ThrottledRecords</td>
+</tr>
+<tr>
+<td>배치 cadence</td>
+<td>Job 성공/실패, <code>pipeline_dlq_events</code> 건수</td>
+</tr>
+<tr>
+<td>DocumentDB</td>
+<td>ReplicaLag, CPU</td>
+</tr>
+<tr>
+<td>UI</td>
+<td>CloudWatch RUM (선택)</td>
+</tr>
+</tbody></table>
+<p>알람: Hot Tier lag, DLQ depth, batch cadence 실패 → SNS → EMG 핫라인 워크플로 (UI nav.emgHotline).</p>
+
+</section>
+
+<section id="doc-14-backend-frontend-design" class="doc-section md-content" data-group="backend" data-source="14-backend-frontend-design.md">
+  <p class="source-tag">SSOT: <code>02.arch/14-backend-frontend-design.md</code></p>
+  <h1>14. 백엔드·프론트엔드 설계</h1>
+<p>테크밸리 <strong>운영 포털(Next.js) + API(NestJS)</strong> 설계 SSOT입니다.<br>참고 구현·도메인 상세: <strong>FOTA Lite</strong> (<code>source/etc/FOTA/30.fota-lite-project</code>) — 본 문서는 테크밸리 <strong>A1~A12·3-Tier·조직 4단계</strong>에 맞게 재정렬합니다.</p>
+<p>관련: <a href="#doc-04-backend-services">04-backend-services.md</a> · <a href="#doc-06-schema-reference">06-schema-reference.md</a> · <a href="#doc-config-schema-org-hierarchy">config/schema/org-hierarchy.md</a> · <a href="#doc-08-greengrass-offline-resilience">08-greengrass-offline-resilience.md</a> (OTA)</p>
+<hr>
+<h2>14.1 논리 아키텍처 (4계층)</h2>
+<pre><code>┌──────────────────────────────────────────────────────────────────┐
+│  채널   관리 콘솔 (admin.*)  │  서비스 웹 (portal.*)               │
+├──────────────────────────────────────────────────────────────────┤
+│  앱     Next.js 16 (MUI · AG Grid)  ←REST/SSE→  NestJS API       │
+├──────────────────────────────────────────────────────────────────┤
+│  데이터 Hot DocumentDB │ Warm Aurora Postgres │ Cold Iceberg       │
+├──────────────────────────────────────────────────────────────────┤
+│  연동   Cognito · IoT Core · KDS/Lambda · EventBridge             │
+└──────────────────────────────────────────────────────────────────┘
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>계층</th>
+<th>테크밸리</th>
+<th>FOTA Lite 참고</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>채널</td>
+<td>관리 콘솔 + 서비스 웹 (동일 repo, 라우트 그룹 또는 서브도메인)</td>
+<td><code>docs/fota-lite/01-stack-spec.md</code> §4.1</td>
+</tr>
+<tr>
+<td>API</td>
+<td>NestJS · TypeORM → <strong>Aurora PostgreSQL</strong> + Mongo driver → DocumentDB</td>
+<td>MySQL → <strong>Postgres로 매핑</strong></td>
+</tr>
+<tr>
+<td>Hot</td>
+<td><code>fota_history</code>, <code>periodic_telemetry</code>, …</td>
+<td><code>firmware_update_events</code></td>
+</tr>
+<tr>
+<td>Warm</td>
+<td><code>device</code>, <code>update_job*</code>, <code>equipment_log_*</code>, 롤업</td>
+<td>동일 개념, DDL: <code>01-core-schema.sql</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>14.2 UI 채널: 관리 콘솔 vs 서비스 웹</h2>
+<p><strong>관리 콘솔</strong>은 «무엇을 허용·배포·버전으로 쓸지», <strong>서비스 웹</strong>은 «지금 장비가 어떻게 돌아가고 문제 시 누가 조치하는지»를 다룹니다.</p>
+<h3>14.2.1 관리 콘솔 (Admin / Platform)</h3>
+<table>
+<thead>
+<tr>
+<th>영역</th>
+<th>테크밸리 UI (<code>menuId</code>)</th>
+<th>API (NestJS · 예정)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>사용자·RBAC</td>
+<td><code>admin-users</code>, <code>admin-menus</code></td>
+<td><code>/api/admin/users</code>, <code>/api/admin/menus</code></td>
+</tr>
+<tr>
+<td>공통코드</td>
+<td><code>admin-codes</code></td>
+<td><code>/api/common-codes</code></td>
+</tr>
+<tr>
+<td>IoT 인증·인증서</td>
+<td><code>admin-iot-auth</code></td>
+<td><code>/api/admin/iot/certificates</code>, Thing registry</td>
+</tr>
+<tr>
+<td>토픽·YAML·Rule</td>
+<td>(data-pipeline 설정 탭)</td>
+<td><code>/api/admin/pipeline/rules</code>, manifest mirror</td>
+</tr>
+<tr>
+<td>테넌트·조직 마스터</td>
+<td><code>customers</code>, <code>installation</code></td>
+<td><code>/api/companies</code>, <code>/api/branches</code>, <code>/api/sites</code></td>
+</tr>
+<tr>
+<td>펌웨어·제품 카탈로그</td>
+<td><code>settings-firmware</code></td>
+<td><code>/api/products</code>, <code>/api/firmwares</code>, <code>/api/firmwares/upload</code></td>
+</tr>
+</tbody></table>
+<p>역할: <code>admin</code> (플랫폼)·<code>engineer</code> — <code>menu-catalog.ts</code> VIEW_ACCESS.</p>
+<h3>14.2.2 서비스 웹 (Operations Portal)</h3>
+<table>
+<thead>
+<tr>
+<th>영역</th>
+<th>테크밸리 UI</th>
+<th>scope</th>
+<th>API · 소스</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>통합 관제</td>
+<td><code>dashboard</code></td>
+<td>batch</td>
+<td><code>/api/dashboard</code>, <code>aurora.fleet_hourly_rollup</code></td>
+</tr>
+<tr>
+<td>데이터 파이프라인</td>
+<td><code>data-pipeline</code></td>
+<td>mixed</td>
+<td><code>/api/pipeline/status</code>, Tier snapshot</td>
+</tr>
+<tr>
+<td>실시간 스트림</td>
+<td><code>metric-stream</code></td>
+<td>realtime</td>
+<td>SSE/WS <code>/api/metric-stream</code>, KDS</td>
+</tr>
+<tr>
+<td>장비 로그</td>
+<td><code>equipment-logs</code></td>
+<td>batch</td>
+<td><code>/api/equipment-logs?category=</code></td>
+</tr>
+<tr>
+<td>알람·룰</td>
+<td><code>alarms</code>, <code>alarm-rules</code></td>
+<td>batch</td>
+<td><code>/api/alarms</code>, <code>/api/alarm-rules</code></td>
+</tr>
+<tr>
+<td>원격</td>
+<td><code>remote-diagnosis</code>, <code>remote-control</code></td>
+<td>realtime+batch</td>
+<td>IoT Jobs, Shadow</td>
+</tr>
+<tr>
+<td>서비스·SLA</td>
+<td><code>service-tickets</code>, <code>service-progress</code>, <code>sla</code></td>
+<td>batch</td>
+<td><code>/api/service/*</code>, <code>/api/sla</code></td>
+</tr>
+<tr>
+<td>장비·현장</td>
+<td><code>equipment</code>, <code>installation</code></td>
+<td>batch</td>
+<td><code>/api/devices</code>, <code>/api/installation</code></td>
+</tr>
+<tr>
+<td>검사·수율</td>
+<td><code>inspection</code>, <code>reports</code></td>
+<td>batch</td>
+<td><code>/api/inspection</code>, Iceberg rollup</td>
+</tr>
+<tr>
+<td>부품·AS</td>
+<td><code>parts-*</code>, <code>as</code></td>
+<td>batch</td>
+<td><code>/api/parts/*</code>, <code>/api/as</code></td>
+</tr>
+<tr>
+<td>알림 설정</td>
+<td><code>settings-notifications</code></td>
+<td>batch</td>
+<td><code>/api/notifications/settings</code></td>
+</tr>
+</tbody></table>
+<p>역할: <code>admin</code> · <code>engineer</code> · <code>cs</code> · <code>customer</code> — JWT <code>companyId</code> · <code>branchId</code> · <code>siteId</code>로 <strong>조직 스코프</strong> 필터 (<a href="#doc-config-schema-org-hierarchy">org-hierarchy.md</a>).</p>
+<h3>14.2.3 배포 패턴</h3>
+<table>
+<thead>
+<tr>
+<th>패턴</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>단일 repo</strong></td>
+<td><code>app/(admin)/…</code>, <code>app/(platform)/…</code> — 현재 <code>03.source/frontend</code> 구조</td>
+</tr>
+<tr>
+<td><strong>분리 호스트</strong></td>
+<td><code>admin.tv.example.com</code> / <code>portal.tv.example.com</code> — 동일 SSG 빌드, CloudFront behavior</td>
+</tr>
+<tr>
+<td><strong>분리 빌드</strong></td>
+<td>관리 콘솔만 포함한 <code>NEXT_PUBLIC_APP_CHANNEL=admin</code> (선택)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>14.3 백엔드: NestJS 바운디드 컨텍스트</h2>
+<p>FOTA Lite <code>apps/backend/src/contexts/</code> 패턴을 테크밸리 <strong><code>03.source/beckend/</code></strong> (예정)에 적용합니다.</p>
+<pre><code>contexts/
+├── identity/          # Cognito JWT · users · RBAC · 조직 스코프 claim
+├── organization/      # company · branch · site
+├── catalog/           # product · firmware (S3 multipart)
+├── device/            # device 마스터 · device_phase · history
+├── device-group/      # 플릿 그룹 · 일괄 OTA 대상
+├── fota/              # update_jobs · IoT Job/MQTT orchestration · DocDB 이벤트
+├── pipeline/          # Tier snapshot · KDS lag · cadence status (읽기 전용)
+├── telemetry/         # Hot 조회 · metric-stream fan-out
+├── alarm/             # 알람 · ruleset mirror · EventBridge
+├── service/           # ticket · progress · SLA snapshot
+├── inspection/        # 수율 · Iceberg proxy
+├── parts/             # 부품 · AS
+├── admin/             # IoT cert · YAML deploy · system-config
+└── platform/          # DLQ mirror · health
+</code></pre>
+<p>각 컨텍스트 하위 폴더 (FOTA Lite 규약):</p>
+<table>
+<thead>
+<tr>
+<th>폴더</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>entities/</code></td>
+<td>TypeORM 엔티티 — DDL SSOT: <code>config/schema/postgres/</code></td>
+</tr>
+<tr>
+<td><code>controllers/</code></td>
+<td>HTTP · <code>*.controller.interface.ts</code></td>
+</tr>
+<tr>
+<td><code>services/</code></td>
+<td><code>@Injectable()</code> · 키셋 페이징 <code>findPage(limit, lastId)</code></td>
+</tr>
+<tr>
+<td><code>modules/</code></td>
+<td>Nest <code>*.module.ts</code></td>
+</tr>
+<tr>
+<td><code>doc/</code></td>
+<td>컨텍스트별 API·업무 규칙 md</td>
+</tr>
+</tbody></table>
+<p><strong>횡단</strong>: <code>src/infrastructure/</code> — MQTT, S3/MinIO, Cognito, DocumentDB, Redis(선택).<br><strong>공통</strong>: <code>src/common/contracts/</code> — CRUD·process 포트, CQRS DataSource 선택.</p>
+<p>MSA 경계와의 대응: <a href="#doc-04-backend-services">04-backend-services.md</a> §4.1 — 초기에는 <strong>모놀리식 NestJS</strong>, 도메인 모듈 경계만 유지 후 Fleet/Alarm 등 분리.</p>
+<hr>
+<h2>14.4 CQRS (Read / Write 분리)</h2>
+<table>
+<thead>
+<tr>
+<th>구분</th>
+<th>조건</th>
+<th>DB</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Read</strong></td>
+<td>HTTP <code>GET</code> · 서비스 <code>get*</code></td>
+<td>Aurora <strong>Reader</strong> · DocDB read preference</td>
+</tr>
+<tr>
+<td><strong>Write</strong></td>
+<td>POST/PUT/PATCH/DELETE</td>
+<td>Aurora <strong>Writer</strong> · DocDB Primary</td>
+</tr>
+</tbody></table>
+<p>환경 변수 예: <code>POSTGRES_READ_URL</code>, <code>POSTGRES_WRITE_URL</code>, <code>MONGO_READ_URI</code>, <code>MONGO_WRITE_URI</code>.</p>
+<ul>
+<li>배치·BI·대시보드 GET → Reader (ReplicaLag 모니터링 — <a href="#doc-03-storage-tiers">03-storage-tiers.md</a> §3.5).</li>
+<li>«방금 쓴 값 즉시 확인»(Job 생성 직후 목록)만 Writer fallback.</li>
+</ul>
+<hr>
+<h2>14.5 인증·조직 스코프</h2>
+<h3>14.5.1 Cognito JWT (운영)</h3>
+<table>
+<thead>
+<tr>
+<th>claim</th>
+<th>용도</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>role</code></td>
+<td><code>admin</code> · <code>engineer</code> · <code>cs</code> · <code>customer</code></td>
+</tr>
+<tr>
+<td><code>companyId</code></td>
+<td><code>company.id</code> — customers 스코프</td>
+</tr>
+<tr>
+<td><code>branchId</code></td>
+<td><code>branch.id</code> — 지점 KPI</td>
+</tr>
+<tr>
+<td><code>siteId</code></td>
+<td><code>site.id</code> — 현장·installation</td>
+</tr>
+<tr>
+<td><code>scope</code></td>
+<td>API 세부 권한 (menu-catalog 1:1)</td>
+</tr>
+</tbody></table>
+<p><code>system_admin</code>(플랫폼): 스코프 무시 · 전체 테넌트.</p>
+<h3>14.5.2 FOTA Lite에서 이식한 패턴</h3>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>FOTA Lite</th>
+<th>테크밸리 적용</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>가입·승인</td>
+<td>email verify → admin approve</td>
+<td>Cognito + <code>account_status</code> 또는 Pre sign-up Lambda</td>
+</tr>
+<tr>
+<td>Google SSO</td>
+<td><code>POST /api/auth/google</code></td>
+<td>Cognito Hosted UI / OIDC</td>
+</tr>
+<tr>
+<td>사이트별 회원</td>
+<td><code>/system-admin/site-members</code></td>
+<td><code>scope_site_id</code> + site admin approve</td>
+</tr>
+<tr>
+<td>API Public</td>
+<td><code>@Public()</code> — login, register</td>
+<td><code>/api/auth/*</code>, health</td>
+</tr>
+</tbody></table>
+<p>상세: FOTA <code>docs/domain/02-auth.md</code>, <code>docs/fota-lite/08-cognito-auth.md</code>.</p>
+<hr>
+<h2>14.6 UI ↔ API 매핑 (서비스 웹 + 마스터)</h2>
+<p>프론트 mock 교체 시 <strong><code>src/lib/data/batch/*</code></strong>, <strong><code>src/lib/data/realtime/*</code></strong> → OpenAPI 클라이언트.</p>
+<blockquote>
+<p><strong>웹 레퍼런스</strong>: 아키텍처 docs <code>/reference/ui-api/</code> — UI↔API 표 · NestJS contexts · FOTA API · JWT claim</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>UI route</th>
+<th>menuId</th>
+<th>HTTP (prefix <code>/api</code>)</th>
+<th>dataScope</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>/dashboard</code></td>
+<td>dashboard</td>
+<td>GET <code>/dashboard/summary</code></td>
+<td>batch</td>
+</tr>
+<tr>
+<td><code>/data-pipeline</code></td>
+<td>data-pipeline</td>
+<td>GET <code>/pipeline/tiers</code>, <code>/pipeline/live</code></td>
+<td>mixed</td>
+</tr>
+<tr>
+<td><code>/metric-stream</code></td>
+<td>metric-stream</td>
+<td>GET <code>/metric-stream</code> (SSE)</td>
+<td>realtime</td>
+</tr>
+<tr>
+<td><code>/equipment-logs</code></td>
+<td>equipment-logs</td>
+<td>GET <code>/equipment-logs?category=</code></td>
+<td>batch</td>
+</tr>
+<tr>
+<td><code>/alarms</code></td>
+<td>alarms</td>
+<td>GET <code>/alarms</code></td>
+<td>batch</td>
+</tr>
+<tr>
+<td><code>/alarm-rules</code></td>
+<td>alarm-rules</td>
+<td>GET <code>/alarm-rules</code>, <code>/rule-recommendations</code></td>
+<td>batch</td>
+</tr>
+<tr>
+<td><code>/remote-control</code></td>
+<td>remote-control</td>
+<td>POST <code>/remote/shadow</code>, <code>/remote/jobs</code></td>
+<td>realtime</td>
+</tr>
+<tr>
+<td><code>/remote-diagnosis</code></td>
+<td>remote-diagnosis</td>
+<td>GET <code>/remote/diagnostics</code></td>
+<td>batch+Hot</td>
+</tr>
+<tr>
+<td><code>/service-tickets</code></td>
+<td>service-tickets</td>
+<td>CRUD <code>/service/tickets</code></td>
+<td>batch</td>
+</tr>
+<tr>
+<td><code>/sla</code></td>
+<td>sla</td>
+<td>GET <code>/sla/snapshots</code></td>
+<td>batch</td>
+</tr>
+<tr>
+<td><code>/equipment</code></td>
+<td>equipment</td>
+<td>GET <code>/devices</code></td>
+<td>batch</td>
+</tr>
+<tr>
+<td><code>/installation</code></td>
+<td>installation</td>
+<td>GET <code>/sites</code>, <code>/installation</code></td>
+<td>batch</td>
+</tr>
+<tr>
+<td><code>/customers</code></td>
+<td>customers</td>
+<td>CRUD <code>/companies</code>, <code>/branches</code></td>
+<td>batch</td>
+</tr>
+<tr>
+<td><code>/inspection</code></td>
+<td>inspection</td>
+<td>GET <code>/inspection/yield</code></td>
+<td>batch</td>
+</tr>
+<tr>
+<td><code>/settings/firmware</code></td>
+<td>settings-firmware</td>
+<td>CRUD <code>/firmwares</code>, POST <code>/update-jobs</code></td>
+<td>batch</td>
+</tr>
+<tr>
+<td><code>/admin/iot-auth</code></td>
+<td>admin-iot-auth</td>
+<td>CRUD <code>/admin/iot/*</code></td>
+<td>—</td>
+</tr>
+</tbody></table>
+<p><strong>조직 필터</strong>: 목록 API 공통 query — <code>companyId</code>, <code>branchId</code>, <code>siteId</code>, <code>productId</code> (FOTA <code>devices</code> API와 동일 패턴).</p>
+<p><strong>응답 메타</strong> (batch): <code>{ data, meta: { asOf, source, refreshInterval } }</code> — <code>DataSourceMeta</code>.</p>
+<hr>
+<h2>14.7 FOTA · 펌웨어 업데이트 도메인</h2>
+<p>테크밸리는 <strong>Greengrass IoT Jobs + MQTT <code>ota/*</code></strong> (<a href="#doc-08-greengrass-offline-resilience">08-greengrass-offline-resilience.md</a>)와 <strong>운영 포털 Job UI</strong>를 함께 씁니다.</p>
+<h3>14.7.1 Warm (RDS)</h3>
+<table>
+<thead>
+<tr>
+<th>테이블</th>
+<th>역할</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>product</code></td>
+<td>제품군</td>
+</tr>
+<tr>
+<td><code>firmware</code> / OTA 아티팩트 메타</td>
+<td>S3 key, checksum, CF URL</td>
+</tr>
+<tr>
+<td><code>device</code></td>
+<td>현재 펌웨어 버전 스냅샷</td>
+</tr>
+<tr>
+<td><code>update_job</code>, <code>update_job_device</code></td>
+<td>Job·대상·상태 (FOTA Lite 동형)</td>
+</tr>
+<tr>
+<td><code>equipment_log_firmware</code></td>
+<td>Warm 카테고리 로그</td>
+</tr>
+</tbody></table>
+<p>DDL: <code>01-core-schema.sql</code>, <code>04-tv-domain-extensions.sql</code>.</p>
+<h3>14.7.2 Hot (DocumentDB)</h3>
+<table>
+<thead>
+<tr>
+<th>컬렉션</th>
+<th>역할</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>fota_history</code></td>
+<td>OTA 진행·상태 이벤트 (<code>rule_fota_events_v1</code>)</td>
+</tr>
+<tr>
+<td><code>control_history</code></td>
+<td>Shadow·Job 제어</td>
+</tr>
+</tbody></table>
+<p>MQTT: <code>+/+/+/+/event/fota/+/json</code> — <a href="#doc-05-yaml-and-rules">05-yaml-and-rules.md</a>.</p>
+<h3>14.7.3 Job 생성 → 장비 반영 (시퀀스)</h3>
+<div class="mermaid">sequenceDiagram
+  participant UI as 서비스 웹 settings-firmware
+  participant API as NestJS fota context
+  participant RDS as Aurora Writer
+  participant IOT as IoT Core Jobs / MQTT
+  participant GG as Greengrass
+  participant DOC as DocumentDB
+
+  UI->>API: POST /api/update-jobs (deviceIds, firmwareId)
+  API->>RDS: update_job + update_job_devices INSERT
+  API->>IOT: CreateJob / MQTT ota command (retain)
+  GG->>IOT: ota/progress · ota/status
+  IOT->>DOC: stream_sync_consumer → fota_history
+  Note over API,DOC: batch cadence → equipment_log_firmware · Job 상태 갱신
+</div>
+<ul>
+<li><strong>CF Signed URL 만료</strong>: <code>ota/cf-url-request</code> → orchestrator 재발급 (24h).</li>
+<li><strong>오프라인</strong>: Job <strong>QUEUED</strong> — 복귀 시 <code>notify-next</code> (<a href="#doc-08-greengrass-offline-resilience">08</a> §8.3).</li>
+<li><strong>시뮬레이션</strong> (로컬/E2E): FOTA Lite <code>POST /api/update-jobs/:id/simulate</code> 패턴.</li>
+</ul>
+<h3>14.7.4 운영 vs 비운영</h3>
+<p>FOTA Job <strong>대상은 운영(고객등록) device만</strong> — <code>device_phase</code> = 고객등록(3), <code>site_id</code> 필수 (FOTA Lite <code>docs/domain/01-hierarchy.md</code> D0001).</p>
+<hr>
+<h2>14.8 프론트엔드 스택 (<code>03.source/frontend</code>)</h2>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>테크밸리</th>
+<th>FOTA Lite 참고</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>프레임워크</td>
+<td><strong>Next.js 16</strong> App Router</td>
+<td>Next 14 SSG <code>output: &#39;export&#39;</code></td>
+</tr>
+<tr>
+<td>UI</td>
+<td><strong>MUI</strong> + <strong>AG Grid Enterprise</strong></td>
+<td>shadcn + AG Grid Community</td>
+</tr>
+<tr>
+<td>i18n</td>
+<td>ko/en, KST (<code>locale/</code>)</td>
+<td>빌드 시점 <code>languages.json</code> (선택 이식)</td>
+</tr>
+<tr>
+<td>배포</td>
+<td>Vercel</td>
+<td>S3 + CloudFront</td>
+</tr>
+<tr>
+<td>API URL</td>
+<td><code>NEXT_PUBLIC_API_URL</code> (예정)</td>
+<td><code>NEXT_PUBLIC_API_URL</code> + SSR <code>API_URL</code></td>
+</tr>
+<tr>
+<td>CORS</td>
+<td>API Gateway / NestJS <code>CORS_ORIGINS</code></td>
+<td>동일</td>
+</tr>
+</tbody></table>
+<p>그리드·컬럼: <code>src/components/grid/column-defs.tsx</code>, <code>viewport-columns.ts</code> — API 연동 시 DTO 타입만 교체.</p>
+<hr>
+<h2>14.9 로컬·연동</h2>
+<table>
+<thead>
+<tr>
+<th>서비스</th>
+<th>포트 (예)</th>
+<th>비고</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Frontend</td>
+<td>3000</td>
+<td><code>npm run dev:frontend</code></td>
+</tr>
+<tr>
+<td>NestJS API</td>
+<td>3002 / 17012</td>
+<td><code>03.source/beckend</code> (예정)</td>
+</tr>
+<tr>
+<td>Postgres</td>
+<td>25432</td>
+<td><a href="#doc-07-repo-and-deployment">07-repo-and-deployment.md</a></td>
+</tr>
+<tr>
+<td>DocumentDB Local</td>
+<td>27000</td>
+<td>Hot</td>
+</tr>
+<tr>
+<td>Mosquitto (선택)</td>
+<td>1883</td>
+<td><code>/mqtt</code> 디버그 UI</td>
+</tr>
+</tbody></table>
+<p>FOTA Lite 스크립트 참고: <code>start-local.sh</code>, <code>local-up.sh</code> — 테크밸리는 <code>90.infra/local/</code> Podman compose SSOT.</p>
+<hr>
+<h2>14.10 FOTA Lite ↔ 테크밸리 대응표</h2>
+<table>
+<thead>
+<tr>
+<th>FOTA Lite</th>
+<th>테크밸리</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>MySQL <code>companies/branches/sites/devices</code></td>
+<td>Postgres <code>company/branch/site/device</code></td>
+</tr>
+<tr>
+<td><code>firmware_update_events</code> (DocDB)</td>
+<td><code>fota_history</code></td>
+</tr>
+<tr>
+<td><code>firmware_update_history</code> (RDS)</td>
+<td><code>equipment_log_firmware</code> + Job 테이블</td>
+</tr>
+<tr>
+<td>MQTT 8-level <code>{tenant}/{env}/…</code></td>
+<td><code>{tv}/{dev|stg|prd}/…</code> — <a href="#doc-05-yaml-and-rules">05-yaml-and-rules.md</a></td>
+</tr>
+<tr>
+<td>NestJS stream consumer (로컬)</td>
+<td><code>stream-sync-consumer</code> Lambda (운영)</td>
+</tr>
+<tr>
+<td><code>stats_hourly/daily/…</code></td>
+<td><code>telemetry_*_time_series</code>, <code>communication_quality_rollup_*</code></td>
+</tr>
+<tr>
+<td>관리 콘솔 / 서비스 웹</td>
+<td><code>admin-*</code> / <code>(platform)/*</code> routes</td>
+</tr>
+</tbody></table>
+<p><strong>참고 문서 경로</strong> (외부 SSOT, 구현 시 읽기):</p>
+<table>
+<thead>
+<tr>
+<th>문서</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>FOTA/30.fota-lite-project/docs/fota-lite/11-ui-api.md</code></td>
+<td>UI·API·CORS</td>
+</tr>
+<tr>
+<td><code>FOTA/30.fota-lite-project/docs/fota-lite/01-stack-spec.md</code></td>
+<td>스택·CQRS·UI 분리</td>
+</tr>
+<tr>
+<td><code>FOTA/30.fota-lite-project/docs/domain/01-hierarchy.md</code></td>
+<td>조직·device_phase</td>
+</tr>
+<tr>
+<td><code>FOTA/30.fota-lite-project/docs/domain/03-firmware-update.md</code></td>
+<td>Job·펌웨어</td>
+</tr>
+<tr>
+<td><code>FOTA/30.fota-lite-project/apps/backend/src/contexts/README.md</code></td>
+<td>컨텍스트 구조</td>
+</tr>
+<tr>
+<td><code>FOTA/10.doc/01-fota-customer-overview.md</code></td>
+<td>Cognito SSO·고객 기능 개요</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>14.11 구현 상태</h2>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>상태</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>프론트 UI + mock + DataScope</td>
+<td><strong>done</strong> (<code>03.source/frontend</code>)</td>
+</tr>
+<tr>
+<td>Lambda pipeline skeleton</td>
+<td><strong>skeleton</strong> (<code>03.source/lambda</code>)</td>
+</tr>
+<tr>
+<td>NestJS <code>03.source/beckend/</code></td>
+<td><strong>next</strong> — FOTA Lite contexts 포팅</td>
+</tr>
+<tr>
+<td>Cognito + API Gateway</td>
+<td><strong>next</strong></td>
+</tr>
+<tr>
+<td><code>settings-firmware</code> → real OTA API</td>
+<td><strong>next</strong></td>
+</tr>
+</tbody></table>
+
+</section>
+
+<section id="doc-05-yaml-and-rules" class="doc-section md-content" data-group="yaml" data-source="05-yaml-and-rules.md">
+  <p class="source-tag">SSOT: <code>02.arch/05-yaml-and-rules.md</code></p>
+  <h1>05. YAML·변환 규칙·배치 Cadence</h1>
+<p>테크밸리 IoT 플랫폼 <strong>YAML 4층</strong> 설계 SSOT입니다.</p>
+<h2>5.1 설정 4층</h2>
+<table>
+<thead>
+<tr>
+<th>층</th>
+<th>파일 (가칭)</th>
+<th>역할</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>A. 매니페스트</strong></td>
+<td><code>01-data-platform.manifest.yaml</code></td>
+<td>Doc/RDS 스키마, IoT Rule, KDS, 알람 ruleset</td>
+</tr>
+<tr>
+<td><strong>B. 정규화</strong></td>
+<td><code>normalize-config.default.yaml</code></td>
+<td>8세그먼트 파싱, topic_filter → collection</td>
+</tr>
+<tr>
+<td><strong>C. 배치</strong></td>
+<td><code>02-batch-cadence.yaml</code></td>
+<td>cadence, read/write, RDS 매핑, depends_on</td>
+</tr>
+<tr>
+<td><strong>D. 규칙 번들</strong></td>
+<td><code>rules/*.json</code></td>
+<td>배포 시 빌드 산출 — Lambda 런타임 로드</td>
+</tr>
+</tbody></table>
+<p><strong>버전</strong>: <code>spec_version</code> (문법) · <code>rule_version</code> (규칙) · <code>deploy_version</code> (운영 릴리스).</p>
+<h2>5.2 MQTT 토픽 (8세그먼트)</h2>
+<pre><code>{tenant}/{env}/{edge}/{device}/{data_kind}/{domain}/{role}/json
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>세그먼트</th>
+<th>허용 예 (테크밸리)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>5 <code>data_kind</code></td>
+<td><code>periodic</code>, <code>event</code></td>
+</tr>
+<tr>
+<td>6 <code>domain</code></td>
+<td><code>telemetry</code>, <code>fota</code>, <code>control</code>, <code>alarm</code>, <code>file</code></td>
+</tr>
+<tr>
+<td>7 <code>role</code></td>
+<td><code>report</code>, <code>status</code>, <code>command</code>, <code>chunk</code></td>
+</tr>
+</tbody></table>
+<p>IoT Topic Rule → KDS <strong>PartitionKey = <code>device_code</code></strong> (장비 S/N).</p>
+<h3>조직 필드 해석 (MQTT에 없음)</h3>
+<p>토픽 8세그먼트에는 company/branch/site가 <strong>없습니다</strong> — <code>{device}</code> = <code>device_code</code>만 carries합니다.<br><code>stream_sync_consumer</code>가 manifest <code>org_resolution</code> + <code>rdbms_time_series_link</code>로 <code>device</code> → <code>site</code> → <code>branch</code> → <code>company</code>를 조인·스냅샷합니다.</p>
+<p>상세: <a href="#doc-config-schema-org-hierarchy">org-hierarchy.md</a> · <a href="#doc-01-platform-overview">01-platform-overview.md</a> §1.2</p>
+<h3>metric-stream UI ↔ 토픽</h3>
+<table>
+<thead>
+<tr>
+<th>UI hash</th>
+<th>data_kind / domain</th>
+<th>예시 필드</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>#periodic</code></td>
+<td>periodic / telemetry</td>
+<td>tube.kv, temp, yield</td>
+</tr>
+<tr>
+<td><code>#event</code></td>
+<td>event / telemetry</td>
+<td>상태 전이, 알람 트리거</td>
+</tr>
+<tr>
+<td><code>#firmware</code></td>
+<td>periodic / fota</td>
+<td>firmware.version, OTA</td>
+</tr>
+<tr>
+<td><code>#control</code></td>
+<td>event / control</td>
+<td>Shadow, IoT Job</td>
+</tr>
+</tbody></table>
+<h2>5.3 normalize-config (B층)</h2>
+<p><code>mongo.documentDbTopicFilters.include</code> 화이트리스트 — <strong>첫 매칭 행</strong>의 <code>collection</code> + <code>rule_code</code>.</p>
+<table>
+<thead>
+<tr>
+<th>topic 패턴 (예)</th>
+<th>DocumentDB collection</th>
+<th>rule_code</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>+/+/+/+/periodic/telemetry/report/json</code></td>
+<td><code>periodic_telemetry</code></td>
+<td><code>rule_periodic_telemetry_v1</code></td>
+</tr>
+<tr>
+<td><code>+/+/+/+/event/telemetry/status/json</code></td>
+<td><code>event_history</code></td>
+<td><code>rule_telemetry_events_v1</code></td>
+</tr>
+<tr>
+<td><code>+/+/+/+/event/control/command/json</code></td>
+<td><code>control_history</code></td>
+<td><code>rule_control_v1</code></td>
+</tr>
+<tr>
+<td><code>+/+/+/+/event/fota/report/json</code></td>
+<td><code>fota_history</code></td>
+<td><code>rule_fota_v1</code></td>
+</tr>
+</tbody></table>
+<p>Firehose 스위치: normalize-config에서 tier별 on/off — <strong>Hot·Cold 동일 변환 출력</strong> 유지.</p>
+<h2>5.4 규칙 JSON (D층)</h2>
+<p>주요 키:</p>
+<pre><code class="language-yaml">topic_match: [&quot;...&quot;]
+payload:
+  source_type: json_to_json | delimited_text | binary_* | json_wrapped_*
+mappings: [...]
+transform:
+  steps: [calc, map_field, pivot, ...]
+targets: [documentdb, firehose]
+alerts_raw: [...]   # 스트림 즉시 알림
+aggregations: [...] # 배치 입력 정의
+</code></pre>
+<h3>source_type (페이로드 디코드)</h3>
+<table>
+<thead>
+<tr>
+<th>type</th>
+<th>용도</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>json_to_json</code></td>
+<td>표준 JSON 텔레메트리</td>
+</tr>
+<tr>
+<td><code>delimited_text</code></td>
+<td>레거시 구분자</td>
+</tr>
+<tr>
+<td><code>binary_layout</code> / <code>binary_index</code></td>
+<td>바이너리 센서</td>
+</tr>
+<tr>
+<td><code>json_wrapped_binary</code></td>
+<td>JSON envelope + binary</td>
+</tr>
+</tbody></table>
+<p>페이로드 디코드: <code>json_to_json</code>, <code>delimited_text</code>, <code>binary_layout</code> 등 — <code>03.source/lambda/packages/pipeline-core</code> <code>decodePayload()</code> 파이프라인.</p>
+<h2>5.5 배치 cadence (C층)</h2>
+<h3>디바이스 롤업 체인</h3>
+<pre><code>periodic_telemetry
+  → telemetry_rollups_device_10min
+  → telemetry_rollups_device_hour
+  → telemetry_rollups_device_day
+  → telemetry_rollups_device_month
+  → telemetry_rollups_device_year
+</code></pre>
+<p>각 단계는 <strong>직전 grain만</strong> 입력.</p>
+<h3>테크밸리 관제 cadence (Aurora)</h3>
+<table>
+<thead>
+<tr>
+<th>cadence_id</th>
+<th>입력</th>
+<th>출력</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>rollup_hourly</code></td>
+<td>Doc hour 롤업</td>
+<td><code>aurora.fleet_hourly_rollup</code></td>
+</tr>
+<tr>
+<td><code>rollup_daily</code></td>
+<td>Doc day + alarm raw</td>
+<td><code>dashboard_daily_aggregate</code>, <code>alarm_daily_rollup</code></td>
+</tr>
+<tr>
+<td><code>rollup_daily_yield</code></td>
+<td>Cold/Iceberg staging</td>
+<td><code>iceberg.yield_daily_rollup</code></td>
+</tr>
+<tr>
+<td><code>equipment_log_export</code></td>
+<td>Doc 이벤트·제어·FOTA</td>
+<td>Warm 카테고리별 log 테이블</td>
+</tr>
+</tbody></table>
+<h3>depends_on 예</h3>
+<pre><code class="language-yaml">rollup_hourly:
+  depends_on: [rollup_device_10min]
+rollup_daily:
+  depends_on: [rollup_device_day]
+</code></pre>
+<h2>5.6 알람 규칙 분리</h2>
+<table>
+<thead>
+<tr>
+<th>유형</th>
+<th>실행 시점</th>
+<th>설정 위치</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Raw (<code>alerts_raw</code>)</td>
+<td>stream Lambda</td>
+<td>rules JSON</td>
+</tr>
+<tr>
+<td>임계·복합</td>
+<td>EventBridge</td>
+<td>alarm-rules UI ↔ ruleset mirror</td>
+</tr>
+<tr>
+<td>집계 (통신품질 등)</td>
+<td>batch cadence</td>
+<td><code>02-batch-cadence.yaml</code> + RDS</td>
+</tr>
+</tbody></table>
+<h2>5.7 배포 워크플로 (YAML → predeploy → Terraform)</h2>
+<p>테크밸리 <strong><code>02.arch/config/</code> + <code>03.source/lambda/</code> + <code>90.infra/</code></strong> 배포 패턴.<br><strong>상세 SSOT</strong>: <a href="#doc-10-yaml-pipeline-deploy-automation">10-yaml-pipeline-deploy-automation.md</a></p>
+<h3>한 줄 요약</h3>
+<pre><code>processes/*.yaml → compose:manifest → ingress-deploy.yaml + infrastructure.yaml
+  → npm run predeploy (번들·tfvars·validate) → terraform plan/apply (별도 승인)
+</code></pre>
+<h3>predeploy (AWS 배포 아님)</h3>
+<table>
+<thead>
+<tr>
+<th>단계</th>
+<th>script</th>
+<th>산출</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>manifest 합성</td>
+<td><code>compose:manifest</code></td>
+<td><code>01-data-platform.manifest.yaml</code></td>
+</tr>
+<tr>
+<td>Lambda 빌드</td>
+<td><code>lambda:assets</code></td>
+<td><code>apps/*/bundle/</code> ZIP</td>
+</tr>
+<tr>
+<td>Terraform 입력</td>
+<td><code>tfvars</code></td>
+<td><code>environments/*.auto.tfvars.json</code></td>
+</tr>
+<tr>
+<td>정합 검증</td>
+<td><code>validate:deploy</code></td>
+<td>manifest ↔ ingress-deploy ↔ IoT rules</td>
+</tr>
+</tbody></table>
+<h3>배포 SSOT 파일</h3>
+<pre><code>02.arch/config/                    ← SSOT (11.1 전체)
+  ingress-deploy.yaml
+  infrastructure.yaml
+  process-deploy.yaml
+  normalize-config.default.yaml
+  02-batch-cadence.yaml
+  manifest/ · converter-rules/ · rules/ · samples/
+90.infra/config/                   ← sync:config 미러
+03.source/lambda/apps/*/bundle/
+</code></pre>
+<h3>EventBridge ↔ batch-cadence 이중 SSOT</h3>
+<table>
+<thead>
+<tr>
+<th>계층</th>
+<th>파일</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>cadence <strong>의미</strong></td>
+<td><code>02-batch-cadence.yaml</code></td>
+<td>id, kind, storage, depends_on</td>
+</tr>
+<tr>
+<td>AWS <strong>cron</strong></td>
+<td><code>ingress-deploy.yaml#batch.schedules[]</code></td>
+<td><code>schedule_expression</code></td>
+</tr>
+<tr>
+<td>런타임</td>
+<td><code>batch_cadence_runner</code></td>
+<td>EventBridge input <code>{ cadence_id, schedule_key }</code></td>
+</tr>
+</tbody></table>
+<h3>Terraform apply (수동 승인)</h3>
+<ol>
+<li>YAML/JSON 규칙 수정 (Git)</li>
+<li><code>npm run predeploy</code></li>
+<li><code>terraform plan -var-file=environments/dev.auto.tfvars.json</code></li>
+<li>승인 후 <code>terraform apply</code></li>
+<li>Lambda alias·버전 고정 (트리거별)</li>
+</ol>
+<blockquote>
+<p><code>*.auto.tfvars.json</code>은 <code>npm run tfvars</code>로만 갱신 — <strong>수동 편집 금지</strong></p>
+</blockquote>
+<h2>5.8 금지·예외</h2>
+<ul>
+<li>KDS → Firehose <strong>직접</strong> (Lambda 우회) — 표준 금지</li>
+<li>RDS site 팩트에 <strong>원시 periodic 로우</strong> 직접 집계 — 금지 (Doc «일» 롤업 합산만)</li>
+<li>배치 cadence <strong>단일 EventBridge</strong>에 전부 묶기 — cadence별 규칙 분리 권장</li>
+</ul>
+<h2>5.9 오프라인·복구 토픽 (ota · file)</h2>
+<p>Greengrass Disk Spooler 경유 가능한 도메인·역할. 상세 시퀀스: <a href="#doc-08-greengrass-offline-resilience">08-greengrass-offline-resilience.md</a>.</p>
+<table>
+<thead>
+<tr>
+<th>domain</th>
+<th>role</th>
+<th>Retained</th>
+<th>용도</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ota</code></td>
+<td><code>cf-url-request</code></td>
+<td>—</td>
+<td>CF Signed URL 재발급 요청</td>
+</tr>
+<tr>
+<td><code>ota</code></td>
+<td><code>cf-url-response</code></td>
+<td>✓</td>
+<td>재발급 URL (만료 시 덮어쓰기)</td>
+</tr>
+<tr>
+<td><code>ota</code></td>
+<td><code>progress</code> / <code>status</code></td>
+<td>—</td>
+<td>OTA 진행·완료</td>
+</tr>
+<tr>
+<td><code>file</code></td>
+<td><code>request</code> / <code>response</code> / <code>chunk</code> / <code>stream</code> / <code>progress</code> / <code>complete</code> / <code>abort</code></td>
+<td>—</td>
+<td>S3 단일·멀티파트·이미지청크·비디오스트림 (<a href="#doc-13-media-upload-pipeline">13-media-upload-pipeline.md</a>)</td>
+</tr>
+</tbody></table>
+
+</section>
+
+<section id="doc-10-yaml-pipeline-deploy-automation" class="doc-section md-content" data-group="yaml" data-source="10-yaml-pipeline-deploy-automation.md">
+  <p class="source-tag">SSOT: <code>02.arch/10-yaml-pipeline-deploy-automation.md</code></p>
+  <h1>10. YAML 파이프라인 자동 배포</h1>
+<p>테크밸리 IoT 플랫폼의 <strong>YAML → predeploy → Terraform</strong> 자동 배포 SSOT입니다.<br>설정 원본: <strong><code>02.arch/config/</code></strong> · Lambda: <strong><code>03.source/lambda/</code></strong> · IaC: <strong><code>90.infra/</code></strong></p>
+<h2>10.1 구현 상태</h2>
+<table>
+<thead>
+<tr>
+<th>구성요소</th>
+<th>SSOT 경로</th>
+<th>상태</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ingress-deploy</td>
+<td><code>02.arch/config/ingress-deploy.yaml</code></td>
+<td>완료</td>
+</tr>
+<tr>
+<td>infrastructure</td>
+<td><code>02.arch/config/infrastructure.yaml</code></td>
+<td>완료</td>
+</tr>
+<tr>
+<td>process-deploy</td>
+<td><code>02.arch/config/process-deploy.yaml</code></td>
+<td>완료</td>
+</tr>
+<tr>
+<td>manifest + processes</td>
+<td><code>02.arch/config/manifest/</code></td>
+<td>완료</td>
+</tr>
+<tr>
+<td>converter-rules + rules JSON</td>
+<td><code>02.arch/config/converter-rules/</code> · <code>rules/</code></td>
+<td>완료 (6종)</td>
+</tr>
+<tr>
+<td>predeploy scripts</td>
+<td><code>03.source/lambda/scripts/</code></td>
+<td>완료</td>
+</tr>
+<tr>
+<td>Lambda 앱 소스</td>
+<td><code>03.source/lambda/apps/</code></td>
+<td>골격 (8종)</td>
+</tr>
+<tr>
+<td>Terraform modules</td>
+<td><code>90.infra/terraform/</code></td>
+<td>골격 (6모듈, validate)</td>
+</tr>
+</tbody></table>
+<h2>10.2 배포 원칙</h2>
+<ol>
+<li><strong>플랫폼 계약 YAML</strong>과 <strong>AWS 배포 형태</strong>를 분리한다.</li>
+<li>운영 수치·Lambda·KDS·EventBridge cron → <strong><code>ingress-deploy.yaml</code> 단일 SSOT</strong>.</li>
+<li>IoT Rule on/off·IAM·레이크/DB 스위치 → <strong><code>infrastructure.yaml</code></strong>.</li>
+<li>IoT Rule SQL·topic_filter → <strong>manifest <code>iot_rules.rules[]</code></strong> (processes compose).</li>
+<li>cadence <strong>의미</strong> → <strong><code>02-batch-cadence.yaml</code></strong>.</li>
+<li><strong><code>npm run predeploy</code>는 AWS 배포를 하지 않는다</strong> — 번들·tfvars·정합 검증만. <code>terraform apply</code>는 별도 승인.</li>
+</ol>
+<h2>10.3 설정 5층 + 배포 3층</h2>
+<div class="mermaid">flowchart TB
+  subgraph platform [플랫폼 계약 — 05]
+    P[processes/*.yaml]
+    M[01-data-platform.manifest.yaml]
+    N[normalize-config.default.yaml]
+    B[02-batch-cadence.yaml]
+    R[rules/*.json]
+    P --> M
+  end
+
+  subgraph deploy [배포 SSOT — 02.arch/config]
+    ID[ingress-deploy.yaml]
+    INF[infrastructure.yaml]
+    PD[process-deploy.yaml]
+  end
+
+  subgraph scripts [predeploy]
+    CM[compose:manifest]
+    LA[lambda:assets]
+    TV[tfvars]
+    VA[validate:deploy]
+    CM --> LA --> TV --> VA
+  end
+
+  subgraph aws [Terraform — 수동 승인]
+    TFV[dev.auto.tfvars.json]
+    TF[plan/apply]
+    AWS[IoT · KDS · Lambda · EventBridge]
+    TFV --> TF --> AWS
+  end
+
+  M --> CM
+  ID --> TV
+  INF --> TV
+  N --> LA
+  B --> LA
+  R --> LA
+  VA --> TFV
+</div>
+<table>
+<thead>
+<tr>
+<th>층</th>
+<th>파일</th>
+<th>수정 시점</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A. 매니페스트</td>
+<td><code>manifest/01-data-platform.manifest.yaml</code></td>
+<td>processes 수정 후 compose</td>
+</tr>
+<tr>
+<td>B. 정규화</td>
+<td><code>normalize-config.default.yaml</code></td>
+<td>토픽·collection·rule_code</td>
+</tr>
+<tr>
+<td>C. 배치</td>
+<td><code>02-batch-cadence.yaml</code></td>
+<td>cadence·depends_on</td>
+</tr>
+<tr>
+<td>D. 규칙</td>
+<td><code>rules/*.json</code></td>
+<td>페이로드 변환·alerts_raw</td>
+</tr>
+<tr>
+<td>E. ingress-deploy</td>
+<td><code>ingress-deploy.yaml</code></td>
+<td>Lambda·KDS·EventBridge cron</td>
+</tr>
+<tr>
+<td>F. infrastructure</td>
+<td><code>infrastructure.yaml</code></td>
+<td>IoT·IAM·레이크</td>
+</tr>
+<tr>
+<td>G. process-deploy</td>
+<td><code>process-deploy.yaml</code></td>
+<td>로컬 E2E</td>
+</tr>
+</tbody></table>
+<h2>10.4 ingress-deploy.yaml</h2>
+<p>SSOT: <strong><code>02.arch/config/ingress-deploy.yaml</code></strong></p>
+<h3>10.4.1 최상위 키</h3>
+<table>
+<thead>
+<tr>
+<th>키</th>
+<th>역할</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>project</code></td>
+<td><code>name: tv-ingress</code>, <code>aws_region</code>, <code>environment</code>, <code>tags</code></td>
+</tr>
+<tr>
+<td><code>partition_key</code></td>
+<td><code>device_code</code> (장비 S/N)</td>
+</tr>
+<tr>
+<td><code>lambda_package</code></td>
+<td>runtime nodejs24.x, architecture arm64</td>
+</tr>
+<tr>
+<td><code>lambdas.*</code></td>
+<td>memory·timeout·deploy_group</td>
+</tr>
+<tr>
+<td><code>streams.*</code></td>
+<td>KDS·ESM·DLQ</td>
+</tr>
+<tr>
+<td><code>batch.schedules[]</code></td>
+<td>EventBridge cron SSOT</td>
+</tr>
+<tr>
+<td><code>ml.eventbridge</code></td>
+<td>anomaly_scorer, rule_recommender, self_heal</td>
+</tr>
+</tbody></table>
+<h3>10.4.2 Lambda deploy_group</h3>
+<table>
+<thead>
+<tr>
+<th>deploy_group</th>
+<th>함수</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ingress</code></td>
+<td>stream_sync_consumer, dlq_shard_processor, file_upload_orchestrator</td>
+</tr>
+<tr>
+<td><code>batch</code></td>
+<td>batch_cadence_runner, batch_dlq_replay</td>
+</tr>
+<tr>
+<td><code>invoke_only</code></td>
+<td>payload_converter</td>
+</tr>
+<tr>
+<td><code>ml</code></td>
+<td>anomaly_scorer, rule_recommender, self_heal_orchestrator</td>
+</tr>
+</tbody></table>
+<h3>10.4.3 streams</h3>
+<table>
+<thead>
+<tr>
+<th>키</th>
+<th>테크밸리 기본</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ingest_main</code></td>
+<td>ON_DEMAND, retention 168h, batch_size 100</td>
+</tr>
+<tr>
+<td><code>ingest_events_isolated</code></td>
+<td>disabled (분리 KDS 필요 시 enable)</td>
+</tr>
+</tbody></table>
+<h3>10.4.4 batch.schedules</h3>
+<p>배치는 <strong>EventBridge → batch_cadence_runner</strong> (Nest Cron 사용 안 함).</p>
+<table>
+<thead>
+<tr>
+<th>schedule_key</th>
+<th>AWS cron</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>rollup_device_10min</td>
+<td><code>cron(0/10 * * * ? *)</code></td>
+</tr>
+<tr>
+<td>rollup_hourly</td>
+<td><code>cron(0 * * * ? *)</code></td>
+</tr>
+<tr>
+<td>rollup_daily</td>
+<td><code>cron(5 0 * * ? *)</code></td>
+</tr>
+<tr>
+<td>fleet_hourly_export</td>
+<td><code>cron(15 * * * ? *)</code></td>
+</tr>
+</tbody></table>
+<h2>10.5 infrastructure.yaml</h2>
+<table>
+<thead>
+<tr>
+<th>키</th>
+<th>dev 기본</th>
+<th>Terraform</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>iot.enabled</code></td>
+<td>true</td>
+<td>IoT Rule → KDS</td>
+</tr>
+<tr>
+<td><code>analytics_lake.enabled</code></td>
+<td>true</td>
+<td>Firehose · S3 · Glue</td>
+</tr>
+<tr>
+<td><code>data_plane.enabled</code></td>
+<td>false</td>
+<td>DocumentDB/RDS (운영 시 enable)</td>
+</tr>
+</tbody></table>
+<h2>10.6 manifest deploy_binding</h2>
+<pre><code class="language-yaml">deploy_binding:
+  root: 02.arch/config
+  config_ref: 02.arch/config/ingress-deploy.yaml
+  terraform_dir: 90.infra/terraform
+  lambdas_dir: 03.source/lambda/apps
+  lambdas_core_package: 03.source/lambda/packages/pipeline-core
+  batch_scheduler:
+    schedules_ref: 02.arch/config/ingress-deploy.yaml#batch.schedules
+</code></pre>
+<h2>10.7 predeploy (npm scripts)</h2>
+<table>
+<thead>
+<tr>
+<th>script</th>
+<th>동작</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>compose:manifest</code></td>
+<td>processes → manifest 합성</td>
+</tr>
+<tr>
+<td><code>rules:build</code></td>
+<td>converter-rules → rules/*.json</td>
+</tr>
+<tr>
+<td><code>lambda:assets</code></td>
+<td>NestJS 빌드 + stage-bundles</td>
+</tr>
+<tr>
+<td><code>tfvars</code></td>
+<td>→ <code>02.arch/config/terraform/environments/*.auto.tfvars.json</code></td>
+</tr>
+<tr>
+<td><code>validate:deploy</code></td>
+<td>manifest ↔ ingress-deploy 정합</td>
+</tr>
+<tr>
+<td><code>sync:config</code></td>
+<td>02.arch/config → 90.infra/config</td>
+</tr>
+<tr>
+<td><strong><code>predeploy</code></strong></td>
+<td>위 전체 (AWS 미배포)</td>
+</tr>
+</tbody></table>
+<h2>10.8 validate-deploy-alignment</h2>
+<ul>
+<li>manifest deploy_binding ↔ ingress-deploy</li>
+<li>streams terraform_map_key 1:1</li>
+<li>batch.schedules cadence_id ↔ 02-batch-cadence</li>
+<li>Lambda bundle 경로 존재</li>
+</ul>
+<p><strong>실패 시 <code>terraform plan</code> 금지.</strong></p>
+<h2>10.9 Terraform 모듈 (목표)</h2>
+<pre><code>90.infra/terraform/modules/
+  ingress_stack · batch_stack · iot_stack · analytics_lake_stack · lambda_function
+</code></pre>
+<p>Lambda 환경 변수 (Terraform 주입):</p>
+<table>
+<thead>
+<tr>
+<th>변수</th>
+<th>값</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>TV_ENVIRONMENT</code></td>
+<td>dev / stg / prd</td>
+</tr>
+<tr>
+<td><code>TV_DEPLOY_CONFIG_REF</code></td>
+<td>ingress-deploy.yaml</td>
+</tr>
+<tr>
+<td><code>TV_BATCH_SCHEDULER</code></td>
+<td>eventbridge</td>
+</tr>
+<tr>
+<td><code>TV_PARTITION_KEY_FIELD</code></td>
+<td>device_code</td>
+</tr>
+</tbody></table>
+<h2>10.10 로컬 E2E</h2>
+<pre><code class="language-bash">podman compose -f 02.arch/config/local/docker-compose.yml up -d
+cd 03.source/lambda
+npm run rules:build &amp;&amp; npm run sync:config &amp;&amp; npm run predeploy
+npm run test:local:ingress   # Lambda 구현 후
+npm run test:local:batch
+</code></pre>
+<h2>10.11 운영 워크플로</h2>
+<p><strong>A. 규칙·토픽 변경</strong> — <code>02.arch/config/converter-rules/</code> → <code>rules:build</code> → <code>predeploy</code> → terraform plan</p>
+<p><strong>B. KDS·cron 변경</strong> — <code>02.arch/config/ingress-deploy.yaml</code> + <code>02-batch-cadence.yaml</code> 교차 확인</p>
+<p><strong>C. IoT Rule</strong> — <code>manifest/processes/01-ingress-pipeline.yaml</code> → compose → predeploy</p>
+<p><strong>D. Cold 경로</strong> — <code>infrastructure.yaml</code> analytics_lake.enabled: true</p>
+<h2>10.12 구현 체크리스트</h2>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> <code>02.arch/config/</code> 전체 (YAML·JSON·samples·manifest)</li>
+<li><input checked="" disabled="" type="checkbox"> predeploy · sync:config 스크립트</li>
+<li><input checked="" disabled="" type="checkbox"> <code>03.source/lambda/apps/</code> Lambda 골격 (8종)</li>
+<li><input checked="" disabled="" type="checkbox"> <code>90.infra/terraform/</code> 모듈 골격</li>
+<li><input disabled="" type="checkbox"> Lambda DocDB/Aurora/Firehose 실 write</li>
+</ul>
+<h2>10.13 관련 문서</h2>
+<ul>
+<li><a href="#doc-config-schema-postgres-readme">config/README.md</a></li>
+<li><a href="#doc-11-config-examples-reference">11-config-examples-reference.md</a></li>
+<li><a href="#doc-05-yaml-and-rules">05-yaml-and-rules.md</a></li>
+<li><a href="#doc-07-repo-and-deployment">07-repo-and-deployment.md</a></li>
+</ul>
+
+</section>
+
+<section id="doc-06-schema-reference" class="doc-section md-content" data-group="database" data-source="06-schema-reference.md">
+  <p class="source-tag">SSOT: <code>02.arch/06-schema-reference.md</code></p>
+  <h1>06. 스키마 및 UI 매핑</h1>
+<blockquote>
+<p><strong>DB 설계 전체(DDL·bootstrap·ERD): <a href="#doc-12-database-design">12-database-design.md</a></strong><br><strong>조직 계층 SSOT: <a href="#doc-config-schema-org-hierarchy">config/schema/org-hierarchy.md</a></strong><br><strong>물리 SSOT: <a href="./config/schema/"><code>config/schema/</code></a></strong></p>
+</blockquote>
+<h2>6.1 DocumentDB (Hot) — <code>iot_service</code></h2>
+<table>
+<thead>
+<tr>
+<th>컬렉션</th>
+<th>용도</th>
+<th>Warm UI 카테고리</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>periodic_telemetry</code></td>
+<td>tube.kv, temp, yield 주기</td>
+<td>주기</td>
+</tr>
+<tr>
+<td><code>event_history</code></td>
+<td>상태 전이·연결</td>
+<td>이벤트</td>
+</tr>
+<tr>
+<td><code>control_history</code></td>
+<td>Shadow·Job</td>
+<td>원격제어</td>
+</tr>
+<tr>
+<td><code>fota_history</code></td>
+<td>OTA·버전</td>
+<td>펌웨어</td>
+</tr>
+<tr>
+<td><code>files_history</code></td>
+<td>이미지·청크 업로드</td>
+<td>(파일)</td>
+</tr>
+<tr>
+<td><code>device_notifications</code></td>
+<td>디바이스 알림</td>
+<td>알람</td>
+</tr>
+<tr>
+<td><code>stream_events_default</code></td>
+<td>미분류 fallback</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>device_meta</code></td>
+<td>Shadow·메타 스냅샷</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>telemetry_rollups_device_10min</code></td>
+<td>10분 롤업</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>telemetry_rollups_device_hour</code></td>
+<td>시간 롤업</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>telemetry_rollups_device_day</code></td>
+<td>일 롤업</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>telemetry_rollups_device_{month,year}</code></td>
+<td>월·연</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>rollup_cursor_periodic_telemetry</code></td>
+<td>배치 체크포인트</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>pipeline_dlq_events</code></td>
+<td>배치 DLQ</td>
+<td>—</td>
+</tr>
+</tbody></table>
+<h3>periodic_telemetry 주요 필드 (예)</h3>
+<table>
+<thead>
+<tr>
+<th>필드</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>device_code</code></td>
+<td>장비 S/N</td>
+</tr>
+<tr>
+<td><code>site_id</code>, <code>customer_id</code></td>
+<td>조직 (device→site→branch→company 스냅샷)</td>
+</tr>
+<tr>
+<td><code>tube.kv</code>, <code>tube.ma</code></td>
+<td>튜브 출력</td>
+</tr>
+<tr>
+<td><code>detector.temp_c</code></td>
+<td>디텍터 온도</td>
+</tr>
+<tr>
+<td><code>yield_pct</code></td>
+<td>수율 (주기)</td>
+</tr>
+<tr>
+<td><code>reported_at</code></td>
+<td>ISO 8601</td>
+</tr>
+</tbody></table>
+<h2>6.2 Aurora PostgreSQL (Warm)</h2>
+<table>
+<thead>
+<tr>
+<th>테이블</th>
+<th>grain</th>
+<th>UI</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>telemetry_site_product_time_series</code></td>
+<td>site × product × day/month/year</td>
+<td>대시보드·SLA</td>
+</tr>
+<tr>
+<td><code>telemetry_branch_product_time_series</code></td>
+<td>branch × product × day/month/year</td>
+<td>리포트·지점 KPI</td>
+</tr>
+<tr>
+<td><code>telemetry_company_product_time_series</code></td>
+<td>company × product</td>
+<td>리포트</td>
+</tr>
+<tr>
+<td><code>communication_quality_rollups</code></td>
+<td>device 10min/hour</td>
+<td>데이터 파이프라인</td>
+</tr>
+<tr>
+<td><code>communication_quality_rollups_site</code></td>
+<td>site</td>
+<td>SLA</td>
+</tr>
+<tr>
+<td><code>communication_quality_rollup_branch</code></td>
+<td>branch</td>
+<td>지점 SLA·플릿</td>
+</tr>
+<tr>
+<td><code>communication_alarm_incident</code></td>
+<td>알람 인시던트</td>
+<td>알람·티켓</td>
+</tr>
+<tr>
+<td><code>communication_alarm_incident_actions</code></td>
+<td>조치 이력</td>
+<td>서비스 진행</td>
+</tr>
+<tr>
+<td><code>notification</code></td>
+<td>알림 수신함</td>
+<td>설정·알람</td>
+</tr>
+<tr>
+<td><code>notification_ruleset_mirror</code></td>
+<td>EventBridge 룰 미러</td>
+<td>alarm-rules</td>
+</tr>
+<tr>
+<td><code>device</code> (RDS) / <code>device_code</code> (Doc·MQTT)</td>
+<td>장비 마스터·S/N</td>
+<td>equipment</td>
+</tr>
+<tr>
+<td><code>company</code> (RDS)</td>
+<td>회사 마스터</td>
+<td>customers</td>
+</tr>
+<tr>
+<td><code>branch</code> (RDS)</td>
+<td>지점·지사 (company 하위)</td>
+<td>customers · 조직</td>
+</tr>
+<tr>
+<td><code>site</code> (RDS)</td>
+<td>본사·지사·현장 (<code>org_level_type</code>)</td>
+<td>installation · site 필터</td>
+</tr>
+<tr>
+<td><code>service_ticket</code></td>
+<td>티켓</td>
+<td>service-tickets</td>
+</tr>
+<tr>
+<td><code>service_ticket_progress</code></td>
+<td>진행</td>
+<td>service-progress</td>
+</tr>
+<tr>
+<td><code>sla_fleet_snapshot</code></td>
+<td>SLA 스냅샷</td>
+<td>sla</td>
+</tr>
+<tr>
+<td><code>equipment_log_tube</code> … <code>equipment_log_audit</code></td>
+<td>카테고리별 로그</td>
+<td>equipment-logs</td>
+</tr>
+<tr>
+<td><code>equipment_log_media</code></td>
+<td>검사 이미지·비디오</td>
+<td>inspection, equipment-logs</td>
+</tr>
+<tr>
+<td><code>media_upload_session</code> · <code>media_upload_part</code></td>
+<td>S3 업로드 세션</td>
+<td>data-pipeline, inspection</td>
+</tr>
+<tr>
+<td><code>parts_order</code>, <code>parts_schedule</code></td>
+<td>부품</td>
+<td>parts-*</td>
+</tr>
+<tr>
+<td><code>as_record</code></td>
+<td>AS 이력</td>
+<td>as</td>
+</tr>
+<tr>
+<td><code>installation</code></td>
+<td>설치</td>
+<td>installation</td>
+</tr>
+<tr>
+<td><code>anomaly_events</code></td>
+<td>SageMaker 이상 탐지 결과</td>
+<td>alarms, metric-stream overlay</td>
+</tr>
+<tr>
+<td><code>rule_recommendations</code></td>
+<td>AI 룰셋 추천 draft/approved</td>
+<td>alarm-rules</td>
+</tr>
+<tr>
+<td><code>self_heal_playbooks</code></td>
+<td>엣지 자가복구 시나리오</td>
+<td>admin (예정)</td>
+</tr>
+<tr>
+<td><code>self_heal_executions</code></td>
+<td>Job 실행·성공률</td>
+<td>remote-diagnosis, equipment-logs</td>
+</tr>
+<tr>
+<td><code>model_registry_mirror</code></td>
+<td>배포 모델 버전</td>
+<td>data-pipeline (health)</td>
+</tr>
+</tbody></table>
+<h2>6.3 Iceberg (Cold)</h2>
+<table>
+<thead>
+<tr>
+<th>테이블 (논리)</th>
+<th>파티션</th>
+<th>UI</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>yield_daily_rollup</code></td>
+<td>day, site, lot</td>
+<td>inspection, dashboard</td>
+</tr>
+<tr>
+<td><code>anomaly_daily_rollup</code></td>
+<td>day, equipment</td>
+<td>reports</td>
+</tr>
+<tr>
+<td><code>service_replacement_rollup</code></td>
+<td>month</td>
+<td>reports</td>
+</tr>
+<tr>
+<td><code>stream_fact_telemetry</code></td>
+<td>day, device</td>
+<td>Athena 분석·SageMaker 학습</td>
+</tr>
+<tr>
+<td><code>fix_effectiveness_daily</code></td>
+<td>day, site</td>
+<td>reports — OTA·self-heal KPI</td>
+</tr>
+</tbody></table>
+<p>소스 식별자: <code>iceberg.yield_daily_rollup</code> (<code>BATCH_SOURCES</code>).</p>
+<h2>6.4 scope.ts ↔ 저장소 매핑</h2>
+<pre><code class="language-typescript">// batch
+fleetRollup:        &quot;aurora.fleet_hourly_rollup&quot;
+dashboardAggregate: &quot;aurora.dashboard_daily_aggregate&quot;
+alarmTrend:         &quot;aurora.alarm_daily_rollup&quot;
+yieldAggregate:     &quot;iceberg.yield_daily_rollup&quot;
+equipmentLogs:      &quot;aurora.equipment_log_query&quot;
+collectionRollup:   &quot;aurora.collection_daily_stats&quot;
+pipelineTier:       &quot;documentdb.pipeline_tier_snapshot&quot;
+
+// realtime
+metricStream:       &quot;kinesis.metric_stream&quot;
+collectionLive:     &quot;cloudwatch.collection_live&quot;
+fleetLive:          &quot;documentdb.telemetry_hot&quot;
+remoteControl:      &quot;iot.jobs + device.shadow&quot;
+</code></pre>
+<h2>6.5 UI 화면 ↔ API·소스</h2>
+<blockquote>
+<p><strong>UI·API·NestJS 설계 전체</strong>: <a href="#doc-14-backend-frontend-design">14-backend-frontend-design.md</a> §14.6</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>route</th>
+<th>menuId</th>
+<th>scope</th>
+<th>source (주)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>/dashboard</code></td>
+<td>dashboard</td>
+<td>batch</td>
+<td>fleetRollup, dashboardAggregate</td>
+</tr>
+<tr>
+<td><code>/data-pipeline</code></td>
+<td>data-pipeline</td>
+<td>mixed</td>
+<td>collectionRollup, pipelineTier, collectionLive</td>
+</tr>
+<tr>
+<td><code>/metric-stream</code></td>
+<td>metric-stream</td>
+<td>realtime</td>
+<td>metricStream</td>
+</tr>
+<tr>
+<td><code>/equipment-logs</code></td>
+<td>equipment-logs</td>
+<td>batch</td>
+<td>equipmentLogs</td>
+</tr>
+<tr>
+<td><code>/alarms</code></td>
+<td>alarms</td>
+<td>batch</td>
+<td>alarmTrend, <strong>anomaly_events</strong></td>
+</tr>
+<tr>
+<td><code>/alarm-rules</code></td>
+<td>alarm-rules</td>
+<td>batch</td>
+<td>notification_ruleset_mirror, <strong>rule_recommendations</strong></td>
+</tr>
+<tr>
+<td><code>/remote-control</code></td>
+<td>remote-control</td>
+<td>realtime</td>
+<td>remoteControl, fleetLive</td>
+</tr>
+<tr>
+<td><code>/remote-diagnosis</code></td>
+<td>remote-diagnosis</td>
+<td>batch+Hot</td>
+<td>fleetLive</td>
+</tr>
+<tr>
+<td><code>/service-tickets</code></td>
+<td>service-tickets</td>
+<td>batch</td>
+<td>aurora.service_ticket</td>
+</tr>
+<tr>
+<td><code>/sla</code></td>
+<td>sla</td>
+<td>batch</td>
+<td>fleetRollup, sla_fleet_snapshot</td>
+</tr>
+<tr>
+<td><code>/equipment</code></td>
+<td>equipment</td>
+<td>batch</td>
+<td>fleetRollup</td>
+</tr>
+<tr>
+<td><code>/inspection</code></td>
+<td>inspection</td>
+<td>batch</td>
+<td>yieldAggregate</td>
+</tr>
+<tr>
+<td><code>/admin/iot-auth</code></td>
+<td>admin-iot-auth</td>
+<td>—</td>
+<td>IoT Core API</td>
+</tr>
+</tbody></table>
+<h2>6.6 공통코드 (admin/codes)</h2>
+<table>
+<thead>
+<tr>
+<th>group</th>
+<th>code 예</th>
+<th>용도</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>SLA_TIER</code></td>
+<td>Critical, High, Standard</td>
+<td>SLA·계약</td>
+</tr>
+<tr>
+<td><code>REGION</code></td>
+<td>KR-GG, KR-GB</td>
+<td>지역</td>
+</tr>
+<tr>
+<td><code>PART_TYPE</code></td>
+<td>TUBE, DET</td>
+<td>부품</td>
+</tr>
+<tr>
+<td><code>ALARM_SEV</code></td>
+<td>critical, warning</td>
+<td>알람</td>
+</tr>
+</tbody></table>
+<h2>6.7 IoT 인증 (admin/iot-auth)</h2>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>AWS</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>인증서</td>
+<td>X.509</td>
+</tr>
+<tr>
+<td>프로비저닝</td>
+<td>JITP / JITR</td>
+</tr>
+<tr>
+<td>정책</td>
+<td>Thing Policy, Topic ACL</td>
+</tr>
+<tr>
+<td>CA</td>
+<td>Secrets Manager</td>
+</tr>
+</tbody></table>
+<p>UI: <code>adminIotAuth</code> — Certificate store, Thing registry (mock).</p>
+<h2>6.8 ERP·외부 연동 (참고, IoT SSOT 외)</h2>
+<table>
+<thead>
+<tr>
+<th>이벤트</th>
+<th>방향</th>
+<th>트리거</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>order.confirmed</code></td>
+<td>B→A</td>
+<td>EventBridge</td>
+</tr>
+<tr>
+<td><code>shipment.updated</code></td>
+<td>B→A</td>
+<td>EventBridge</td>
+</tr>
+<tr>
+<td><code>shipment.delivered</code></td>
+<td>B→A</td>
+<td>설치/교체</td>
+</tr>
+</tbody></table>
+<p>REST: OAuth2 + mTLS, Idempotency-Key, DLQ.</p>
+
+</section>
+
+<section id="doc-12-database-design" class="doc-section md-content" data-group="database" data-source="12-database-design.md">
+  <p class="source-tag">SSOT: <code>02.arch/12-database-design.md</code></p>
+  <h1>12. 데이터베이스 설계 (테크밸리)</h1>
+<p>3-Tier 저장(<a href="#doc-03-storage-tiers">03-storage-tiers.md</a>)의 <strong>물리 스키마 SSOT</strong>입니다.<br>DDL·컬렉션·Iceberg 정의는 <strong><code>02.arch/config/schema/</code></strong> 에 두고, manifest·배치·Lambda는 여기를 참조합니다.</p>
+<h2>12.1 설계 원칙</h2>
+<table>
+<thead>
+<tr>
+<th>원칙</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>CQRS</strong></td>
+<td>DocumentDB Writer=Lambda 적재, Reader=배치·GET API</td>
+</tr>
+<tr>
+<td><strong>장비 키</strong></td>
+<td>문자열 <code>device_code</code>(S/N) = MQTT <code>topic(4)</code> = KDS PartitionKey</td>
+</tr>
+<tr>
+<td><strong>조직 트리</strong></td>
+<td><code>company</code> → <code>branch</code> → <code>site</code> → <code>device</code> (Warm FK). MQTT는 device만 carry</td>
+</tr>
+<tr>
+<td><strong>RDS FK</strong></td>
+<td>숫자 <code>device_id</code> → <code>device.id</code> (조회·조인용)</td>
+</tr>
+<tr>
+<td><strong>UI 매핑</strong></td>
+<td><code>device</code> ↔ equipment, <code>company</code> ↔ customer, <code>site</code> ↔ installation/현장</td>
+</tr>
+<tr>
+<td><strong>멱등</strong></td>
+<td>Doc: <code>(device_code, device_timestamp, data_index)</code> UK</td>
+</tr>
+<tr>
+<td><strong>DLQ</strong></td>
+<td>배치 실패 → DocumentDB <code>pipeline_dlq_events</code> (RDS 아님)</td>
+</tr>
+<tr>
+<td><strong>코드표</strong></td>
+<td><code>common_code (main_code, sub_code)</code> — 알람·도메인·권한</td>
+</tr>
+</tbody></table>
+<h2>12.2 SSOT 파일 트리</h2>
+<pre><code>02.arch/config/schema/
+├── postgres/
+│   ├── 01-core-schema.sql          # 마스터·device·OTA·RBAC
+│   ├── 02-pipeline-alarm-notification.sql  # 알람·통신품질·롤업·룰셋 미러
+│   ├── 04-tv-domain-extensions.sql # 서비스·AI·장비로그 (테크밸리 UI)
+│   ├── 05-seed-dev.sql             # HK-2024-00158 등 로컬 시드
+│   └── 03-seed-reference.sql     # 풀 더미 (참고)
+├── documentdb/
+│   ├── collection-contract.md
+│   └── document-schema-anchors.md
+└── iceberg/
+    └── tables.yaml
+</code></pre>
+<p>manifest: <code>manifest/processes/03-documentdb.yaml</code>, <code>06-postgres.yaml</code></p>
+<h2>12.3 DocumentDB (Hot) — <code>iot_service</code></h2>
+<p>전체 컬렉션·인덱스: <strong><code>03-documentdb.yaml</code></strong> (MOBI 파이프라인 계약 이식, 테크밸리 tenant <code>tv</code>).</p>
+<table>
+<thead>
+<tr>
+<th>컬렉션</th>
+<th>Writer</th>
+<th>Reader</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>periodic_telemetry</code></td>
+<td>stream_sync_consumer</td>
+<td>batch rollup, metric-stream</td>
+</tr>
+<tr>
+<td><code>event_history</code></td>
+<td>stream_sync_consumer</td>
+<td>equipment_log_export</td>
+</tr>
+<tr>
+<td><code>control_history</code> / <code>fota_history</code> / <code>files_history</code></td>
+<td>stream_sync_consumer</td>
+<td>equipment_log_export</td>
+</tr>
+<tr>
+<td><code>device_notifications</code></td>
+<td>stream_sync_consumer</td>
+<td>알람 raw</td>
+</tr>
+<tr>
+<td><code>telemetry_rollups_device_*</code></td>
+<td>batch_cadence_runner</td>
+<td>API, batch</td>
+</tr>
+<tr>
+<td><code>pipeline_dlq_events</code></td>
+<td>batch 실패</td>
+<td>batch_dlq_replay</td>
+</tr>
+<tr>
+<td><code>rollup_cursor_periodic_telemetry</code></td>
+<td>batch</td>
+<td>checkpoint</td>
+</tr>
+</tbody></table>
+<p>DocDB ↔ Aurora 링크: <code>03-documentdb.yaml</code> → <code>rdbms_time_series_link</code> (<code>device_code</code>, <code>device_timestamp</code>, <code>base_time</code>).</p>
+<h2>12.4 Aurora PostgreSQL (Warm) — <code>iot_analytics</code></h2>
+<h3>적용 순서</h3>
+<pre><code class="language-bash">cd 90.infra/local
+./bootstrap-postgres.sh    # 01 → 02 → 04 → 05
+</code></pre>
+<h3>테이블 그룹</h3>
+<table>
+<thead>
+<tr>
+<th>그룹</th>
+<th>대표 테이블</th>
+<th>UI</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>core_master</strong></td>
+<td>company, branch, site, device, product</td>
+<td>customers, equipment, installation</td>
+</tr>
+<tr>
+<td><strong>pipeline_alarm</strong></td>
+<td>communication_alarm_incident, notification, alert</td>
+<td>alarms, alarm-rules</td>
+</tr>
+<tr>
+<td><strong>telemetry_rollup</strong></td>
+<td>telemetry_site_product_time_series</td>
+<td>dashboard, sla</td>
+</tr>
+<tr>
+<td><strong>tv_domain</strong></td>
+<td>anomaly_events, rule_recommendations, self_heal_*, service_ticket, equipment_log_*</td>
+<td>AI·서비스·장비로그</td>
+</tr>
+<tr>
+<td><strong>media_upload</strong></td>
+<td>media_upload_session, media_upload_part, media_stream_segment, equipment_log_media</td>
+<td>inspection, equipment-logs (<a href="#doc-13-media-upload-pipeline">13</a>)</td>
+</tr>
+</tbody></table>
+<p>상세 목록: <a href="#doc-06-schema-reference">06-schema-reference.md</a> · <code>06-postgres.yaml#table_groups</code></p>
+<h3>네이밍 (RDS)</h3>
+<ul>
+<li><code>*_id</code> — 숫자 PK/FK</li>
+<li><code>*_code</code> — 문자열 업무키 (<code>device_code</code>, <code>alert_code</code>)</li>
+<li><code>*_type</code> — <code>common_code.sub_code</code> (FK 아님)</li>
+</ul>
+<h2>12.5 Iceberg / S3 / Firehose (Cold)</h2>
+<p><strong>SSOT:</strong> <a href="./config/schema/iceberg/lake-config.yaml"><code>config/schema/iceberg/lake-config.yaml</code></a></p>
+<h3>dev 리소스 (Terraform <code>name_prefix</code> = <code>tv-ingress-dev</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>AWS</th>
+<th>이름 / 경로</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>S3</strong></td>
+<td><code>tv-ingress-dev-tv-analytics-raw</code></td>
+</tr>
+<tr>
+<td><strong>Firehose</strong></td>
+<td><code>tv-ingress-dev-cold-stream-events</code></td>
+</tr>
+<tr>
+<td><strong>Landing</strong></td>
+<td><code>s3://…/cold-stream-events/year=YYYY/month=MM/day=DD/</code></td>
+</tr>
+<tr>
+<td><strong>Errors</strong></td>
+<td><code>s3://…/errors/firehose/cold-stream-events/…</code></td>
+</tr>
+<tr>
+<td><strong>Iceberg warehouse</strong></td>
+<td><code>s3://…/iceberg/warehouse/{table}/</code></td>
+</tr>
+<tr>
+<td><strong>Glue DB</strong></td>
+<td><code>techvalley_analytics</code></td>
+</tr>
+</tbody></table>
+<h3>데이터 흐름</h3>
+<pre><code>KDS → stream_sync_consumer → DocumentDB (Hot)
+                           └→ Firehose PutRecordBatch (동일 정규화 JSON)
+                                → S3 landing (7일)
+                                → Glue Spark → Iceberg (90일+)
+</code></pre>
+<p><strong>금지:</strong> KDS → Firehose 직접 병렬 소비 (Raw 혼입).</p>
+<h3>예시 파일</h3>
+<table>
+<thead>
+<tr>
+<th>파일</th>
+<th>용도</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="./config/samples/firehose_stream_fact.sample.json">firehose_stream_fact.sample.json</a></td>
+<td>Firehose 1레코드</td>
+</tr>
+<tr>
+<td><a href="./config/samples/iceberg_yield_daily.sample.json">iceberg_yield_daily.sample.json</a></td>
+<td>수율 Iceberg 행</td>
+</tr>
+<tr>
+<td><a href="#doc-config-samples-s3-object-layout-example">s3-object-layout.example.md</a></td>
+<td>S3 prefix 트리</td>
+</tr>
+<tr>
+<td><a href="./config/samples/athena-query-examples.sql">athena-query-examples.sql</a></td>
+<td>Athena SQL</td>
+</tr>
+</tbody></table>
+<p>로컬: MinIO <code>tv-analytics-raw</code> — <code>./config/local/minio-init.sh</code></p>
+<h2>12.6 ERD (요약)</h2>
+<div class="mermaid">erDiagram
+  company ||--o{ branch : has
+  company ||--o{ site : registers
+  branch ||--o{ site : registers
+  site ||--o{ device : hosts
+  device ||--o{ periodic_telemetry : &quot;DocDB hot&quot;
+  device ||--o{ communication_quality_rollup : &quot;batch warm&quot;
+  device ||--o{ anomaly_events : &quot;ML warm&quot;
+  anomaly_events ||--o{ rule_recommendations : suggests
+  device ||--o{ service_ticket : opens
+  service_ticket ||--o{ service_ticket_progress : tracks
+</div>
+<p>조직 롤업: <code>device.site_id</code> → <code>site</code> → <code>branch</code> → <code>company</code> · 배치 집계 grain 예: <code>communication_quality_rollup_site</code>, <code>telemetry_company_product_time_series</code>.</p>
+<h2>12.7 로컬 bootstrap</h2>
+<pre><code class="language-bash">podman compose -f 02.arch/config/local/docker-compose.yml up -d
+cd 90.infra/local
+./bootstrap-postgres.sh
+node bootstrap-documentdb.mjs   # mongodb driver — 03.source/lambda 에서 npm i mongodb
+</code></pre>
+<h2>12.8 변경 절차</h2>
+<ol>
+<li><code>02.arch/config/schema/</code> 또는 <code>manifest/processes/03-documentdb.yaml</code> 수정</li>
+<li><code>npm run compose:manifest --prefix 03.source/lambda</code></li>
+<li><code>npm run sync:config --prefix 03.source/lambda</code></li>
+<li>bootstrap 재실행 · <code>06-schema-reference.md</code> / 본 문서 갱신</li>
+</ol>
+<h2>12.9 관련 문서</h2>
+<ul>
+<li><a href="#doc-03-storage-tiers">03-storage-tiers.md</a></li>
+<li><a href="#doc-06-schema-reference">06-schema-reference.md</a></li>
+<li><a href="#doc-09-ai-anomaly-rules-and-edge-self-healing">09-ai-anomaly-rules-and-edge-self-healing.md</a></li>
+<li><a href="#doc-config-schema-postgres-readme">config/schema/postgres/README.md</a></li>
+</ul>
+
+</section>
+
+<section id="doc-config-schema-org-hierarchy" class="doc-section md-content" data-group="database" data-source="config/schema/org-hierarchy.md">
+  <p class="source-tag">SSOT: <code>02.arch/config/schema/org-hierarchy.md</code></p>
+  <h1>조직 · 자산 계층 (company → branch → site → device)</h1>
+<p>Warm Tier(Postgres) SSOT · UI 필터 · 배치 롤업의 <strong>조직 트리</strong>입니다.<br>상세: <a href="#doc-01-platform-overview">01-platform-overview.md</a> §1.2 · DDL: <a href="./postgres/01-core-schema.sql">postgres/01-core-schema.sql</a></p>
+<h2>4단계 계층</h2>
+<pre><code>company (회사)
+  └── branch (지점·지사)
+        └── site (조직·현장 — org_level_type)
+              └── device (단말, device_code = S/N)
+                    └── Greengrass → IoT Core Thing
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>계층</th>
+<th>RDS</th>
+<th>업무 키</th>
+<th>UI</th>
+<th>예</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>회사</td>
+<td><code>company</code></td>
+<td><code>code</code></td>
+<td>customers</td>
+<td>COMP-DEMO-001</td>
+</tr>
+<tr>
+<td>지점</td>
+<td><code>branch</code></td>
+<td><code>code</code></td>
+<td>customers · 조직</td>
+<td>BR-HQ, BR-SEOUL</td>
+</tr>
+<tr>
+<td>현장</td>
+<td><code>site</code></td>
+<td><code>code</code></td>
+<td>installation · site 필터</td>
+<td>SITE-FIELD-001</td>
+</tr>
+<tr>
+<td>장비</td>
+<td><code>device</code></td>
+<td><code>device_code</code></td>
+<td>equipment</td>
+<td>HK-2024-00158</td>
+</tr>
+</tbody></table>
+<h2>site.org_level_type (S0015)</h2>
+<table>
+<thead>
+<tr>
+<th>값</th>
+<th>의미</th>
+<th>FK</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>1</code></td>
+<td>본사</td>
+<td><code>company_id</code> 필수</td>
+</tr>
+<tr>
+<td><code>2</code></td>
+<td>지사</td>
+<td><code>branch_id</code> 필수</td>
+</tr>
+<tr>
+<td><code>3</code></td>
+<td>현장 (field)</td>
+<td><code>branch_id</code> 선택 — <strong>device.site_id</strong> 는 보통 이 레벨</td>
+</tr>
+</tbody></table>
+<h2>MQTT · Hot · 배치</h2>
+<ul>
+<li><strong>MQTT 8세그먼트</strong>에는 company/branch/site 없음 — <code>{device}</code> = <code>device_code</code>만.</li>
+<li><strong>DocumentDB</strong> 공통 필드: <code>site_id</code>, <code>customer_id</code>(=<code>company.code</code> 스냅샷) — Lambda가 <code>device</code> 마스터 조인으로 채움.</li>
+<li><strong>롤업 grain</strong> (Warm): device → site → branch → company<br>예: <code>communication_quality_rollup_site</code>, <code>telemetry_branch_product_time_series</code>, <code>telemetry_company_product_time_series</code>.</li>
+</ul>
+<h2>API · RBAC 스코프</h2>
+<table>
+<thead>
+<tr>
+<th>API prefix</th>
+<th>마스터</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>/customers</code></td>
+<td><code>company</code>, <code>branch</code></td>
+</tr>
+<tr>
+<td><code>/installation</code></td>
+<td><code>site</code></td>
+</tr>
+<tr>
+<td><code>/equipment</code></td>
+<td><code>device</code></td>
+</tr>
+</tbody></table>
+<p>Cognito JWT: <code>companyId</code> / <code>branchId</code> / <code>siteId</code> claim으로 member 스코프와 연동 (Fleet · AuthZ).</p>
+
+</section>
+
+<section id="doc-config-schema-documentdb-collection-contract" class="doc-section md-content" data-group="database" data-source="config/schema/documentdb/collection-contract.md">
+  <p class="source-tag">SSOT: <code>02.arch/config/schema/documentdb/collection-contract.md</code></p>
+  <h1>DocumentDB 컬렉션 계약 (테크밸리)</h1>
+<p><code>manifest/processes/03-documentdb.yaml</code> 의 <code>collections[]</code> 가 <strong>인덱스·컬렉션 이름 SSOT</strong>입니다.</p>
+<p>조직 계층 SSOT: <a href="#doc-config-schema-org-hierarchy">org-hierarchy.md</a></p>
+<h2>공통 필드 (Hot 문서)</h2>
+<table>
+<thead>
+<tr>
+<th>필드</th>
+<th>타입</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>device_code</code></td>
+<td>string</td>
+<td>장비 S/N — MQTT <code>topic(4)</code>, KDS PartitionKey</td>
+</tr>
+<tr>
+<td><code>site_id</code></td>
+<td>string/int</td>
+<td>현장 코드 (<code>site.code</code> 스냅샷, <code>device.site_id</code> 조인)</td>
+</tr>
+<tr>
+<td><code>customer_id</code></td>
+<td>string</td>
+<td>회사 코드 (<code>company.code</code> 스냅샷 — UI customers)</td>
+</tr>
+<tr>
+<td><code>device_timestamp</code></td>
+<td>int64</td>
+<td>장비 시각 epoch ms (UTC)</td>
+</tr>
+<tr>
+<td><code>data_index</code></td>
+<td>int</td>
+<td>동일 ms 내 시퀀스 — 멱등 UK</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td>ISO8601</td>
+<td>서버 적재 시각</td>
+</tr>
+<tr>
+<td><code>base_time</code></td>
+<td>int64</td>
+<td>10분 버킷 <code>yyyyMMddHHmm</code></td>
+</tr>
+<tr>
+<td><code>base_hour</code> / <code>base_day</code> / <code>base_month</code> / <code>base_year</code></td>
+<td>int</td>
+<td>롤업 grain</td>
+</tr>
+</tbody></table>
+<p><code>site_id</code>·<code>customer_id</code>는 MQTT에 없음 — <code>stream_sync_consumer</code>가 <code>device</code> → <code>site</code> → <code>branch</code> → <code>company</code> 조인으로 denormalize (<a href="../manifest/01-data-platform.manifest.yaml">manifest <code>org_resolution</code></a>).</p>
+<h2>periodic_telemetry (주기)</h2>
+<p>튜브·디텍터·수율 등 주기 보고. 샘플: <code>config/samples/periodic_telemetry.samples.json</code></p>
+<table>
+<thead>
+<tr>
+<th>필드</th>
+<th>예</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>tube.kv</code>, <code>tube.ma</code></td>
+<td>120.5, 2.1</td>
+</tr>
+<tr>
+<td><code>detector.temp_c</code></td>
+<td>42.3</td>
+</tr>
+<tr>
+<td><code>yield_pct</code></td>
+<td>98.7</td>
+</tr>
+<tr>
+<td><code>meta.is_alarm</code></td>
+<td>false</td>
+</tr>
+</tbody></table>
+<h2>event_history / control_history / fota_history / files_history</h2>
+<p>이벤트·제어·OTA·파일 — <code>document_schema_anchor</code> ↔ <code>converter-rules/*.yaml</code> ↔ <code>rules/*.json</code> 삼자 정합.</p>
+<h2>롤업 컬렉션</h2>
+<p><code>telemetry_rollups_device_{10min,hour,day,month,year}</code> — <code>02-batch-cadence.yaml</code> cadence가 read/write.</p>
+<h2>DocDB ↔ Aurora 링크</h2>
+<p><code>03-documentdb.yaml</code> 의 <code>rdbms_time_series_link</code> — <code>device_code</code>로 <code>device</code> 마스터 조인, <code>device_timestamp</code> → 통신품질 롤업 window.</p>
+<h2>TTL (Hot 7일)</h2>
+<p>운영 정책: 원천 <code>periodic_telemetry</code>·이벤트 — 7일 후 purge 또는 Cold 확인 후 삭제 (<a href="#doc-03-storage-tiers">03-storage-tiers.md</a>).</p>
+
+</section>
+
+<section id="doc-config-schema-documentdb-document-schema-anchors" class="doc-section md-content" data-group="database" data-source="config/schema/documentdb/document-schema-anchors.md">
+  <p class="source-tag">SSOT: <code>02.arch/config/schema/documentdb/document-schema-anchors.md</code></p>
+  <h1>Document schema anchors (테크밸리)</h1>
+<p><code>normalize-config.default.yaml</code> 의 <code>document_schema_anchor</code> ↔ 컬렉션 ↔ <code>rules/*.json</code> 레지스트리.</p>
+<table>
+<thead>
+<tr>
+<th>앵커</th>
+<th>컬렉션</th>
+<th>rule_code</th>
+<th>batch_read</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>periodic-telemetry-stream-v1</code></td>
+<td><code>periodic_telemetry</code></td>
+<td><code>rule_periodic_telemetry_v1</code></td>
+<td><code>rollup_device_10min</code></td>
+</tr>
+<tr>
+<td><code>telemetry-event-docs-v1</code></td>
+<td><code>event_history</code></td>
+<td><code>rule_telemetry_events_v1</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>alarm-event-docs-v1</code></td>
+<td><code>event_history</code> (alarm)</td>
+<td><code>rule_alarm_events_v1</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>control-command-docs-v1</code></td>
+<td><code>control_history</code></td>
+<td><code>rule_control_events_v1</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>fota-event-docs-v1</code></td>
+<td><code>fota_history</code></td>
+<td><code>rule_fota_events_v1</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>file-transfer-docs-v1</code></td>
+<td><code>files_history</code></td>
+<td><code>rule_file_events_v1</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>file-request-v1</code></td>
+<td><code>files_history</code></td>
+<td><code>rule_file_request_v1</code></td>
+<td><code>media_upload_export</code></td>
+</tr>
+<tr>
+<td><code>file-chunk-v1</code></td>
+<td><code>files_history</code></td>
+<td><code>rule_file_chunk_v1</code></td>
+<td><code>media_upload_export</code></td>
+</tr>
+<tr>
+<td><code>video-stream-v1</code></td>
+<td><code>files_history</code></td>
+<td><code>rule_video_stream_v1</code></td>
+<td><code>media_upload_export</code></td>
+</tr>
+<tr>
+<td><code>file-complete-v1</code></td>
+<td><code>files_history</code></td>
+<td><code>rule_file_complete_v1</code></td>
+<td><code>media_upload_export</code></td>
+</tr>
+</tbody></table>
+<p>MQTT file upload (tenant <code>tv</code>):</p>
+<pre><code>tv/{env}/{edge}/{device_code}/event/file/request/json
+tv/{env}/{edge}/{device_code}/event/file/chunk/json
+tv/{env}/{edge}/{device_code}/event/file/stream/json
+</code></pre>
+<p>미디어 파이프라인: <a href="#doc-13-media-upload-pipeline">13-media-upload-pipeline.md</a></p>
+<p>MQTT 토픽 (tenant <code>tv</code>):</p>
+<pre><code>tv/{env}/{edge}/{device_code}/periodic/telemetry/report/json
+tv/{env}/{edge}/{device_code}/event/alarm/{code}/json
+</code></pre>
+<p>KDS PartitionKey = <strong><code>device_code</code></strong> (= <code>topic(4)</code>).</p>
+<p>상세: <a href="#doc-05-yaml-and-rules">05-yaml-and-rules.md</a>, <a href="#doc-config-schema-documentdb-collection-contract">collection-contract.md</a></p>
+
+</section>
+
+<section id="doc-config-schema-postgres-readme" class="doc-section md-content" data-group="database" data-source="config/schema/postgres/README.md">
+  <p class="source-tag">SSOT: <code>02.arch/config/schema/postgres/README.md</code></p>
+  <h1>PostgreSQL DDL (테크밸리 Warm)</h1>
+<p>조직 계층: <a href="#doc-config-schema-org-hierarchy">org-hierarchy.md</a> — <code>company</code> → <code>branch</code> → <code>site</code> → <code>device</code></p>
+<table>
+<thead>
+<tr>
+<th>파일</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>01-core-schema.sql</code></td>
+<td>user, common_code, <strong>company, branch, site</strong>, device, OTA, RBAC</td>
+</tr>
+<tr>
+<td><code>02-pipeline-alarm-notification.sql</code></td>
+<td>alert, notification, communication_* (site·branch grain), telemetry_*_time_series</td>
+</tr>
+<tr>
+<td><code>04-tv-domain-extensions.sql</code></td>
+<td>AI Ops, service_ticket, equipment_log_*, parts, as</td>
+</tr>
+<tr>
+<td><code>05-seed-dev.sql</code></td>
+<td>로컬 시드 (HK-2024-00158)</td>
+</tr>
+<tr>
+<td><code>03-seed-reference.sql</code></td>
+<td>MOBI 더미 전체 (참고·부하 테스트)</td>
+</tr>
+</tbody></table>
+<pre><code class="language-bash"># 로컬
+../../90.infra/local/bootstrap-postgres.sh
+</code></pre>
+<h2>UI ↔ RDS 매핑</h2>
+<table>
+<thead>
+<tr>
+<th>RDS</th>
+<th>UI 화면</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>company</code></td>
+<td>customers (고객사)</td>
+</tr>
+<tr>
+<td><code>branch</code></td>
+<td>customers · 조직 (지점)</td>
+</tr>
+<tr>
+<td><code>site</code></td>
+<td>installation · site 필터</td>
+</tr>
+<tr>
+<td><code>device</code></td>
+<td>equipment (장비)</td>
+</tr>
+</tbody></table>
+<p>장비 키: <code>device.device_code</code> = MQTT <code>topic(4)</code> = DocDB <code>device_code</code>.</p>
+
+</section>
+
+<section id="doc-gen-postgres-table-inventory" class="doc-section md-content" data-group="database" data-source="__generated/postgres-table-inventory.md">
+  <p class="source-tag">SSOT: <code>02.arch/__generated/postgres-table-inventory.md</code></p>
+  <h1>Postgres 테이블 인벤토리 (DDL SSOT)</h1>
+<h2>01-core-schema.sql</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>테이블</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><code>user</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>common_code</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>company</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>language</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>page_language</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>website_menu</code></td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>website_group</code></td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>website_group_menu</code></td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>product</code></td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>branch</code></td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>device_group</code></td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>firmware</code></td>
+</tr>
+<tr>
+<td>13</td>
+<td><code>site</code></td>
+</tr>
+<tr>
+<td>14</td>
+<td><code>update_job</code></td>
+</tr>
+<tr>
+<td>15</td>
+<td><code>device_group_product</code></td>
+</tr>
+<tr>
+<td>16</td>
+<td><code>device_group_site</code></td>
+</tr>
+<tr>
+<td>17</td>
+<td><code>device</code></td>
+</tr>
+<tr>
+<td>18</td>
+<td><code>firmware_update_history</code></td>
+</tr>
+<tr>
+<td>19</td>
+<td><code>update_job_device_status_event</code></td>
+</tr>
+<tr>
+<td>20</td>
+<td><code>update_job_device</code></td>
+</tr>
+<tr>
+<td>21</td>
+<td><code>device_group_device</code></td>
+</tr>
+</tbody></table>
+<h2>02-pipeline-alarm-notification.sql</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>테이블</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><code>alert</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>notification</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>communication_quality_rollup</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>communication_quality_rollup_site</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>communication_quality_rollup_branch</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>communication_alarm_incident</code></td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>communication_alarm_incident_action</code></td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>notification_ruleset</code></td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>notification_rule</code></td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>notification_ruleset_composite_trigger</code></td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>alarm_user_condition</code></td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>member</code></td>
+</tr>
+<tr>
+<td>13</td>
+<td><code>member_permission</code></td>
+</tr>
+<tr>
+<td>14</td>
+<td><code>telemetry_site_product_time_series</code></td>
+</tr>
+<tr>
+<td>15</td>
+<td><code>telemetry_company_product_time_series</code></td>
+</tr>
+<tr>
+<td>16</td>
+<td><code>telemetry_branch_product_time_series</code></td>
+</tr>
+<tr>
+<td>17</td>
+<td><code>telemetry_brand_product_time_series</code></td>
+</tr>
+<tr>
+<td>18</td>
+<td><code>industry_aggregate_daily</code></td>
+</tr>
+<tr>
+<td>19</td>
+<td><code>industry_aggregate_monthly</code></td>
+</tr>
+<tr>
+<td>20</td>
+<td><code>industry_aggregate_yearly</code></td>
+</tr>
+</tbody></table>
+<h2>03-seed-reference.sql</h2>
+<p><em>（CREATE TABLE 없음 — seed/참고 SQL）</em></p>
+<h2>04-tv-domain-extensions.sql</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>테이블</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><code>anomaly_events</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>rule_recommendations</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>self_heal_playbooks</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>self_heal_executions</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>model_registry_mirror</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>service_ticket</code></td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>service_ticket_progress</code></td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>sla_fleet_snapshot</code></td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>installation</code></td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>as_record</code></td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>parts_order</code></td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>parts_schedule</code></td>
+</tr>
+<tr>
+<td>13</td>
+<td><code>equipment_log_tube</code></td>
+</tr>
+<tr>
+<td>14</td>
+<td><code>equipment_log_detector</code></td>
+</tr>
+<tr>
+<td>15</td>
+<td><code>equipment_log_body</code></td>
+</tr>
+<tr>
+<td>16</td>
+<td><code>equipment_log_control</code></td>
+</tr>
+<tr>
+<td>17</td>
+<td><code>equipment_log_firmware</code></td>
+</tr>
+<tr>
+<td>18</td>
+<td><code>equipment_log_audit</code></td>
+</tr>
+<tr>
+<td>19</td>
+<td><code>media_upload_session</code></td>
+</tr>
+<tr>
+<td>20</td>
+<td><code>media_upload_part</code></td>
+</tr>
+<tr>
+<td>21</td>
+<td><code>media_stream_segment</code></td>
+</tr>
+<tr>
+<td>22</td>
+<td><code>equipment_log_media</code></td>
+</tr>
+</tbody></table>
+<h2>05-seed-dev.sql</h2>
+<p><em>（CREATE TABLE 없음 — seed/참고 SQL）</em></p>
+<blockquote>
+<p>상세 컬럼·FK·인덱스: <code>02.arch/config/schema/postgres/*.sql</code> · manifest <code>06-postgres.yaml</code></p>
+</blockquote>
+
+</section>
+
+<section id="doc-config-schema-iceberg-readme" class="doc-section md-content" data-group="database" data-source="config/schema/iceberg/README.md">
+  <p class="source-tag">SSOT: <code>02.arch/config/schema/iceberg/README.md</code></p>
+  <h1>Iceberg / S3 / Firehose (테크밸리 Cold Tier)</h1>
+<table>
+<thead>
+<tr>
+<th>파일</th>
+<th>역할</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="./lake-config.yaml">lake-config.yaml</a></td>
+<td>버킷·Firehose·Glue·prefix·lifecycle SSOT</td>
+</tr>
+<tr>
+<td><a href="./tables.yaml">tables.yaml</a></td>
+<td>Iceberg 테이블·파티션·컬럼</td>
+</tr>
+<tr>
+<td><a href="./firehose-record.schema.json">firehose-record.schema.json</a></td>
+<td>Lambda → Firehose JSON 스키마</td>
+</tr>
+<tr>
+<td><a href="./glue/iceberg-commit-stream-fact.py">glue/iceberg-commit-stream-fact.py</a></td>
+<td>Glue Job 스텁</td>
+</tr>
+</tbody></table>
+<h2>dev 실제 이름 (확인됨)</h2>
+<table>
+<thead>
+<tr>
+<th>리소스</th>
+<th>값</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>S3 버킷</td>
+<td><code>tv-ingress-dev-tv-analytics-raw</code></td>
+</tr>
+<tr>
+<td>Firehose</td>
+<td><code>tv-ingress-dev-cold-stream-events</code></td>
+</tr>
+<tr>
+<td>S3 landing prefix</td>
+<td><code>cold-stream-events/year=YYYY/month=MM/day=DD/</code></td>
+</tr>
+<tr>
+<td>Glue DB</td>
+<td><code>techvalley_analytics</code></td>
+</tr>
+<tr>
+<td>Iceberg warehouse</td>
+<td><code>s3://tv-ingress-dev-tv-analytics-raw/iceberg/warehouse/</code></td>
+</tr>
+</tbody></table>
+<h2>예시</h2>
+<ul>
+<li><a href="../../samples/firehose_stream_fact.sample.json">samples/firehose_stream_fact.sample.json</a></li>
+<li><a href="../../samples/iceberg_yield_daily.sample.json">samples/iceberg_yield_daily.sample.json</a></li>
+<li><a href="#doc-config-samples-s3-object-layout-example">samples/s3-object-layout.example.md</a></li>
+<li><a href="../../samples/athena-query-examples.sql">samples/athena-query-examples.sql</a></li>
+</ul>
+<p>로컬 MinIO: <code>config/local/minio-init.sh</code></p>
+
+</section>
+
+<section id="doc-07-repo-and-deployment" class="doc-section md-content" data-group="deploy" data-source="07-repo-and-deployment.md">
+  <p class="source-tag">SSOT: <code>02.arch/07-repo-and-deployment.md</code></p>
+  <h1>07. 저장소 구조 및 배포</h1>
+<h2>7.1 워크스페이스 폴더 (SSOT)</h2>
+<pre><code>techvalley/
+├── 00.doc/                 # 제안서·스크린샷·매뉴얼
+├── 02.arch/                # ← 아키텍처 문서 (본 폴더)
+├── 03.source/
+│   ├── frontend/           # Next.js 운영 UI (Git: techvalley_project)
+│   ├── beckend/            # NestJS/Express API (예정)
+│   └── lambda/             # 파이프라인 Lambda + pipeline-core (예정)
+├── 90.infra/               # Terraform, 환경별 tfvars (예정)
+└── package.json            # dev:frontend 등 루트 스크립트
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>번호</th>
+<th>의미</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>00</code></td>
+<td>문서·산출물</td>
+</tr>
+<tr>
+<td><code>02</code></td>
+<td>아키텍처·설계 SSOT</td>
+</tr>
+<tr>
+<td><code>03</code></td>
+<td>애플리케이션 소스</td>
+</tr>
+<tr>
+<td><code>90</code></td>
+<td>인프라·IaC</td>
+</tr>
+</tbody></table>
+<h2>7.2 프론트엔드 (<code>03.source/frontend</code>)</h2>
+<pre><code class="language-bash">cd 03.source/frontend
+npm ci &amp;&amp; cp .env.local.example .env.local
+npm run dev          # http://localhost:3000
+</code></pre>
+<p>루트에서:</p>
+<pre><code class="language-bash">npm run dev:frontend
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>값</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>배포</td>
+<td>Vercel</td>
+</tr>
+<tr>
+<td>Root Directory</td>
+<td>repo 루트 (frontend 단독 Git)</td>
+</tr>
+<tr>
+<td>필수 env</td>
+<td><code>NEXT_PUBLIC_AG_GRID_LICENSE_KEY</code></td>
+</tr>
+</tbody></table>
+<p>Git author (Vercel Hobby): <code>.cursor/rules/git-vercel-author.mdc</code> 참고.</p>
+<h2>7.3 백엔드 (예정 — <code>03.source/beckend</code>)</h2>
+<p><strong>설계 SSOT</strong>: <a href="#doc-14-backend-frontend-design">14-backend-frontend-design.md</a></p>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>계획</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>프레임워크</td>
+<td>NestJS (FOTA Lite <code>contexts/</code> 패턴)</td>
+</tr>
+<tr>
+<td>구조</td>
+<td><code>contexts/{identity,organization,catalog,device,fota,…}/</code></td>
+</tr>
+<tr>
+<td>API</td>
+<td>REST + SSE(metric-stream) + (선택) WebSocket</td>
+</tr>
+<tr>
+<td>ORM</td>
+<td>TypeORM → Aurora <strong>PostgreSQL</strong> (FOTA는 MySQL)</td>
+</tr>
+<tr>
+<td>DocDB</td>
+<td>Mongo driver, Reader/Writer URI 분리 (CQRS)</td>
+</tr>
+<tr>
+<td>인증</td>
+<td>Cognito JWT — <code>companyId</code> · <code>branchId</code> · <code>siteId</code> claim</td>
+</tr>
+<tr>
+<td>FOTA</td>
+<td><code>update-jobs</code> → IoT Jobs / MQTT <code>ota/*</code> (<a href="#doc-08-greengrass-offline-resilience">08</a>)</td>
+</tr>
+</tbody></table>
+<pre><code>03.source/beckend/          (예정)
+├── src/contexts/
+│   ├── identity/
+│   ├── organization/       # company · branch · site
+│   ├── catalog/            # product · firmware
+│   ├── device/
+│   ├── fota/               # update_jobs · DocDB events
+│   └── …
+├── src/infrastructure/     # mqtt · s3 · cognito · docdb
+└── src/common/contracts/   # CRUD ports · CQRS
+</code></pre>
+<p>MSA 분리는 <a href="#doc-04-backend-services">04-backend-services.md</a> 도메인 표 준수 — 초기 모놀리식.</p>
+<h2>7.4 Lambda (예정 — <code>03.source/lambda</code>)</h2>
+<p>테크밸리 파이프라인 Lambda. <strong>배포</strong>: <a href="#doc-10-yaml-pipeline-deploy-automation">10-yaml-pipeline-deploy-automation.md</a> · 설정 SSOT: <a href="./config/">config/</a></p>
+<pre><code>03.source/lambda/
+├── packages/pipeline-core/
+├── apps/
+│   ├── stream-sync-consumer/bundle/
+│   ├── batch-cadence-runner/bundle/
+│   ├── dlq-shard-processor/bundle/
+│   ├── batch-dlq-replay/bundle/
+│   └── payload-converter/bundle/
+└── scripts/
+    ├── stage-bundles.mjs
+    ├── render-terraform-tfvars.mjs
+    └── validate-deploy-alignment.mjs
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>script</th>
+<th>역할</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>npm run predeploy</code></td>
+<td>compose + lambda:assets + tfvars + validate (<strong>AWS 미배포</strong>)</td>
+</tr>
+<tr>
+<td><code>npm run terraform:plan</code></td>
+<td>predeploy 후 plan only</td>
+</tr>
+</tbody></table>
+<p>빌드: <code>stage-bundles.mjs</code>가 normalize-config·batch-cadence·rules JSON을 bundle에 복사 → Terraform ZIP.</p>
+<h2>7.5 인프라 (<code>90.infra</code>)</h2>
+<p>설정 SSOT: <strong><code>02.arch/config/</code></strong> → <code>npm run sync:config</code> → <code>90.infra/config/</code> (배포 미러)</p>
+<pre><code>02.arch/config/          ← SSOT (ingress-deploy, manifest, rules, samples)
+90.infra/
+├── config/              ← sync 미러
+├── terraform/modules/   ← 예정
+└── local/               ← sync 미러 (Podman)
+</code></pre>
+<p><strong>배포 순서</strong>:</p>
+<ol>
+<li><code>02.arch/config/*.yaml</code> 수정</li>
+<li><code>npm run rules:build &amp;&amp; npm run sync:config &amp;&amp; npm run predeploy</code></li>
+<li><code>terraform plan -var-file=...</code></li>
+<li><code>terraform apply</code></li>
+<li>Lambda alias 고정 + EventBridge 연결 확인</li>
+</ol>
+<p><strong>리전</strong>: <code>ap-northeast-2</code> (ingress-deploy <code>project.aws_region</code>).</p>
+<h2>7.6 환경</h2>
+<table>
+<thead>
+<tr>
+<th>env</th>
+<th>용도</th>
+<th>IoT Thing prefix</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>dev</code></td>
+<td>개발·E2E</td>
+<td><code>tv/dev/...</code></td>
+</tr>
+<tr>
+<td><code>stg</code></td>
+<td>통합 검증</td>
+<td><code>tv/stg/...</code></td>
+</tr>
+<tr>
+<td><code>prd</code></td>
+<td>운영</td>
+<td><code>tv/prd/...</code></td>
+</tr>
+</tbody></table>
+<h2>7.7 로컬 데이터 플레인</h2>
+<p><a href="./config/local/docker-compose.yml">config/local/docker-compose.yml</a>:</p>
+<table>
+<thead>
+<tr>
+<th>컨테이너</th>
+<th>포트</th>
+<th>대체 AWS</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>DocumentDB Local</td>
+<td>27000</td>
+<td>DocumentDB</td>
+</tr>
+<tr>
+<td>PostgreSQL 16</td>
+<td>25432</td>
+<td>Aurora</td>
+</tr>
+<tr>
+<td>MinIO</td>
+<td>19010</td>
+<td>S3</td>
+</tr>
+</tbody></table>
+<p>부트스트랩 SQL/JS: Hot·Warm 스키마 + 샘플 장비(삼성전자 DS 등 mock과 동일 S/N).</p>
+<h2>7.8 CI/CD (목표)</h2>
+<table>
+<thead>
+<tr>
+<th>대상</th>
+<th>파이프라인</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>frontend</td>
+<td>Vercel Git 연동</td>
+</tr>
+<tr>
+<td>lambda</td>
+<td>GitHub Actions → bundle → S3 artifact → Terraform</td>
+</tr>
+<tr>
+<td>beckend</td>
+<td>ECS Fargate 또는 Lambda (API Gateway)</td>
+</tr>
+<tr>
+<td>infra</td>
+<td>Terraform Cloud / GitHub Actions plan on PR</td>
+</tr>
+</tbody></table>
+<h2>7.9 문서 동기화 체크리스트</h2>
+<p>아키텍처 변경 시:</p>
+<ul>
+<li><input disabled="" type="checkbox"> <code>02.arch/config/</code> · <code>02.arch/*.md</code></li>
+<li><input disabled="" type="checkbox"> <code>npm run sync:config</code></li>
+<li><input disabled="" type="checkbox"> <code>00.doc</code> 제안서 HTML (Major 변경 시)</li>
+</ul>
+<h2>7.10 관련 문서</h2>
+<table>
+<thead>
+<tr>
+<th>경로</th>
+<th>용도</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>00.doc/techvalley_proposal/</code></td>
+<td>기능정의서 HTML</td>
+</tr>
+<tr>
+<td><code>00.doc/architecture/index.html</code></td>
+<td>웹 아키텍처 가이드</td>
+</tr>
+</tbody></table>
+
+</section>
+
+<section id="doc-11-config-examples-reference" class="doc-section md-content" data-group="deploy" data-source="11-config-examples-reference.md">
+  <p class="source-tag">SSOT: <code>02.arch/11-config-examples-reference.md</code></p>
+  <h1>11. 설정 예시·샘플 레퍼런스</h1>
+<p>테크밸리 X-ray·검사 장비 IoT 플랫폼의 <strong>설정·샘플 SSOT</strong>입니다.<br><strong>모든 파일은 <code>02.arch/config/</code>에 실제로 존재합니다.</strong></p>
+<blockquote>
+<p>배포 시: <code>npm run sync:config --prefix 03.source/lambda</code> → <code>90.infra/config/</code></p>
+</blockquote>
+<h2>11.1 파일 위치 요약</h2>
+<table>
+<thead>
+<tr>
+<th>용도</th>
+<th>SSOT 경로</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>설정 인덱스</strong></td>
+<td><a href="#doc-config-schema-postgres-readme">config/README.md</a></td>
+</tr>
+<tr>
+<td>배포 SSOT</td>
+<td><a href="./config/ingress-deploy.yaml">config/ingress-deploy.yaml</a></td>
+</tr>
+<tr>
+<td>IoT·IAM 스위치</td>
+<td><a href="./config/infrastructure.yaml">config/infrastructure.yaml</a></td>
+</tr>
+<tr>
+<td>로컬 E2E</td>
+<td><a href="./config/process-deploy.yaml">config/process-deploy.yaml</a></td>
+</tr>
+<tr>
+<td>normalize</td>
+<td><a href="./config/normalize-config.default.yaml">config/normalize-config.default.yaml</a></td>
+</tr>
+<tr>
+<td>batch cadence</td>
+<td><a href="./config/02-batch-cadence.yaml">config/02-batch-cadence.yaml</a></td>
+</tr>
+<tr>
+<td>manifest (composed)</td>
+<td><a href="./config/manifest/01-data-platform.manifest.yaml">config/manifest/01-data-platform.manifest.yaml</a></td>
+</tr>
+<tr>
+<td>manifest processes</td>
+<td><a href="./config/manifest/processes/">config/manifest/processes/</a></td>
+</tr>
+<tr>
+<td>converter 규칙 YAML</td>
+<td><a href="./config/converter-rules/">config/converter-rules/</a> (6종)</td>
+</tr>
+<tr>
+<td>rules JSON</td>
+<td><a href="./config/rules/">config/rules/</a> (6종)</td>
+</tr>
+<tr>
+<td>DocDB 주기 샘플</td>
+<td><a href="./config/samples/periodic_telemetry.samples.json">config/samples/periodic_telemetry.samples.json</a></td>
+</tr>
+<tr>
+<td>MQTT 예시</td>
+<td><a href="#doc-config-samples-mqtt-topics">config/samples/mqtt-topics.md</a></td>
+</tr>
+<tr>
+<td>이벤트·알람·OTA·제어</td>
+<td><a href="./config/samples/">config/samples/</a> <code>*_event*.json</code></td>
+</tr>
+<tr>
+<td>AI·자가복구 샘플</td>
+<td><a href="./config/samples/anomaly_event.sample.json">config/samples/anomaly_event.sample.json</a></td>
+</tr>
+<tr>
+<td>rules 빌드</td>
+<td><a href="./config/scripts/build-rules.mjs">config/scripts/build-rules.mjs</a></td>
+</tr>
+<tr>
+<td>로컬 Podman</td>
+<td><a href="./config/local/docker-compose.yml">config/local/docker-compose.yml</a></td>
+</tr>
+<tr>
+<td>Terraform tfvars</td>
+<td><a href="./config/terraform/environments/dev.auto.tfvars.json">config/terraform/environments/dev.auto.tfvars.json</a></td>
+</tr>
+<tr>
+<td><strong>PostgreSQL DDL</strong></td>
+<td><a href="./config/schema/postgres/">config/schema/postgres/</a></td>
+</tr>
+<tr>
+<td><strong>DocumentDB 계약</strong></td>
+<td><a href="./config/manifest/processes/03-documentdb.yaml">config/manifest/processes/03-documentdb.yaml</a></td>
+</tr>
+<tr>
+<td><strong>Postgres manifest</strong></td>
+<td><a href="./config/manifest/processes/06-postgres.yaml">config/manifest/processes/06-postgres.yaml</a></td>
+</tr>
+<tr>
+<td><strong>Iceberg lake SSOT</strong></td>
+<td><a href="./config/schema/iceberg/lake-config.yaml">config/schema/iceberg/lake-config.yaml</a></td>
+</tr>
+<tr>
+<td>Firehose 레코드 샘플</td>
+<td><a href="./config/samples/firehose_stream_fact.sample.json">config/samples/firehose_stream_fact.sample.json</a></td>
+</tr>
+<tr>
+<td>S3 레이아웃 예시</td>
+<td><a href="#doc-config-samples-s3-object-layout-example">config/samples/s3-object-layout.example.md</a></td>
+</tr>
+<tr>
+<td>Athena SQL 예시</td>
+<td><a href="./config/samples/athena-query-examples.sql">config/samples/athena-query-examples.sql</a></td>
+</tr>
+<tr>
+<td><strong>미디어 업로드</strong></td>
+<td><a href="#doc-13-media-upload-pipeline">13-media-upload-pipeline.md</a> · <a href="./config/media-upload.yaml">config/media-upload.yaml</a> · <code>file_*.sample.json</code></td>
+</tr>
+<tr>
+<td>DB 설계 문서</td>
+<td><a href="#doc-12-database-design">12-database-design.md</a></td>
+</tr>
+</tbody></table>
+<h3>converter-rules 6종</h3>
+<table>
+<thead>
+<tr>
+<th>파일</th>
+<th>collection</th>
+<th>UI</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>rule_periodic_telemetry_v1.yaml</code></td>
+<td>periodic_telemetry</td>
+<td>metric-stream</td>
+</tr>
+<tr>
+<td><code>rule_telemetry_events_v1.yaml</code></td>
+<td>event_history</td>
+<td>equipment-logs</td>
+</tr>
+<tr>
+<td><code>rule_alarm_events_v1.yaml</code></td>
+<td>device_notifications</td>
+<td>alarms</td>
+</tr>
+<tr>
+<td><code>rule_control_events_v1.yaml</code></td>
+<td>control_history</td>
+<td>remote-control</td>
+</tr>
+<tr>
+<td><code>rule_fota_events_v1.yaml</code></td>
+<td>fota_history</td>
+<td>settings/firmware</td>
+</tr>
+<tr>
+<td><code>rule_file_events_v1.yaml</code></td>
+<td>files_history</td>
+<td>file 업로드 (fallback)</td>
+</tr>
+<tr>
+<td><code>rule_file_request_v1.yaml</code></td>
+<td>files_history</td>
+<td>file/request</td>
+</tr>
+<tr>
+<td><code>rule_file_chunk_v1.yaml</code></td>
+<td>files_history</td>
+<td>image chunk</td>
+</tr>
+<tr>
+<td><code>rule_video_stream_v1.yaml</code></td>
+<td>files_history</td>
+<td>video stream</td>
+</tr>
+</tbody></table>
+<h2>11.2 MQTT 8세그먼트</h2>
+<pre><code>tv/{env}/{edge}/{device}/{data_kind}/{domain}/{role}/json
+</code></pre>
+<p>예: <code>tv/prd/GG-HW-001/HK-2024-00158/periodic/telemetry/report/json</code></p>
+<p>상세: <a href="#doc-config-samples-mqtt-topics">config/samples/mqtt-topics.md</a></p>
+<h2>11.3 주기 텔레메트리</h2>
+<p>장비 MQTT → Lambda <code>rule_periodic_telemetry_v1</code> → DocumentDB <code>periodic_telemetry</code></p>
+<p>샘플: <a href="./config/samples/periodic_telemetry.samples.json">config/samples/periodic_telemetry.samples.json</a></p>
+<h2>11.4 rule_code · collection</h2>
+<table>
+<thead>
+<tr>
+<th>topic</th>
+<th>rule_code</th>
+<th>collection</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>.../periodic/telemetry/report/json</code></td>
+<td>rule_periodic_telemetry_v1</td>
+<td>periodic_telemetry</td>
+</tr>
+<tr>
+<td><code>.../event/telemetry/status/json</code></td>
+<td>rule_telemetry_events_v1</td>
+<td>event_history</td>
+</tr>
+<tr>
+<td><code>.../event/alarm/+/json</code></td>
+<td>rule_alarm_events_v1</td>
+<td>device_notifications</td>
+</tr>
+<tr>
+<td><code>.../event/control/+/json</code></td>
+<td>rule_control_events_v1</td>
+<td>control_history</td>
+</tr>
+<tr>
+<td><code>.../event/fota/+/json</code></td>
+<td>rule_fota_events_v1</td>
+<td>fota_history</td>
+</tr>
+</tbody></table>
+<h2>11.5 alerts_raw</h2>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>조건</th>
+<th>severity</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>tube_kv_high</td>
+<td>tube.kv &gt; 180</td>
+<td>critical</td>
+</tr>
+<tr>
+<td>detector_temp_high</td>
+<td>detector.temp_c &gt; 65</td>
+<td>warning</td>
+</tr>
+<tr>
+<td>yield_drop</td>
+<td>yield_pct &lt; 90</td>
+<td>warning</td>
+</tr>
+</tbody></table>
+<h2>11.6 EventBridge ↔ batch-cadence</h2>
+<table>
+<thead>
+<tr>
+<th>schedule_key</th>
+<th>ingress-deploy cron</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>rollup_device_10min</td>
+<td><code>cron(0/10 * * * ? *)</code></td>
+</tr>
+<tr>
+<td>rollup_hourly</td>
+<td><code>cron(0 * * * ? *)</code></td>
+</tr>
+<tr>
+<td>fleet_hourly_export</td>
+<td><code>cron(15 * * * ? *)</code></td>
+</tr>
+</tbody></table>
+<h2>11.7 batch Job ↔ UI</h2>
+<table>
+<thead>
+<tr>
+<th>batch_source_id</th>
+<th>UI</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>aurora.fleet_hourly_rollup</td>
+<td>/dashboard</td>
+</tr>
+<tr>
+<td>aurora.alarm_daily_rollup</td>
+<td>/alarms</td>
+</tr>
+<tr>
+<td>iceberg.yield_daily_rollup</td>
+<td>/inspection</td>
+</tr>
+</tbody></table>
+<h2>11.8 3-Tier</h2>
+<p>Hot DocumentDB 7일 · Warm Aurora 7~90일 · Cold Iceberg 90일+</p>
+<h2>11.9 명령</h2>
+<pre><code class="language-bash">cd 03.source/lambda
+npm run rules:build
+npm run sync:config
+npm run predeploy
+</code></pre>
+<h2>11.10 배포 3종 동시 반영</h2>
+<p>normalize-config + manifest documentdb + 02-batch-cadence — <strong>세트로 배포</strong></p>
+<h2>11.11 체크리스트</h2>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> 11.1 전체 파일 <code>02.arch/config/</code></li>
+<li><input checked="" disabled="" type="checkbox"> Lambda apps (9개 skeleton + file-upload-orchestrator)</li>
+<li><input checked="" disabled="" type="checkbox"> Terraform modules (ingress / batch / ml / lambda_function)</li>
+<li><input checked="" disabled="" type="checkbox"> predeploy 스크립트 (compose · rules · assets · tfvars · validate)</li>
+<li><input checked="" disabled="" type="checkbox"> 로컬 bootstrap (<code>config/local/bootstrap-*.sh</code>)</li>
+<li><input checked="" disabled="" type="checkbox"> DB DDL·DocumentDB 인덱스 SSOT (<code>config/schema/</code>, <code>03-documentdb.yaml</code>)</li>
+</ul>
+<h2>11.12 관련 문서</h2>
+<ul>
+<li><a href="#doc-config-schema-postgres-readme">config/README.md</a></li>
+<li><a href="#doc-10-yaml-pipeline-deploy-automation">10-yaml-pipeline-deploy-automation.md</a></li>
+<li><a href="#">00.doc/architecture/index.html</a></li>
+</ul>
+
+</section>
+
+<section id="doc-config-readme" class="doc-section md-content" data-group="deploy" data-source="config/README.md">
+  <p class="source-tag">SSOT: <code>02.arch/config/README.md</code></p>
+  <h1>02.arch/config — 테크밸리 아키텍처 설정 SSOT</h1>
+<p><strong>모든 YAML·JSON·manifest·samples는 이 폴더가 원본입니다.</strong><br><code>02.arch/*.md</code> Markdown과 한곳에서 관리합니다.</p>
+<p>배포: <code>npm run sync:config --prefix 03.source/lambda</code> → <code>90.infra/config/</code></p>
+<h2>디렉터리 트리</h2>
+<pre><code>02.arch/config/
+├── README.md
+├── ingress-deploy.yaml
+├── infrastructure.yaml
+├── process-deploy.yaml
+├── normalize-config.default.yaml
+├── 02-batch-cadence.yaml
+├── manifest/
+│   ├── 01-data-platform.manifest.yaml
+│   └── processes/          (6 files)
+├── converter-rules/        (6 YAML)
+├── rules/                  (6 JSON — rules:build)
+├── samples/                (8 files)
+├── scripts/build-rules.mjs
+├── local/docker-compose.yml
+└── terraform/environments/dev.auto.tfvars.json
+</code></pre>
+<h2>명령</h2>
+<pre><code class="language-bash">cd 03.source/lambda
+npm run rules:build      # converter-rules → rules/*.json
+npm run sync:config      # → 90.infra/config
+npm run predeploy        # manifest + bundle + tfvars + validate
+</code></pre>
+<h2>테크밸리 규약</h2>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>값</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>MQTT tenant</td>
+<td><code>tv</code></td>
+</tr>
+<tr>
+<td>조직 계층</td>
+<td><code>company</code> → <code>branch</code> → <code>site</code> → <code>device</code> (<a href="#doc-config-schema-org-hierarchy">schema/org-hierarchy.md</a>)</td>
+</tr>
+<tr>
+<td>PartitionKey</td>
+<td><code>device_code</code> (장비 S/N)</td>
+</tr>
+<tr>
+<td>예시 S/N</td>
+<td><code>HK-2024-00158</code></td>
+</tr>
+<tr>
+<td>리전</td>
+<td><code>ap-northeast-2</code></td>
+</tr>
+<tr>
+<td>project</td>
+<td><code>tv-ingress</code></td>
+</tr>
+</tbody></table>
+<h2>관련 문서</h2>
+<ul>
+<li><a href="#doc-11-config-examples-reference">../11-config-examples-reference.md</a></li>
+<li><a href="#doc-10-yaml-pipeline-deploy-automation">../10-yaml-pipeline-deploy-automation.md</a></li>
+<li><a href="../../00.doc/architecture/index.html">../../00.doc/architecture/index.html</a></li>
+</ul>
+
+</section>
+
+<section id="doc-config-local-readme" class="doc-section md-content" data-group="deploy" data-source="config/local/README.md">
+  <p class="source-tag">SSOT: <code>02.arch/config/local/README.md</code></p>
+  <h1>로컬 개발 — SSOT: 02.arch/config/local/</h1>
+<pre><code class="language-bash">podman compose -f 02.arch/config/local/docker-compose.yml up -d
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>서비스</th>
+<th>포트</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>DocumentDB Local</td>
+<td>27000</td>
+</tr>
+<tr>
+<td>PostgreSQL 16</td>
+<td>25432</td>
+</tr>
+<tr>
+<td>MinIO</td>
+<td>19010 / 19011</td>
+</tr>
+</tbody></table>
+<p>환경: <code>TV_MONGO_URI</code>, <code>TV_POSTGRES_URI</code> — <a href="../process-deploy.yaml">process-deploy.yaml</a></p>
+
+</section>
+
+<section id="doc-config-samples-s3-object-layout-example" class="doc-section md-content" data-group="deploy" data-source="config/samples/s3-object-layout.example.md">
+  <p class="source-tag">SSOT: <code>02.arch/config/samples/s3-object-layout.example.md</code></p>
+  <h1>S3 객체 레이아웃 예시 (dev)</h1>
+<p>버킷: <code>tv-ingress-dev-tv-analytics-raw</code><br>리전: <code>ap-northeast-2</code></p>
+<h2>Firehose landing (extended_s3)</h2>
+<p>Lambda <code>PutRecordBatch</code> → Firehose → Parquet → S3:</p>
+<pre><code>s3://tv-ingress-dev-tv-analytics-raw/
+├── cold-stream-events/
+│   └── year=2026/
+│       └── month=06/
+│           └── day=06/
+│               ├── tv-ingress-dev-cold-stream-events-1-2026-06-06-05-30-00-abc123.parquet
+│               └── tv-ingress-dev-cold-stream-events-1-2026-06-06-05-45-00-def456.parquet
+├── errors/
+│   └── firehose/
+│       └── cold-stream-events/
+│           └── year=2026/month=06/day=06/...
+├── iceberg/
+│   └── warehouse/
+│       ├── stream_fact_telemetry/
+│       │   └── data/
+│       │       └── dt=2026-06-06/
+│       │           └── tenant_id=tv/
+│       │               └── device_code=HK-2024-00158/
+│       │                   └── *.parquet
+│       └── yield_daily_rollup/
+│           └── data/
+│               └── event_day=2026-06-06/
+│                   └── site_id=TV-SITE-FACTORY-01/
+│                       └── lot_id=LOT-20260606-A/
+│                           └── *.parquet
+├── media/
+│   └── {device_code}/...
+├── fota/
+│   └── ...
+└── ml-artifacts/
+    └── tv-tube-multivariate-v3/
+</code></pre>
+<h2>로컬 MinIO (동일 prefix)</h2>
+<pre><code>s3://tv-analytics-raw/   # endpoint http://127.0.0.1:19010
+  cold-stream-events/year=2026/month=06/day=06/...
+  iceberg/warehouse/stream_fact_telemetry/...
+</code></pre>
+<p>초기화: <code>config/local/minio-init.sh</code></p>
+<h2>Lifecycle (운영)</h2>
+<table>
+<thead>
+<tr>
+<th>Prefix</th>
+<th>보존</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>cold-stream-events/</code></td>
+<td>7일 (Iceberg 커밋 후 삭제)</td>
+</tr>
+<tr>
+<td><code>errors/firehose/</code></td>
+<td>30일</td>
+</tr>
+<tr>
+<td><code>iceberg/warehouse/</code></td>
+<td>90일+ (Cold SSOT)</td>
+</tr>
+<tr>
+<td><code>media/</code></td>
+<td>Intelligent-Tiering</td>
+</tr>
+</tbody></table>
+<p>SSOT: <a href="../schema/iceberg/lake-config.yaml">schema/iceberg/lake-config.yaml</a></p>
+
+</section>
+
+<section id="status" class="doc-section" data-group="deploy">
+  <h2><span class="step">✓</span> 구현 상태 (요약)</h2>
+  <table>
+    <thead><tr><th>항목</th><th>상태</th></tr></thead>
+    <tbody>
+      <tr><td>02.arch 문서 12개 + config SSOT</td><td><span class="tag tag-done">완료</span></td></tr>
+      <tr><td>converter-rules + rules JSON 6종</td><td><span class="tag tag-done">완료</span></td></tr>
+      <tr><td>Postgres/DocDB DDL + bootstrap</td><td><span class="tag tag-done">완료</span></td></tr>
+      <tr><td>Lambda 8종 skeleton + pipeline-core</td><td><span class="tag tag-done">골격</span></td></tr>
+      <tr><td>Terraform 6모듈 (validate)</td><td><span class="tag tag-done">골격</span></td></tr>
+      <tr><td>Lambda DocDB/Aurora/Firehose 실 write</td><td><span class="tag tag-wip">다음</span></td></tr>
+      <tr><td>NestJS API (03.source/beckend/)</td><td><span class="tag tag-wip">다음</span></td></tr>
+    </tbody>
+  </table>
+</section>
+<footer>
+  테크밸리 IoT · SSOT <code>02.arch/</code> ·
+  재생성: <code>npm run build --prefix 00.doc/architecture</code>
+</footer>
+</main>
+</div>
+
+<script>
+mermaid.initialize({startOnLoad:true,theme:'neutral',securityLevel:'loose'});
+(function(){
+  const search = document.getElementById('navSearch');
+  const links = document.querySelectorAll('.sidebar a[href^="#"]');
+  const sections = [...links].map(a => document.getElementById(a.getAttribute('href').slice(1))).filter(Boolean);
+  search.addEventListener('input', () => {
+    const q = search.value.trim().toLowerCase();
+    document.querySelectorAll('.nav-group').forEach(g => {
+      let any = false;
+      g.querySelectorAll('a').forEach(a => {
+        const show = !q || a.textContent.toLowerCase().includes(q);
+        a.classList.toggle('hidden', !show);
+        if (show) any = true;
+      });
+      g.classList.toggle('hidden', !any);
+    });
+  });
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      const id = e.target.id;
+      links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+    });
+  }, {rootMargin:'-25% 0px -55% 0px', threshold:0});
+  sections.forEach(s => obs.observe(s));
+})();
+</script>
+</body>
+</html>

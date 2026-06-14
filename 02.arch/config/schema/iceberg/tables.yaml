@@ -1,0 +1,82 @@
+version: 1
+glue_database: techvalley_analytics
+s3_warehouse: s3://tv-ingress-dev-tv-analytics-raw/iceberg/warehouse/
+
+tables:
+  - table_id: stream_fact_telemetry
+    physical_name: stream_fact_telemetry
+    glue_table: stream_fact_telemetry
+    format: iceberg
+    location: s3://tv-ingress-dev-tv-analytics-raw/iceberg/warehouse/stream_fact_telemetry/
+    description: Lambda Firehose PutRecordBatch — 정규화 텔레메트리·이벤트 팩트
+    partition_keys:
+      - source_column: created_at
+        transform: day
+        partition_field_name: dt
+      - source_column: tenant_id
+        transform: identity
+      - source_column: device_code
+        transform: identity
+    columns:
+      - { name: device_code, type: string, required: true }
+      - { name: site_id, type: string }
+      - { name: customer_id, type: string }
+      - { name: tenant_id, type: string, default: tv }
+      - { name: product_code, type: string }
+      - { name: device_timestamp, type: bigint }
+      - { name: data_index, type: int }
+      - { name: created_at, type: timestamptz, partition_source: true }
+      - { name: base_time, type: bigint }
+      - { name: event_domain, type: string }
+      - { name: rule_code, type: string }
+      - { name: topic, type: string }
+      - { name: tube_kv, type: double, source_field: metric_values_kv.tube.kv }
+      - { name: tube_ma, type: double }
+      - { name: detector_temp_c, type: double }
+      - { name: yield_pct, type: double }
+      - { name: is_alarm, type: boolean }
+    batch_source_id: null
+    ui: [data-pipeline, metric-stream-training]
+
+  - table_id: yield_daily_rollup
+    physical_name: yield_daily_rollup
+    glue_table: yield_daily_rollup
+    format: iceberg
+    location: s3://tv-ingress-dev-tv-analytics-raw/iceberg/warehouse/yield_daily_rollup/
+    description: 수율 일별 — batch cadence yield_daily_rollup
+    partition_keys:
+      - { source_column: event_day, transform: identity }
+      - { source_column: site_id, transform: identity }
+      - { source_column: lot_id, transform: identity }
+    columns:
+      - { name: event_day, type: date }
+      - { name: site_id, type: string }
+      - { name: lot_id, type: string }
+      - { name: device_code, type: string }
+      - { name: yield_pct_avg, type: double }
+      - { name: sample_count, type: bigint }
+    batch_source_id: iceberg.yield_daily_rollup
+    ui: [inspection, dashboard]
+
+  - table_id: anomaly_daily_rollup
+    physical_name: anomaly_daily_rollup
+    glue_table: anomaly_daily_rollup
+    format: iceberg
+    partition_keys:
+      - { source_column: event_day, transform: identity }
+      - { source_column: device_code, transform: identity }
+    batch_source_id: iceberg.anomaly_daily_rollup
+    ui: [reports, alarms]
+
+  - table_id: fix_effectiveness_daily
+    physical_name: fix_effectiveness_daily
+    glue_table: fix_effectiveness_daily
+    partition_keys:
+      - { source_column: event_day, transform: identity }
+      - { source_column: site_id, transform: identity }
+    batch_source_id: iceberg.fix_effectiveness_daily
+    ui: [reports]
+
+created_at_policy:
+  source_field: created_at
+  align_with: documentdb.created_at

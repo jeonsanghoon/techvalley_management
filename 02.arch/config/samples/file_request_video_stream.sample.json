@@ -1,0 +1,11 @@
+{
+  "deviceId": "HK-2024-00158",
+  "request_code": "VID-20260613-001",
+  "file_kind": "video/mjpeg-stream",
+  "upload_mode": "video_stream",
+  "codec": "mjpeg",
+  "segment_duration_sec": 10,
+  "file_size_bytes": 524288000,
+  "device_timestamp": 1717654400000,
+  "data_index": 0
+}

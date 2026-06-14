@@ -1,0 +1,28 @@
+{
+  "name": "techvalley-lambda",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "compose:manifest": "node scripts/compose-manifest.mjs",
+    "rules:build": "node scripts/build-rules.mjs",
+    "sync:config": "node scripts/sync-config.mjs",
+    "lambda:assets": "node scripts/prepare-lambda-assets.mjs",
+    "tfvars": "node scripts/render-terraform-tfvars.mjs",
+    "validate:deploy": "node scripts/validate-deploy-alignment.mjs",
+    "render:deploy": "npm run compose:manifest && npm run rules:build && npm run tfvars && npm run validate:deploy",
+    "predeploy": "npm run compose:manifest && npm run rules:build && npm run lambda:assets && npm run tfvars && npm run validate:deploy",
+    "test:local:ingress": "node scripts/invoke-local-stream-sync.mjs",
+    "test:local:batch": "node scripts/invoke-local-batch-cadence.mjs",
+    "test:local:media": "node scripts/local-media-multipart.mjs",
+    "terraform:plan": "npm run render:deploy && cd ../../90.infra/terraform && terraform plan -var-file=environments/dev.auto.tfvars.json"
+  },
+  "dependencies": {
+    "yaml": "^2.8.3"
+  },
+  "devDependencies": {
+    "mongodb": "^6.21.0"
+  }
+}

@@ -1,0 +1,394 @@
+{
+  "light": [
+    {
+      "file": "/tmp/tv-screenshots/light/00_login.png",
+      "title": "로그인",
+      "path": "/login"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/01_dashboard_1.png",
+      "title": "대시보드 (상단)",
+      "path": "/dashboard"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/01_dashboard_2.png",
+      "title": "대시보드 (하단)",
+      "path": "/dashboard"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/02_equipment_1.png",
+      "title": "장비 관리 (상단)",
+      "path": "/equipment"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/02_equipment_2.png",
+      "title": "장비 관리 (하단)",
+      "path": "/equipment"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/03_equipment-logs_tab1_튜브.png",
+      "title": "장비 이력 — 튜브",
+      "path": "/equipment-logs",
+      "tab": "튜브"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/03_equipment-logs_tab2_디텍터.png",
+      "title": "장비 이력 — 디텍터",
+      "path": "/equipment-logs",
+      "tab": "디텍터"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/03_equipment-logs_tab3_본체.png",
+      "title": "장비 이력 — 본체",
+      "path": "/equipment-logs",
+      "tab": "본체"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/03_equipment-logs_tab4_알람.png",
+      "title": "장비 이력 — 알람",
+      "path": "/equipment-logs",
+      "tab": "알람"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/03_equipment-logs_tab5_원격제어.png",
+      "title": "장비 이력 — 원격제어",
+      "path": "/equipment-logs",
+      "tab": "원격제어"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/03_equipment-logs_tab6_펌웨어.png",
+      "title": "장비 이력 — 펌웨어",
+      "path": "/equipment-logs",
+      "tab": "펌웨어"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/03_equipment-logs_tab7_주기.png",
+      "title": "장비 이력 — 주기",
+      "path": "/equipment-logs",
+      "tab": "주기"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/03_equipment-logs_tab8_이벤트.png",
+      "title": "장비 이력 — 이벤트",
+      "path": "/equipment-logs",
+      "tab": "이벤트"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/03_equipment-logs_tab9_감사.png",
+      "title": "장비 이력 — 감사",
+      "path": "/equipment-logs",
+      "tab": "감사"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/04_data-pipeline_1.png",
+      "title": "데이터 파이프라인 (상단)",
+      "path": "/data-pipeline"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/04_data-pipeline_2.png",
+      "title": "데이터 파이프라인 (하단)",
+      "path": "/data-pipeline"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/05_no-permission.png",
+      "title": "접근 권한 없음",
+      "path": "/metric-stream"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/06_alarms_1.png",
+      "title": "알람 (상단)",
+      "path": "/alarms"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/06_alarms_2.png",
+      "title": "알람 (하단)",
+      "path": "/alarms"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/07_alarm-rules.png",
+      "title": "알람 규칙",
+      "path": "/alarm-rules"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/08_service-tickets_1.png",
+      "title": "서비스 티켓 (상단)",
+      "path": "/service-tickets"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/08_service-tickets_2.png",
+      "title": "서비스 티켓 (하단)",
+      "path": "/service-tickets"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/09_service-progress.png",
+      "title": "서비스 진행",
+      "path": "/service-progress"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/10_inspection.png",
+      "title": "점검",
+      "path": "/inspection"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/11_installation.png",
+      "title": "설치",
+      "path": "/installation"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/12_remote-control.png",
+      "title": "원격 제어",
+      "path": "/remote-control"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/13_reports.png",
+      "title": "보고서",
+      "path": "/reports"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/14_parts-orders.png",
+      "title": "부품 주문",
+      "path": "/parts-orders"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/15_parts-schedule_1.png",
+      "title": "부품 일정 (상단)",
+      "path": "/parts-schedule"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/15_parts-schedule_2.png",
+      "title": "부품 일정 (하단)",
+      "path": "/parts-schedule"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/16_customers.png",
+      "title": "고객사",
+      "path": "/customers"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/17_sla_1.png",
+      "title": "SLA (상단)",
+      "path": "/sla"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/17_sla_2.png",
+      "title": "SLA (하단)",
+      "path": "/sla"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/18_as.png",
+      "title": "A/S",
+      "path": "/as"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/19_settings_notifications.png",
+      "title": "알림 설정",
+      "path": "/settings/notifications"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/20_settings_firmware.png",
+      "title": "펌웨어 설정",
+      "path": "/settings/firmware"
+    },
+    {
+      "file": "/tmp/tv-screenshots/light/24_admin_iot-auth.png",
+      "title": "IoT 인증",
+      "path": "/admin/iot-auth"
+    }
+  ],
+  "dark": [
+    {
+      "file": "/tmp/tv-screenshots/dark/00_login.png",
+      "title": "로그인",
+      "path": "/login"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/01_dashboard_1.png",
+      "title": "대시보드 (상단)",
+      "path": "/dashboard"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/01_dashboard_2.png",
+      "title": "대시보드 (하단)",
+      "path": "/dashboard"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/02_equipment_1.png",
+      "title": "장비 관리 (상단)",
+      "path": "/equipment"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/02_equipment_2.png",
+      "title": "장비 관리 (하단)",
+      "path": "/equipment"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/03_equipment-logs_tab1_튜브.png",
+      "title": "장비 이력 — 튜브",
+      "path": "/equipment-logs",
+      "tab": "튜브"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/03_equipment-logs_tab2_디텍터.png",
+      "title": "장비 이력 — 디텍터",
+      "path": "/equipment-logs",
+      "tab": "디텍터"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/03_equipment-logs_tab3_본체.png",
+      "title": "장비 이력 — 본체",
+      "path": "/equipment-logs",
+      "tab": "본체"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/03_equipment-logs_tab4_알람.png",
+      "title": "장비 이력 — 알람",
+      "path": "/equipment-logs",
+      "tab": "알람"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/03_equipment-logs_tab5_원격제어.png",
+      "title": "장비 이력 — 원격제어",
+      "path": "/equipment-logs",
+      "tab": "원격제어"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/03_equipment-logs_tab6_펌웨어.png",
+      "title": "장비 이력 — 펌웨어",
+      "path": "/equipment-logs",
+      "tab": "펌웨어"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/03_equipment-logs_tab7_주기.png",
+      "title": "장비 이력 — 주기",
+      "path": "/equipment-logs",
+      "tab": "주기"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/03_equipment-logs_tab8_이벤트.png",
+      "title": "장비 이력 — 이벤트",
+      "path": "/equipment-logs",
+      "tab": "이벤트"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/03_equipment-logs_tab9_감사.png",
+      "title": "장비 이력 — 감사",
+      "path": "/equipment-logs",
+      "tab": "감사"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/04_data-pipeline_1.png",
+      "title": "데이터 파이프라인 (상단)",
+      "path": "/data-pipeline"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/04_data-pipeline_2.png",
+      "title": "데이터 파이프라인 (하단)",
+      "path": "/data-pipeline"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/05_no-permission.png",
+      "title": "접근 권한 없음",
+      "path": "/metric-stream"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/06_alarms_1.png",
+      "title": "알람 (상단)",
+      "path": "/alarms"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/06_alarms_2.png",
+      "title": "알람 (하단)",
+      "path": "/alarms"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/07_alarm-rules.png",
+      "title": "알람 규칙",
+      "path": "/alarm-rules"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/08_service-tickets_1.png",
+      "title": "서비스 티켓 (상단)",
+      "path": "/service-tickets"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/08_service-tickets_2.png",
+      "title": "서비스 티켓 (하단)",
+      "path": "/service-tickets"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/09_service-progress.png",
+      "title": "서비스 진행",
+      "path": "/service-progress"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/10_inspection.png",
+      "title": "점검",
+      "path": "/inspection"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/11_installation.png",
+      "title": "설치",
+      "path": "/installation"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/12_remote-control.png",
+      "title": "원격 제어",
+      "path": "/remote-control"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/13_reports.png",
+      "title": "보고서",
+      "path": "/reports"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/14_parts-orders.png",
+      "title": "부품 주문",
+      "path": "/parts-orders"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/15_parts-schedule_1.png",
+      "title": "부품 일정 (상단)",
+      "path": "/parts-schedule"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/15_parts-schedule_2.png",
+      "title": "부품 일정 (하단)",
+      "path": "/parts-schedule"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/16_customers.png",
+      "title": "고객사",
+      "path": "/customers"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/17_sla_1.png",
+      "title": "SLA (상단)",
+      "path": "/sla"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/17_sla_2.png",
+      "title": "SLA (하단)",
+      "path": "/sla"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/18_as.png",
+      "title": "A/S",
+      "path": "/as"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/19_settings_notifications.png",
+      "title": "알림 설정",
+      "path": "/settings/notifications"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/20_settings_firmware.png",
+      "title": "펌웨어 설정",
+      "path": "/settings/firmware"
+    },
+    {
+      "file": "/tmp/tv-screenshots/dark/24_admin_iot-auth.png",
+      "title": "IoT 인증",
+      "path": "/admin/iot-auth"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "techvalley",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Techvalley IoT platform workspace (00.doc · 03.source · 90.infra)",
+  "scripts": {
+    "dev:frontend": "npm run dev --prefix 03.source/frontend",
+    "build:frontend": "npm run build --prefix 03.source/frontend",
+    "build:architecture-docs": "npm run build --prefix 00.doc/architecture/site",
+    "build:architecture-legacy": "npm run build:legacy-html --prefix 00.doc/architecture",
+    "dev:architecture-docs": "npm run dev --prefix 00.doc/architecture/site",
+    "local:up": "bash 02.arch/config/local/local-up.sh",
+    "local:test": "bash 02.arch/config/local/local-test-all.sh",
+    "local:down": "podman compose -f 02.arch/config/local/docker-compose.yml down",
+    "lint:frontend": "npm run lint --prefix 03.source/frontend",
+    "start:frontend": "npm run start --prefix 03.source/frontend"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

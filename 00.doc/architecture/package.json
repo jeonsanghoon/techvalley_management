@@ -1,0 +1,9 @@
+{
+  "name": "@techvalley/architecture-docs",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --prefix site",
+    "build": "npm run build --prefix site",
+    "build:legacy-html": "node build.mjs"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "deviceId": "HK-2024-00158",
+  "request_code": "fota_20260606_001",
+  "device_timestamp": 1717654700000,
+  "fota_status": "SUCCEEDED",
+  "fota_result_type": "completed",
+  "firmware_version": "gg-component-1.2.1"
+}

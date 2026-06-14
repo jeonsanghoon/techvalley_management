@@ -1,0 +1,165 @@
+@import "tailwindcss";
+
+@theme {
+  --color-navy: #0b3d5c;
+  --color-navy-dark: #062840;
+  --color-accent: #1c7293;
+  --color-accent-light: #e6f1fb;
+  --color-surface: #f4f7f9;
+  --color-border: #d9e2e8;
+  --color-muted: #5b6b73;
+  --font-sans: "Malgun Gothic", "맑은 고딕", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: Consolas, "SF Mono", monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 4.5rem;
+}
+
+@media (min-width: 1024px) {
+  html {
+    scroll-padding-top: 5rem;
+  }
+}
+
+body {
+  font-family: var(--font-sans);
+  @apply bg-surface text-[#1c2b33] antialiased;
+  overflow-x: hidden;
+}
+
+.prose-doc {
+  @apply w-full max-w-none text-[15px] leading-relaxed;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 639px) {
+  .prose-doc {
+    @apply text-[14px];
+  }
+
+  .prose-doc h1 {
+    @apply text-xl;
+  }
+
+  .prose-doc h2 {
+    @apply text-base;
+  }
+}
+
+.prose-doc h1 {
+  @apply mb-4 border-b-2 border-accent-light pb-3 text-2xl font-bold text-navy;
+}
+
+.prose-doc h2 {
+  @apply mt-8 mb-3 border-l-4 border-accent pl-3 text-lg font-semibold text-navy;
+}
+
+.prose-doc h3 {
+  @apply mt-6 mb-2 text-base font-semibold text-accent;
+}
+
+.prose-doc h4 {
+  @apply mt-4 mb-2 text-sm font-semibold text-navy;
+}
+
+.prose-doc p {
+  @apply my-3;
+}
+
+.prose-doc ul,
+.prose-doc ol {
+  @apply my-3 ml-5 list-outside;
+}
+
+.prose-doc ul {
+  @apply list-disc;
+}
+
+.prose-doc ol {
+  @apply list-decimal;
+}
+
+.prose-doc li {
+  @apply my-1;
+}
+
+.prose-doc a {
+  @apply text-accent underline-offset-2 hover:underline;
+  word-break: break-word;
+}
+
+.prose-doc blockquote {
+  @apply my-4 border-l-4 border-accent bg-accent-light/60 px-4 py-2 text-sm;
+}
+
+.prose-doc code:not(pre code) {
+  @apply rounded border border-border bg-white px-1.5 py-0.5 font-mono text-[13px];
+  word-break: break-all;
+}
+
+.prose-doc pre {
+  @apply my-4 max-w-full overflow-x-auto rounded-lg bg-[#0e2233] p-3 text-[12px] leading-relaxed text-[#cfe3f2] sm:p-4 sm:text-[13px];
+}
+
+.prose-doc pre code {
+  @apply border-0 bg-transparent p-0 text-inherit;
+}
+
+.prose-doc .table-scroll table,
+.prose-doc table {
+  @apply w-full min-w-[520px] border-collapse text-sm;
+}
+
+.prose-doc thead th {
+  @apply border border-border bg-navy px-2 py-2 text-center text-xs font-semibold whitespace-nowrap text-white sm:px-3 sm:text-sm;
+}
+
+.prose-doc tbody td {
+  @apply border border-border px-2 py-2 align-top text-xs sm:px-3 sm:text-sm;
+}
+
+.prose-doc tbody tr:nth-child(even) td {
+  @apply bg-white/70;
+}
+
+.prose-doc tbody td:first-child {
+  @apply bg-accent-light/40 font-medium;
+}
+
+.prose-doc hr {
+  @apply my-8 border-border;
+}
+
+.mermaid-svg-root svg {
+  display: block;
+  max-width: none !important;
+  height: auto;
+}
+
+.mermaid-svg-root .nodeLabel,
+.mermaid-svg-root .label {
+  font-family: var(--font-sans) !important;
+  font-size: 12px !important;
+}
+
+@media (max-width: 639px) {
+  .mermaid-svg-root .nodeLabel,
+  .mermaid-svg-root .label {
+    font-size: 10px !important;
+  }
+}
+
+.table-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 999px;
+}

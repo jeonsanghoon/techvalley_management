@@ -1,0 +1,14 @@
+{
+  "deviceId": "HK-2024-00158",
+  "request_code": "IMG-20260613-001",
+  "upload_mode": "image_chunk",
+  "upload_id": "2~exampleMultipartUploadId",
+  "part_urls": [
+    { "part_number": 1, "url": "https://tv-media-upload.s3.ap-northeast-2.amazonaws.com/..." },
+    { "part_number": 2, "url": "https://tv-media-upload.s3.ap-northeast-2.amazonaws.com/..." }
+  ],
+  "expires_in": 3600,
+  "s3_bucket": "tv-ingress-dev-tv-media-upload",
+  "s3_key": "media/images/HK-2024-00158/IMG-20260613-001/object.jpg",
+  "device_timestamp": 1717654321000
+}

@@ -1,0 +1,54 @@
+postgres:
+  database: iot_analytics
+  ddl_root: 02.arch/config/schema/postgres
+  apply_order:
+    - 01-core-schema.sql
+    - 02-pipeline-alarm-notification.sql
+    - 04-tv-domain-extensions.sql
+    - 05-seed-dev.sql
+  optional_reference:
+    - 03-seed-reference.sql
+  table_groups:
+    core_master:
+      - user
+      - common_code
+      - company
+      - branch
+      - site
+      - product
+      - device
+    pipeline_alarm:
+      - alert
+      - notification
+      - communication_quality_rollup
+      - communication_quality_rollup_site
+      - communication_alarm_incident
+      - communication_alarm_incident_action
+      - notification_ruleset
+      - notification_rule
+    telemetry_rollup:
+      - telemetry_site_product_time_series
+      - telemetry_company_product_time_series
+    tv_domain:
+      - anomaly_events
+      - rule_recommendations
+      - self_heal_playbooks
+      - self_heal_executions
+      - model_registry_mirror
+      - service_ticket
+      - service_ticket_progress
+      - sla_fleet_snapshot
+      - equipment_log_tube
+      - equipment_log_detector
+      - equipment_log_body
+      - equipment_log_control
+      - equipment_log_firmware
+      - equipment_log_audit
+      - parts_order
+      - parts_schedule
+      - as_record
+      - installation
+  ui_mapping:
+    equipment: device
+    customer: company
+    notification_ruleset_mirror: notification_ruleset

@@ -1,0 +1,93 @@
+# 테크밸리 Analytics Lake — Iceberg / S3 / Firehose SSOT
+# Terraform: 90.infra/terraform/modules/analytics_lake_stack
+# Manifest: manifest/processes/04-stream-ingress.yaml → analytics_lake
+version: 1
+
+flow: firehose_to_s3_then_glue_to_iceberg
+
+naming:
+  # dev 기본 — tfvars project_name + environment
+  name_prefix: tv-ingress-dev
+  aws_region: ap-northeast-2
+
+s3:
+  bucket: tv-ingress-dev-tv-analytics-raw
+  bucket_suffix: tv-analytics-raw
+  force_destroy: false
+  layout:
+    # Firehose extended_s3 landing (Parquet 변환 전·후 객체)
+    firehose_landing_prefix: cold-stream-events/
+    firehose_dynamic_prefix: "cold-stream-events/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/"
+    firehose_errors_prefix: errors/firehose/cold-stream-events/
+    # Glue Spark Iceberg warehouse (catalog location)
+    iceberg_warehouse_prefix: iceberg/warehouse/
+    # 대용량 미디어·FOTA (Greengrass file 도메인 — Firehose와 분리)
+    media_prefix: media/
+    fota_artifacts_prefix: fota/
+    ml_artifacts_prefix: ml-artifacts/
+  lifecycle:
+    firehose_landing_days: 7
+    firehose_errors_days: 30
+    media_intelligent_tiering: true
+  local_minio_mirror:
+    endpoint: http://127.0.0.1:19010
+    bucket: tv-analytics-raw
+    access_key_env: MINIO_ROOT_USER
+    secret_key_env: MINIO_ROOT_PASSWORD
+
+firehose:
+  stream_name: tv-ingress-dev-cold-stream-events
+  stream_suffix: cold-stream-events
+  destination: extended_s3
+  source: lambda_put_record_batch
+  # stream-sync-consumer — KDS와 병렬 KDS→Firehose 금지
+  buffer:
+    interval_seconds: 900
+    size_mb: 128
+  parquet:
+    enabled: true
+    compression: SNAPPY
+  dynamic_partitioning:
+    enabled: true
+    retry_duration_seconds: 300
+  record_format:
+    type: json_lines
+    newline_delimited: true
+    schema_ref: 02.arch/config/schema/iceberg/firehose-record.schema.json
+
+glue:
+  catalog: glue
+  database: techvalley_analytics
+  jobs:
+    iceberg_commit:
+      name_suffix: iceberg-commit-stream-fact
+      trigger: eventbridge_s3_object_created
+      script_ref: 02.arch/config/schema/iceberg/glue/iceberg-commit-stream-fact.py
+  crawler:
+    enabled: false
+
+iceberg:
+  catalog: glue
+  partition_time_source:
+    column: created_at
+    meaning: DocumentDB 적재 시각과 동일 — Firehose·Iceberg dt 파티션 SSOT
+  event_time_source:
+    column: device_timestamp
+    meaning: 장비 발생 시각 epoch ms — 분석·SageMaker feature
+  tables_ref: 02.arch/config/schema/iceberg/tables.yaml
+
+iam:
+  lambda_firehose_actions:
+    - firehose:PutRecord
+    - firehose:PutRecordBatch
+  firehose_s3_actions:
+    - s3:AbortMultipartUpload
+    - s3:GetBucketLocation
+    - s3:GetObject
+    - s3:ListBucket
+    - s3:PutObject
+
+environment_lambda:
+  FIREHOSE_STREAM_NAME: tv-ingress-dev-cold-stream-events
+  FIREHOSE_DISABLED: "false"
+  ICEBERG_DEFAULT_TABLE: stream_fact_telemetry

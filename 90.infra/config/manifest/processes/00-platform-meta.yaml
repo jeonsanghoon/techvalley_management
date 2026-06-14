@@ -1,0 +1,19 @@
+platform_manifest_registry:
+  default_entry_id: default
+  entries:
+    - id: default
+      is_default: true
+      manifest_file: 02.arch/config/manifest/01-data-platform.manifest.yaml
+
+config_format_policy:
+  continuous_runtime_yaml:
+    source_of_truth: 02.arch/config
+    paths:
+      - 02.arch/config/manifest/processes/_index.yaml
+      - 02.arch/config/manifest/processes/*.yaml
+      - 02.arch/config/02-batch-cadence.yaml
+      - 02.arch/config/normalize-config.default.yaml
+      - 02.arch/config/ingress-deploy.yaml
+  apply_once_deploy_json:
+    source_of_truth: 02.arch/config/rules/*.json
+    build: npm run rules:build
