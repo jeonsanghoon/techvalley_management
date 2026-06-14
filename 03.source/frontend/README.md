@@ -12,7 +12,7 @@ Next.js 기반 운영·모니터링·정비 플랫폼 UI입니다.
 | AG Grid Enterprise | 35 |
 | TanStack Query | 5 |
 
-워크스페이스 경로: `techvalley_management/03.source/frontend` (모노레포 `03.source` 하위)
+워크스페이스 경로: `techvalley/techvalley_management/03.source/frontend`
 
 ## 로컬 실행
 
@@ -22,7 +22,7 @@ cp .env.local.example .env.local
 npm run dev
 ```
 
-워크스페이스 루트(`techvalley_management/`)에서 실행하려면 `npm run dev:frontend`를 사용합니다.
+워크스페이스 루트(`techvalley/techvalley_management/`)에서 실행하려면 `npm run dev:frontend`를 사용합니다.
 
 [http://localhost:3000](http://localhost:3000) 에서 확인합니다.
 

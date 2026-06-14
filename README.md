@@ -2,6 +2,8 @@
 
 테크밸리 IoT 플랫폼 **관리·아키텍처·소스** 모노레포입니다.
 
+**로컬 경로**: `techvalley/techvalley_management/` (Git repo 루트)
+
 | 경로 | 내용 |
 |------|------|
 | `02.arch/` | 아키텍처·YAML·DDL SSOT |

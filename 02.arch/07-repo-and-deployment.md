@@ -3,15 +3,16 @@
 ## 7.1 워크스페이스 폴더 (SSOT)
 
 ```
-techvalley_management/
-├── 00.doc/                 # 제안서·스크린샷·매뉴얼
-├── 02.arch/                # ← 아키텍처 문서 (본 폴더)
-├── 03.source/
-│   ├── frontend/           # Next.js 운영 UI (Git: techvalley_project)
-│   ├── beckend/            # NestJS/Express API (예정)
-│   └── lambda/             # 파이프라인 Lambda 9종 + pipeline-core (skeleton)
-├── 90.infra/               # Terraform, 환경별 tfvars (skeleton)
-└── package.json            # dev:frontend 등 루트 스크립트
+techvalley/                      # 프로젝트 그룹 폴더 (선택)
+└── techvalley_management/       # ← Git repo 루트 (본 문서 기준)
+    ├── 00.doc/                 # 제안서·스크린샷·매뉴얼
+    ├── 02.arch/                # ← 아키텍처 문서 (본 폴더)
+    ├── 03.source/
+    │   ├── frontend/           # Next.js 운영 UI
+    │   ├── beckend/            # NestJS API (예정)
+    │   └── lambda/             # 파이프라인 Lambda 9종 + pipeline-core (skeleton)
+    ├── 90.infra/               # Terraform, 환경별 tfvars (skeleton)
+    └── package.json            # dev:frontend 등 루트 스크립트
 ```
 
 | 번호 | 의미 |
