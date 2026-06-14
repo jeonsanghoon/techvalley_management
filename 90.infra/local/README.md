@@ -5,7 +5,7 @@
 ## 빠른 시작
 
 ```bash
-# repo 루트 (techvalley/)
+# repo 루트 (techvalley_management/)
 chmod +x 02.arch/config/local/*.sh
 ./02.arch/config/local/local-up.sh          # Podman + bootstrap
 ./02.arch/config/local/local-test-all.sh    # Lambda invoke 전체

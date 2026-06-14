@@ -1,8 +1,8 @@
 {
-  "name": "techvalley",
+  "name": "techvalley_management",
   "version": "1.0.0",
   "private": true,
-  "description": "Techvalley IoT platform workspace (00.doc · 03.source · 90.infra)",
+  "description": "Techvalley IoT management monorepo (00.doc · 02.arch · 03.source · 90.infra)",
   "scripts": {
     "dev:frontend": "npm run dev --prefix 03.source/frontend",
     "build:frontend": "npm run build --prefix 03.source/frontend",

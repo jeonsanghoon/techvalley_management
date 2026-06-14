@@ -50,7 +50,7 @@ brew install minio/stable/mc   # 선택
 ### 기동·중지
 
 ```bash
-# repo 루트 (techvalley/)
+# repo 루트 (techvalley_management/)
 podman compose -f 02.arch/config/local/docker-compose.yml up -d
 podman compose -f 02.arch/config/local/docker-compose.yml ps
 podman compose -f 02.arch/config/local/docker-compose.yml down    # 볼륨 유지

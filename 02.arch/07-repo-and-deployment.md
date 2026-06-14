@@ -3,7 +3,7 @@
 ## 7.1 워크스페이스 폴더 (SSOT)
 
 ```
-techvalley/
+techvalley_management/
 ├── 00.doc/                 # 제안서·스크린샷·매뉴얼
 ├── 02.arch/                # ← 아키텍처 문서 (본 폴더)
 ├── 03.source/
