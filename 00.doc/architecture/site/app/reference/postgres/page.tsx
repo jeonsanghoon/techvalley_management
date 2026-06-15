@@ -22,7 +22,7 @@ export default function PostgresReferencePage() {
         <h1 className="text-2xl font-bold text-navy">Aurora PostgreSQL DDL 레퍼런스</h1>
         <p className="mt-2 text-sm text-muted">
           Warm Tier SSOT · 총 <b>{total}</b> 테이블 · bootstrap:{" "}
-          <code className="text-xs">90.infra/local/bootstrap-postgres.sh</code>
+          <code className="text-xs">10.local/bootstrap-postgres.sh</code>
         </p>
         <Link
           href={`/docs/${slugFromRel("config/schema/org-hierarchy.md")}/`}

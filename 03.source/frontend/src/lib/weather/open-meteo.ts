@@ -87,7 +87,7 @@ function geocodeCacheKey(latitude: number, longitude: number, language: WeatherL
   return `${latitude.toFixed(3)},${longitude.toFixed(3)}:${language}`;
 }
 
-/** 역지오코딩 — 브라우저 CORS 회피를 위해 Next.js API 프록시 경유 */
+/** 역지오코딩 — Next.js `/api/weather/reverse` */
 export async function reverseGeocodeLabel(
   latitude: number,
   longitude: number,
@@ -104,12 +104,14 @@ export async function reverseGeocodeLabel(
 
   const request = (async () => {
     try {
+      const { getApiBaseUrl } = await import("@/lib/api/config");
+      const base = getApiBaseUrl();
       const params = new URLSearchParams({
         lat: String(latitude),
         lon: String(longitude),
         lang: language,
       });
-      const res = await fetch(`/api/weather/reverse?${params.toString()}`);
+      const res = await fetch(`${base}/weather/reverse?${params.toString()}`);
       if (!res.ok) return fallback;
       const data = (await res.json()) as { label?: string };
       const label =
@@ -127,11 +129,14 @@ export async function reverseGeocodeLabel(
   return request;
 }
 
-/** Open-Meteo forecast — same-origin API 프록시 (ad blocker 우회) */
+/** Open-Meteo forecast — Next.js `/api/weather/forecast` */
 export async function fetchWeatherForecast(
   coords: WeatherCoords,
   timeZone = "Asia/Seoul",
 ): Promise<WeatherSnapshot> {
+  const { getApiBaseUrl } = await import("@/lib/api/config");
+  const base = getApiBaseUrl();
+
   const params = new URLSearchParams({
     latitude: String(coords.latitude),
     longitude: String(coords.longitude),
@@ -139,7 +144,7 @@ export async function fetchWeatherForecast(
     forecast_days: "7",
   });
 
-  const res = await fetch(`/api/weather/forecast?${params.toString()}`);
+  const res = await fetch(`${base}/weather/forecast?${params.toString()}`);
   if (!res.ok) throw new Error("날씨 정보를 불러오지 못했습니다.");
 
   const data = (await res.json()) as OpenMeteoForecast;

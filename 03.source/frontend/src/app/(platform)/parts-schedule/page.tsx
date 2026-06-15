@@ -5,7 +5,7 @@ import { Box, Grid } from "@mui/material";
 import { AgDataGrid } from "@/components/grid/AgDataGrid";
 import { SectionCard } from "@/components/ui/PageComponents";
 import { StatGrid, TagList } from "@/components/ui/mui-primitives";
-import { partSchedules } from "@/lib/mock-data";
+import { getListItems, usePartSchedules, useEnumCodes } from "@/lib/api/hooks";
 import { QueryToolbar } from "@/components/ui/QueryToolbar";
 import { useQueryState } from "@/hooks/useQueryState";
 import { useFilteredRows } from "@/hooks/useFilteredRows";
@@ -16,15 +16,15 @@ import { useLocale } from "@/contexts/LocaleContext";
 import type { TranslationKey } from "@/lib/locale";
 import { localeLabel } from "@/lib/locale/types";
 import { SEARCH_FIELD_LABELS } from "@/lib/locale/search-fields";
-import { localizeDomainValue } from "@/lib/locale/domain-labels";
 import type { PartSchedule } from "@/lib/types";
-
-const POD_STATUSES = ["전체", "요청", "확정", "출고", "운송중", "도착", "교체완료"];
 
 const INITIAL_SEARCH = { orderId: "", ticketId: "", equipmentSn: "", customer: "", partName: "", engineerName: "", trackingNo: "" };
 
 export default function PartsSchedulePage() {
   const { translate, language } = useLocale();
+  const { data: scheduleData } = usePartSchedules();
+  const scheduleRows = getListItems(scheduleData);
+  const { data: podStatusCodesData } = useEnumCodes("PRST");
   const query = useQueryState(INITIAL_SEARCH, { podStatus: "전체" });
 
   const searchDefs = useMemo(
@@ -41,12 +41,11 @@ export default function PartsSchedulePage() {
   );
 
   const podStatusFilterOptions = useMemo(
-    () =>
-      POD_STATUSES.map((s) => ({
-        value: s,
-        label: s === "전체" ? translate("common.all" as TranslationKey) : localizeDomainValue(s, language),
-      })),
-    [language, translate],
+    () => [
+      { value: "전체", label: translate("common.all" as TranslationKey) },
+      ...getListItems(podStatusCodesData).map((c) => ({ value: c.code, label: c.name })),
+    ],
+    [podStatusCodesData, translate],
   );
 
   const scheduleStageTags = useMemo(
@@ -82,16 +81,16 @@ export default function PartsSchedulePage() {
     [query.applied],
   );
 
-  const { fetchRows, resultCount, rowData } = useFilteredRows(partSchedules, filterFn);
+  const { fetchRows, resultCount, rowData } = useFilteredRows(scheduleRows, filterFn);
   const delayed = rowData.filter((s) => s.delayDays > 0);
-  const inTransit = rowData.filter((s) => s.podStatus === "운송중");
+  const inTransit = rowData.filter((s) => s.podStatus === "in_transit" || s.podStatus === "운송중");
 
   const statItems = useMemo(
     () => [
       { label: translate("partsSchedule.stat.resultCount" as TranslationKey), value: resultCount, variant: "info" as const },
       { label: translate("partsSchedule.stat.inTransit" as TranslationKey), value: inTransit.length, variant: "warning" as const },
       { label: translate("partsSchedule.stat.delayed" as TranslationKey), value: delayed.length, variant: "danger" as const },
-      { label: translate("partsSchedule.stat.replaced" as TranslationKey), value: rowData.filter((s) => s.podStatus === "교체완료").length, variant: "success" as const },
+      { label: translate("partsSchedule.stat.replaced" as TranslationKey), value: rowData.filter((s) => s.podStatus === "completed" || s.podStatus === "교체완료").length, variant: "success" as const },
     ],
     [translate, resultCount, inTransit.length, delayed.length, rowData],
   );
@@ -99,7 +98,7 @@ export default function PartsSchedulePage() {
   const visitTags = useMemo(
     () =>
       rowData
-        .filter((s) => s.visitPlannedAt === "2026-06-07")
+        .filter((s) => s.visitPlannedAt === new Date().toISOString().split("T")[0])
         .map((s) =>
           translate("partsSchedule.visitTag" as TranslationKey)
             .replace("{engineer}", s.engineerName ?? translate("partsSchedule.unassigned" as TranslationKey))

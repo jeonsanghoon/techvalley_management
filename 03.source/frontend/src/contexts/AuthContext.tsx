@@ -6,15 +6,18 @@ import { findNavItem, resolveNavMenuId } from "@/lib/navigation";
 import { useLocationHash } from "@/hooks/useHashTab";
 import { canPerform } from "@/lib/auth/permissions";
 import { userRoleToAppRole } from "@/lib/auth/role-map";
-import { clearSession, loadSession, saveSession } from "@/lib/auth/session";
+import { clearSession, loadSession, onSessionInvalidated, saveSession } from "@/lib/auth/session";
 import type { AuthUser, PermissionAction } from "@/lib/auth/types";
-import { users } from "@/lib/mock-data";
 import type { UserAccount } from "@/lib/types";
+import { api } from "@/lib/api/endpoints";
 
 interface AuthContextValue {
   user: AuthUser | null;
   ready: boolean;
-  login: (userId: string, options?: { persist?: boolean }) => void;
+  login: (
+    userId: string,
+    options?: { persist?: boolean; password?: string; email?: string },
+  ) => Promise<void>;
   logout: () => void;
   can: (menuId: string, action: PermissionAction) => boolean;
   currentMenuId: string | undefined;
@@ -33,8 +36,8 @@ function toAuthUser(account: UserAccount): AuthUser {
   };
 }
 
-/** 데모 자동 로그인 기본 계정 (로그인 버튼 클릭 시) */
-export const DEMO_LOGIN_USER_ID = "usr-002";
+export const DEMO_LOGIN_USER_ID = "USR-TV-OPS";
+export const DEMO_PASSWORD = "demo-password";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -42,20 +45,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [ready, setReady] = useState(false);
 
+  useLayoutEffect(() => onSessionInvalidated(() => setUser(null)), []);
+
   useLayoutEffect(() => {
-    setUser(loadSession());
-    setReady(true);
+    let cancelled = false;
+
+    async function bootstrapSession() {
+      const session = loadSession();
+      if (!session?.tokens?.accessToken) {
+        if (!cancelled) {
+          setUser(null);
+          setReady(true);
+        }
+        return;
+      }
+
+      try {
+        const me = await api.me();
+        const authUser = toAuthUser(me.user);
+        if (!cancelled) {
+          saveSession({ user: authUser, tokens: session.tokens });
+          setUser(authUser);
+        }
+      } catch {
+        clearSession();
+        if (!cancelled) setUser(null);
+      } finally {
+        if (!cancelled) setReady(true);
+      }
+    }
+
+    void bootstrapSession();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const login = useCallback((userId: string, options?: { persist?: boolean }) => {
-    const account = users.find((u) => u.id === userId);
-    if (!account) return;
-    const authUser = toAuthUser(account);
-    if (options?.persist !== false) {
-      saveSession(authUser);
-    }
-    setUser(authUser);
-  }, []);
+  const login = useCallback(
+    async (
+      userId: string,
+      options?: { persist?: boolean; password?: string; email?: string },
+    ) => {
+      const result = await api.login({
+        userId,
+        email: options?.email,
+        password: options?.password ?? DEMO_PASSWORD,
+      });
+      const authUser = toAuthUser(result.user);
+      const session = { user: authUser, tokens: result.tokens };
+      if (options?.persist !== false) {
+        saveSession(session);
+      }
+      setUser(authUser);
+    },
+    [],
+  );
 
   const logout = useCallback(() => {
     clearSession();
@@ -84,25 +128,4 @@ export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
-}
-
-export function usePermission(menuId?: string) {
-  const { can, currentMenuId, user } = useAuth();
-  const resolvedMenuId = menuId ?? currentMenuId ?? "";
-
-  return useMemo(
-    () => ({
-      menuId: resolvedMenuId,
-      user,
-      canView: can(resolvedMenuId, "view"),
-      canCreate: can(resolvedMenuId, "create"),
-      canUpdate: can(resolvedMenuId, "update"),
-      canDelete: can(resolvedMenuId, "delete"),
-      canExport: can(resolvedMenuId, "export"),
-      canExecute: can(resolvedMenuId, "execute"),
-      can: (action: PermissionAction, targetMenuId?: string) =>
-        can(targetMenuId ?? resolvedMenuId, action),
-    }),
-    [can, resolvedMenuId, user],
-  );
 }

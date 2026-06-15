@@ -29,7 +29,7 @@ import {
   type AlarmQuickFilter,
 } from "@/lib/alarm-ops";
 import { combineAnd, matchesDateRange, matchesIndexedFields, matchesSelectFilter } from "@/lib/grid/query-filter";
-import { batchAlarms, batchOperationalMeta } from "@/lib/data/batch";
+import { fallbackMeta, getListItems, useAlarms } from "@/lib/api/hooks";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { TranslationKey } from "@/lib/locale";
 import { localeLabel } from "@/lib/locale/types";
@@ -49,6 +49,9 @@ const QUICK_FILTER_KEYS: Record<AlarmQuickFilter, TranslationKey> = {
 
 export default function AlarmsPage() {
   const { translate, language, formatAsOf } = useLocale();
+  const { data: alarmData, isLoading } = useAlarms();
+  const alarmRows = getListItems(alarmData);
+  const dataMeta = alarmData?.meta ?? fallbackMeta("/alarms");
   const [quickFilter, setQuickFilter] = useState<AlarmQuickFilter>("all");
   const query = useQueryState(INITIAL_SEARCH, { severity: "전체", ack: "전체" });
 
@@ -77,7 +80,7 @@ export default function AlarmsPage() {
     [translate],
   );
 
-  const opsStats = useMemo(() => alarmOpsStats(batchAlarms), []);
+  const opsStats = useMemo(() => alarmOpsStats(alarmRows), [alarmRows]);
 
   const statItems = useMemo(
     () => [
@@ -125,14 +128,14 @@ export default function AlarmsPage() {
   }, [query.applied, quickFilter]);
 
   const fetchRows = useMemo(
-    () => createKeysetFetcher(batchAlarms, { idField: "id", filterFn }),
+    () => createKeysetFetcher(alarmRows, { idField: "id", filterFn }),
     [filterFn],
   );
 
-  const resultCount = countFilteredRows(batchAlarms, filterFn);
+  const resultCount = countFilteredRows(alarmRows, filterFn);
   const activeQuickMeta = ALARM_QUICK_FILTERS.find((f) => f.id === quickFilter);
   const localeTag = language === "en" ? "en-US" : "ko-KR";
-  const batchAsOf = formatAsOf(batchOperationalMeta.asOf);
+  const batchAsOf = formatAsOf(dataMeta.asOf);
 
   const applyQuickFilter = (next: AlarmQuickFilter) => {
     setQuickFilter(next);
@@ -159,7 +162,7 @@ export default function AlarmsPage() {
   return (
     <Box>
       <PageToolbar>
-        <DataScopeBadge meta={batchOperationalMeta} />
+        <DataScopeBadge meta={dataMeta} />
         <PrimaryButton href="/remote-diagnosis" variant="outlined" menuId="remote-diagnosis" perm="view" startIcon={<BiotechIcon fontSize="small" />}>
           {translate("remoteDiagnosis.nav.label" as TranslationKey)}
         </PrimaryButton>
@@ -210,7 +213,7 @@ export default function AlarmsPage() {
               const count =
                 item.id === "all"
                   ? opsStats.total
-                  : batchAlarms.filter((a) => matchesAlarmQuickFilter(a, item.id)).length;
+                  : alarmRows.filter((a) => matchesAlarmQuickFilter(a, item.id)).length;
               const color =
                 item.id === "unacked_critical"
                   ? "error"

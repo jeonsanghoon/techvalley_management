@@ -2,12 +2,13 @@
 version: 1
 
 manifest_ref:
-  composed: 02.arch/config/manifest/01-data-platform.manifest.yaml
-  processes_dir: 02.arch/config/manifest/processes
+  composed: manifest/01-data-platform.manifest.yaml
+  processes_dir: manifest/processes
 
 deploy_refs:
-  ingress: 02.arch/config/ingress-deploy.yaml
-  process_local: 02.arch/config/process-deploy.yaml
+  ingress: ingress-deploy.yaml
+  process_local: process-deploy.yaml
+  local_stack: ../../90.infra/10.local/local-stack.yaml
 
 iot:
   enabled: true
@@ -105,7 +106,7 @@ lambda_iam_roles:
 
 analytics_lake:
   enabled: true
-  lake_config_ref: 02.arch/config/schema/iceberg/lake-config.yaml
+  lake_config_ref: schema/iceberg/lake-config.yaml
   s3:
     bucket_suffix: tv-analytics-raw
     force_destroy: false

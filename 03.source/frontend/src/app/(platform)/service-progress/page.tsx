@@ -12,20 +12,23 @@ import { useFilteredRows } from "@/hooks/useFilteredRows";
 import { bindSearchFields } from "@/lib/grid/bind-search-fields";
 import { combineAnd, matchesDateRange, matchesIndexedFields, matchesSelectFilter } from "@/lib/grid/query-filter";
 import { bindQueryToolbarDate } from "@/lib/grid/query-toolbar-date";
-import { batchEngineers, batchOperationalMeta, batchServiceTickets } from "@/lib/data/batch";
+import { fallbackMeta, getListItems, useEngineers, useServiceTickets, useEnumCodes } from "@/lib/api/hooks";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { TranslationKey } from "@/lib/locale";
 import { localeLabel } from "@/lib/locale/types";
 import { SEARCH_FIELD_LABELS } from "@/lib/locale/search-fields";
-import { localizeDomainValue } from "@/lib/locale/domain-labels";
 import type { ServiceTicket } from "@/lib/types";
-
-const STAGES = ["전체", "접수", "배정", "출동", "작업", "완료"];
 
 const INITIAL_SEARCH = { id: "", equipmentSn: "", customer: "", engineerName: "" };
 
 export default function ServiceProgressPage() {
   const { translate, language, formatAsOf } = useLocale();
+  const { data: ticketData } = useServiceTickets();
+  const { data: stageCodesData } = useEnumCodes("TKST");
+  const ticketRows = getListItems(ticketData);
+  const dataMeta = ticketData?.meta ?? fallbackMeta("/service/tickets");
+  const { data: engineerData } = useEngineers();
+  const engineerRows = getListItems(engineerData);
   const query = useQueryState(INITIAL_SEARCH, { stage: "전체" });
 
   const searchDefs = useMemo(
@@ -39,12 +42,11 @@ export default function ServiceProgressPage() {
   );
 
   const stageFilterOptions = useMemo(
-    () =>
-      STAGES.map((s) => ({
-        value: s,
-        label: s === "전체" ? translate("common.all" as TranslationKey) : localizeDomainValue(s, language),
-      })),
-    [language, translate],
+    () => [
+      { value: "전체", label: translate("common.all" as TranslationKey) },
+      ...getListItems(stageCodesData).map((c) => ({ value: c.code, label: c.name })),
+    ],
+    [stageCodesData, translate],
   );
 
   const filterFn = useMemo(
@@ -65,22 +67,22 @@ export default function ServiceProgressPage() {
     [query.applied],
   );
 
-  const { rowData, resultCount } = useFilteredRows(batchServiceTickets, filterFn);
-  const active = rowData.filter((t) => t.stage !== "완료");
-  const batchAsOf = formatAsOf(batchOperationalMeta.asOf);
+  const { rowData, resultCount } = useFilteredRows(ticketRows, filterFn);
+  const active = rowData.filter((t) => t.stage !== "closed" && t.stage !== "완료");
+  const batchAsOf = formatAsOf(dataMeta.asOf);
 
   const engineerFilter = useMemo(
     () =>
-      batchEngineers.filter((e) =>
+      engineerRows.filter((e) =>
         matchesIndexedFields(query.applied.search, { engineerName: e.name }),
       ),
-    [query.applied],
+    [query.applied, engineerRows],
   );
 
   return (
     <Box>
       <PageToolbar>
-        <DataScopeBadge meta={batchOperationalMeta} />
+        <DataScopeBadge meta={dataMeta} />
       </PageToolbar>
 
       <QueryToolbar

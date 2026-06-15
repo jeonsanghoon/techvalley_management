@@ -17,8 +17,8 @@ function copyDir(from, to, exclude = []) {
   }
 }
 
-copyDir(src, infra, ["scripts"]);
+copyDir(src, infra, ["scripts", "local"]);
 copyDir(join(src, "converter-rules"), join(lambdaCfg, "converter-rules"));
 copyDir(join(src, "rules"), join(lambdaCfg, "rules"));
-cpSync(join(src, "local"), join(repo, "90.infra/local"), { recursive: true });
-console.log("synced: 02.arch/config → 90.infra/config, 03.source/lambda/config, 90.infra/local");
+// 로컬 Podman/Compose SSOT: 90.infra/10.local/ (sync 대상 아님)
+console.log("synced: 02.arch/config → 90.infra/config, 03.source/lambda/config");

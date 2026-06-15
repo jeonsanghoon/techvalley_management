@@ -13,7 +13,7 @@ import { combineAnd, matchesBoolSelectFilter, matchesIndexedFields, matchesSelec
 import { useLocale } from "@/contexts/LocaleContext";
 import type { TranslationKey } from "@/lib/locale";
 import { localizeAppRole } from "@/lib/locale/domain-labels";
-import { users } from "@/lib/mock-data";
+import { getListItems, useUsers } from "@/lib/api/hooks";
 import type { UserAccount } from "@/lib/types";
 
 const ROLES = ["시스템 관리자", "서비스 엔지니어", "상담·CS", "고객사·대리점"];
@@ -29,6 +29,8 @@ const ROLE_TO_APP: Record<string, string> = {
 
 export default function AdminUsersPage() {
   const { translate, language } = useLocale();
+  const { data: userData } = useUsers();
+  const userRows = getListItems(userData);
   const query = useQueryState(INITIAL_SEARCH, { role: "전체", active: "전체" });
 
   const searchDefs = useMemo(
@@ -73,7 +75,7 @@ export default function AdminUsersPage() {
     [query.applied],
   );
 
-  const { rowData, resultCount } = useFilteredRows(users, filterFn);
+  const { rowData, resultCount } = useFilteredRows(userRows, filterFn);
 
   return (
     <Box>

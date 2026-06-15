@@ -2,7 +2,7 @@
 
 테크밸리 플랫폼을 **Podman Compose**로 AWS Hot/Warm/S3를 대체하고, 프론트·Lambda·(예정) NestJS를 **로컬에서 일괄 검증**하기 위한 SSOT입니다.
 
-관련: [07-repo-and-deployment.md](./07-repo-and-deployment.md) §7.7 · [config/local/](./config/local/) · [process-deploy.yaml](./config/process-deploy.yaml) · [15-lambda-development.md](./15-lambda-development.md) · [14-backend-frontend-design.md](./14-backend-frontend-design.md)
+관련: [07-repo-and-deployment.md](./07-repo-and-deployment.md) §7.5 · [10.local/](../10.local/) · [90.infra/config/process-deploy.yaml](../90.infra/config/process-deploy.yaml) · [15-lambda-development.md](./15-lambda-development.md)
 
 ---
 
@@ -16,7 +16,7 @@
 | Kinesis / IoT | **샘플 JSON + handler invoke** | Lambda 단위·파이프라인 스텁 |
 | Cognito / API GW | **mock + (next) NestJS 로컬** | UI·REST |
 
-**원칙**: 설정 SSOT는 **`02.arch/config/local/`** — `sync:config` 시 `90.infra/local/` 미러.
+**원칙**: 로컬 실행 SSOT는 **`10.local/`** — 스키마·manifest는 `90.infra/config/` (`sync:config` 미러).
 
 ---
 
@@ -39,54 +39,58 @@ brew install minio/stable/mc   # 선택
 
 ## 16.3 Podman Compose — 인프라 SSOT
 
-파일: [`config/local/docker-compose.yml`](./config/local/docker-compose.yml)
+파일: [`10.local/docker-compose.yml`](../10.local/docker-compose.yml) · 포트·서비스: [`10.local/local-stack.yaml`](../10.local/local-stack.yaml)
 
 | 서비스 | 이미지 | 호스트 포트 | 컨테이너 | 자격 증명 |
 |--------|--------|-------------|----------|-----------|
-| **documentdb** | mongo:7 | **27000** | 27017 | user `tv` / pass `tv_local_dev` |
-| **postgres** | postgres:16 | **25432** | 5432 | user `tv` / pass `tv_local_dev` / DB **`iot_analytics`** |
-| **minio** | minio/minio | **19010** (API), **19011** (console) | 9000/9001 | `tv` / `tv_local_dev` |
+| **documentdb** | mongo:7 | **37017** | 27017 | user `tv` / pass `tv_local_dev` |
+| **postgres** | postgres:16 | **35432** | 5432 | user `tv` / pass `tv_local_dev` / DB **`iot_analytics`** |
+| **minio** | minio/minio | **39100** (API), **39101** (console) | 9000/9001 | `tv` / `tv_local_dev` |
 
 ### 기동·중지
 
 ```bash
-# repo 루트 (techvalley/techvalley_management/)
-podman compose -f 02.arch/config/local/docker-compose.yml up -d
-podman compose -f 02.arch/config/local/docker-compose.yml ps
-podman compose -f 02.arch/config/local/docker-compose.yml down    # 볼륨 유지
-podman compose -f 02.arch/config/local/docker-compose.yml down -v  # 데이터 삭제
+# repo 루트 (techvalley_management/)
+npm run local:up
+npm run local:down
+
+# 또는 직접
+podman compose -f 10.local/docker-compose.yml up -d
+podman compose -f 10.local/docker-compose.yml ps
+podman compose -f 10.local/docker-compose.yml down    # 볼륨 유지
+podman compose -f 10.local/docker-compose.yml down -v  # 데이터 삭제
 ```
 
 ### 원라인 (기동 + bootstrap + MinIO)
 
 ```bash
-./02.arch/config/local/local-up.sh
+./10.local/local-up.sh
 ```
 
 ---
 
 ## 16.4 연결 URI · 환경 변수 SSOT
 
-SSOT: [`config/process-deploy.yaml`](./config/process-deploy.yaml) · 예시: [`config/local/env.local.example`](./config/local/env.local.example)
+SSOT: [`90.infra/config/process-deploy.yaml`](../90.infra/config/process-deploy.yaml) · 예시: [`10.local/env.local.example`](../10.local/env.local.example)
 
 | 변수 | 로컬 값 |
 |------|---------|
-| `TV_MONGO_URI` | `mongodb://tv:tv_local_dev@127.0.0.1:27000/iot_service?authSource=admin&directConnection=true` |
-| `TV_POSTGRES_URI` | `postgresql://tv:tv_local_dev@127.0.0.1:25432/iot_analytics` |
-| `PGHOST` / `PGPORT` / `PGUSER` / `PGPASSWORD` / `PGDATABASE` | `127.0.0.1` / `25432` / `tv` / `tv_local_dev` / `iot_analytics` |
+| `TV_MONGO_URI` | `mongodb://tv:tv_local_dev@127.0.0.1:37017/iot_service?authSource=admin&directConnection=true` |
+| `TV_POSTGRES_URI` | `postgresql://tv:tv_local_dev@127.0.0.1:35432/iot_analytics` |
+| `PGHOST` / `PGPORT` / `PGUSER` / `PGPASSWORD` / `PGDATABASE` | `127.0.0.1` / `35432` / `tv` / `tv_local_dev` / `iot_analytics` |
 | `MONGO_URI` | `TV_MONGO_URI` 와 동일 (bootstrap-documentdb.mjs) |
-| `MINIO_ENDPOINT` | `http://127.0.0.1:19010` |
+| `MINIO_ENDPOINT` | `http://127.0.0.1:39100` |
 | `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD` | `tv` / `tv_local_dev` |
 | `MINIO_BUCKET` | `tv-analytics-raw` (Cold landing) |
 | `MINIO_MEDIA_BUCKET` | `tv-media-upload` |
-| `AWS_ENDPOINT_URL` (Lambda S3 SDK, 예정) | `http://127.0.0.1:19010` |
+| `AWS_ENDPOINT_URL` (Lambda S3 SDK) | `http://127.0.0.1:39100` |
 | `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | `tv` / `tv_local_dev` |
 
 로컬 env 로드:
 
 ```bash
-set -a && source 02.arch/config/local/env.local.example && set +a
-# 또는 export 개별 변수
+cp 10.local/env.local.example 10.local/env.local
+set -a && source 10.local/env.local && set +a
 ```
 
 ---
@@ -95,16 +99,16 @@ set -a && source 02.arch/config/local/env.local.example && set +a
 
 | 순서 | 스크립트 | 대상 |
 |------|----------|------|
-| 1 | [`bootstrap-postgres.sh`](./config/local/bootstrap-postgres.sh) | DDL `01-core-schema.sql`, `02-pipeline-alarm-notification.sql`, `04-tv-domain-extensions.sql`, seed `05-seed-dev.sql` |
-| 2 | [`bootstrap-documentdb.mjs`](./config/local/bootstrap-documentdb.mjs) | `manifest/processes/03-documentdb.yaml` 컬렉션·인덱스 |
-| 3 | [`minio-init.sh`](./config/local/minio-init.sh) | 버킷 `tv-analytics-raw`, `tv-media-upload` + S3 prefix |
+| 1 | [`10.local/bootstrap-postgres.sh`](../10.local/bootstrap-postgres.sh) | `90.infra/config/schema/postgres/` DDL + seed |
+| 2 | [`10.local/bootstrap-documentdb.mjs`](../10.local/bootstrap-documentdb.mjs) | `90.infra/config/manifest/processes/03-documentdb.yaml` |
+| 3 | [`10.local/minio-init.sh`](../10.local/minio-init.sh) | 버킷 `tv-analytics-raw`, `tv-media-upload` + S3 prefix |
 
 ```bash
 cd 03.source/lambda && npm install   # mongodb driver (bootstrap-documentdb)
 
-./02.arch/config/local/bootstrap-postgres.sh
-./02.arch/config/local/bootstrap-documentdb.sh
-./02.arch/config/local/minio-init.sh
+./10.local/bootstrap-postgres.sh
+./10.local/bootstrap-documentdb.sh
+./10.local/minio-init.sh
 ```
 
 | DB | 데이터베이스명 | SSOT |
@@ -180,7 +184,7 @@ SSOT: [`config/process-deploy.yaml`](./config/process-deploy.yaml) → `scenario
 | step | 명령 | cwd |
 |------|------|-----|
 | 1 | `podman compose … up -d` | repo 루트 |
-| 2 | bootstrap postgres · docdb · minio | `02.arch/config/local/` |
+| 2 | bootstrap postgres · docdb · minio | `10.local/` |
 | 3 | `npm run compose:manifest` | `03.source/lambda` |
 | 4 | `npm run rules:build` | `03.source/lambda` |
 | 5 | `npm run predeploy` | `03.source/lambda` |
@@ -192,7 +196,7 @@ SSOT: [`config/process-deploy.yaml`](./config/process-deploy.yaml) → `scenario
 원라인 테스트:
 
 ```bash
-./02.arch/config/local/local-test-all.sh
+./10.local/local-test-all.sh
 ```
 
 ---
@@ -256,7 +260,7 @@ SSOT: [`config/process-deploy.yaml`](./config/process-deploy.yaml) → `scenario
 
 | 문서 | 내용 |
 |------|------|
-| [config/local/README.md](./config/local/README.md) | 빠른 시작 |
+| [10.local/README.md](../10.local/README.md) | 빠른 시작 |
 | [12-database-design.md](./12-database-design.md) §12.7 | bootstrap |
 | [15-lambda-development.md](./15-lambda-development.md) | Lambda 로컬 invoke |
 | [13-media-upload-pipeline.md](./13-media-upload-pipeline.md) | MinIO·미디어 |

@@ -26,7 +26,7 @@ import { useLocale } from "@/contexts/LocaleContext";
 import { userRoleToAppRole } from "@/lib/auth/role-map";
 import type { TranslationKey } from "@/lib/locale";
 import { localizeAppRole } from "@/lib/locale/domain-labels";
-import { users } from "@/lib/mock-data";
+import { getListItems, useAuthUsers } from "@/lib/api/hooks";
 import { neonBlue } from "@/theme/devias/colors";
 
 const AUTO_LOGIN_KEY = "tv-auto-login";
@@ -45,14 +45,18 @@ export default function LoginPage() {
   const router = useRouter();
   const { login, logout, ready, user } = useAuth();
   const { translate, language } = useLocale();
+  const { data: authUsersData, isLoading: usersLoading } = useAuthUsers();
+  const authUsers = getListItems(authUsersData);
   const [userId, setUserId] = useState(DEMO_LOGIN_USER_ID);
   const [autoLogin, setAutoLogin] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [password, setPassword] = useState("demo-password");
+  const [loginError, setLoginError] = useState<string | null>(null);
 
-  const selected = users.find((u) => u.id === userId) ?? users[0];
+  const selected = authUsers.find((u) => u.id === userId) ?? authUsers[0];
   const roleLabel = useMemo(
-    () => localizeAppRole(userRoleToAppRole(selected.role), language),
-    [selected.role, language],
+    () => (selected ? localizeAppRole(userRoleToAppRole(selected.role), language) : ""),
+    [selected, language],
   );
 
   useEffect(() => {
@@ -82,17 +86,21 @@ export default function LoginPage() {
   };
 
   const handleLogin = async () => {
+    if (!selected) return;
     setSubmitting(true);
+    setLoginError(null);
     try {
       localStorage.setItem(AUTO_LOGIN_KEY, autoLogin ? "1" : "0");
-      login(userId, { persist: autoLogin });
+      await login(userId, { persist: autoLogin, password, email: selected?.email });
       router.replace("/dashboard");
+    } catch {
+      setLoginError(language === "en" ? "Login failed. Please try again." : "로그인에 실패했습니다. 다시 시도해 주세요.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (!ready || (user && readAutoLoginPref())) {
+  if (!ready || usersLoading || (user && readAutoLoginPref())) {
     return (
       <AuthLayout>
         <Stack spacing={2} sx={{ py: 6, alignItems: "center" }}>
@@ -162,19 +170,26 @@ export default function LoginPage() {
             {translate("login.demoNotice" as TranslationKey)}
           </Alert>
 
+          {loginError && (
+            <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+              {loginError}
+            </Alert>
+          )}
+
           <Stack spacing={2.5}>
             <TextField
               label={translate("login.email" as TranslationKey)}
-              value={selected.email}
+              value={selected?.email ?? ""}
               fullWidth
               slotProps={{ input: { readOnly: true } }}
             />
             <TextField
               label={translate("login.password" as TranslationKey)}
               type="password"
-              defaultValue="demo-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               fullWidth
-              slotProps={{ input: { readOnly: true } }}
+              autoComplete="current-password"
             />
 
             <Box>
@@ -182,7 +197,7 @@ export default function LoginPage() {
                 {translate("login.demoAccounts" as TranslationKey)}
               </Typography>
               <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1 }}>
-                {users.map((u) => {
+                {authUsers.map((u) => {
                   const active = u.id === userId;
                   return (
                     <Chip
@@ -199,10 +214,12 @@ export default function LoginPage() {
             </Box>
 
             <Typography variant="caption" color="text.secondary">
-              {translate("login.selected" as TranslationKey)
-                .replace("{name}", selected.name)
-                .replace("{role}", roleLabel)
-                .replace("{region}", selected.region)}
+              {selected
+                ? translate("login.selected" as TranslationKey)
+                    .replace("{name}", selected.name)
+                    .replace("{role}", roleLabel)
+                    .replace("{region}", selected.region)
+                : translate("common.loading" as TranslationKey)}
             </Typography>
 
             <Divider />
@@ -223,7 +240,7 @@ export default function LoginPage() {
               color="primary"
               fullWidth
               size="large"
-              disabled={submitting}
+              disabled={submitting || !selected}
               startIcon={submitting ? <CircularProgress size={18} color="inherit" /> : <LoginIcon />}
               onClick={handleLogin}
               sx={{ py: 1.35, fontWeight: 700, borderRadius: 2 }}

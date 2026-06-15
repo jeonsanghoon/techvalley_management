@@ -5,12 +5,7 @@ import type { ApexOptions } from "apexcharts";
 import { useColorMode } from "@/contexts/ColorModeContext";
 import { useLocale } from "@/contexts/LocaleContext";
 import { localizeDomainValue } from "@/lib/locale/domain-labels";
-import {
-  batchAlarmTrendDaily,
-  batchDashboardForRegion,
-  batchFleetStatusCountsForRegion,
-  batchFleetTotalsForRegion,
-} from "@/lib/data/batch";
+import type { ApiAlarmTrend } from "@/lib/api/endpoints";
 import { ThemedApexChart } from "@/components/charts/ThemedApexChart";
 
 const CHART_HEIGHT = 220;
@@ -49,28 +44,27 @@ const STATUS_COLORS: Record<string, string> = {
   safe_mode: "#a855f7",
 };
 
-/** 배치 롤업 기준 플릿 상태 분포 */
-export function ApexFleetDonut() {
+export type DashboardFleetStatusChart = {
+  statuses: string[];
+  counts: number[];
+  totalFleet: number;
+};
+
+export type DashboardTicketStageChart = {
+  stages: string[];
+  counts: number[];
+};
+
+export function ApexFleetDonut({ chart }: { chart: DashboardFleetStatusChart }) {
   const baseChart = useApexBaseChart();
   const { mode } = useColorMode();
-  const { language, translate, serviceRegion } = useLocale();
+  const { language } = useLocale();
   const isDark = mode === "dark";
   const labelColor = isDark ? "#9fa6ad" : "#5b6b73";
   const valueColor = isDark ? "#e5e7eb" : "#434a51";
 
-  const statusCounts = useMemo(
-    () => batchFleetStatusCountsForRegion(serviceRegion),
-    [serviceRegion],
-  );
-  const fleetTotals = useMemo(
-    () => batchFleetTotalsForRegion(serviceRegion),
-    [serviceRegion],
-  );
-
-  const keys = Object.keys(statusCounts) as (keyof typeof statusCounts)[];
-  const series = keys.map((k) => statusCounts[k]);
-  const labels = keys.map((k) => localizeDomainValue(k, language));
-  const colors = keys.map((k) => STATUS_COLORS[k] ?? "#94a3b8");
+  const labels = chart.statuses.map((k) => localizeDomainValue(k, language));
+  const colors = chart.statuses.map((k) => STATUS_COLORS[k] ?? "#94a3b8");
 
   const options: ApexOptions = {
     ...baseChart,
@@ -78,136 +72,106 @@ export function ApexFleetDonut() {
     colors,
     legend: {
       ...baseChart.legend,
-      show: true,
-      labels: { colors: isDark ? "#cdd7e1" : "#434a51" },
+      position: "bottom",
+      labels: { colors: labelColor },
     },
     plotOptions: {
       pie: {
         donut: {
-          size: "68%",
+          size: "62%",
           labels: {
             show: true,
             total: {
               show: true,
-              label: translate("map.fleet"),
-              fontSize: "12px",
+              label: "Fleet",
               color: labelColor,
-              formatter: () => String(fleetTotals.totalFleet),
+              formatter: () => String(chart.totalFleet),
             },
-            value: { fontSize: "18px", fontWeight: 700, color: valueColor },
+            value: { color: valueColor, fontSize: "22px", fontWeight: 600 },
           },
         },
       },
     },
   };
 
-  return <ThemedApexChart type="donut" options={options} series={series} height={CHART_HEIGHT} />;
+  return (
+    <ThemedApexChart type="donut" height={CHART_HEIGHT} options={options} series={chart.counts} />
+  );
 }
 
-/** 배치 일별 알람 집계 */
-export function ApexAlarmTrend() {
+export function ApexAlarmTrend({ trend }: { trend?: ApiAlarmTrend }) {
   const baseChart = useApexBaseChart();
-  const { categories, critical, warning } = batchAlarmTrendDaily;
+  const { mode } = useColorMode();
+  const isDark = mode === "dark";
+  const labelColor = isDark ? "#9fa6ad" : "#5b6b73";
 
   const options: ApexOptions = {
     ...baseChart,
     chart: { ...baseChart.chart, type: "bar", stacked: true },
+    xaxis: { categories: trend?.categories ?? [], labels: { style: { colors: labelColor } } },
+    yaxis: { labels: { style: { colors: labelColor } } },
     colors: ["#dc2626", "#d97706"],
-    xaxis: {
-      ...baseChart.xaxis,
-      categories,
-    },
-    plotOptions: { bar: { borderRadius: 3, columnWidth: "50%" } },
-  };
-
-  const series = [
-    { name: "Critical", data: critical },
-    { name: "Warning", data: warning },
-  ];
-
-  return <ThemedApexChart type="bar" options={options} series={series} height={CHART_HEIGHT} />;
-}
-
-/** 배치 티켓 단계 집계 */
-export function ApexTicketStages() {
-  const baseChart = useApexBaseChart();
-  const { mode } = useColorMode();
-  const { language, translate, serviceRegion } = useLocale();
-  const isDark = mode === "dark";
-  const stages = useMemo(
-    () => batchDashboardForRegion(serviceRegion).ticketStages,
-    [serviceRegion],
-  );
-  const stageColors = ["#94a3b8", "#0284c7", "#5c6670", "#d97706", "#059669"];
-
-  const options: ApexOptions = {
-    ...baseChart,
-    chart: { ...baseChart.chart, type: "bar" },
-    colors: stageColors,
-    xaxis: {
-      ...baseChart.xaxis,
-      categories: stages.map((s) => localizeDomainValue(s.stage, language)),
-    },
-    plotOptions: {
-      bar: {
-        borderRadius: 4,
-        distributed: true,
-        columnWidth: "55%",
-      },
-    },
-    legend: { show: false },
-    dataLabels: {
-      enabled: true,
-      offsetY: -16,
-      style: { fontSize: "11px", colors: [isDark ? "#e5e7eb" : "#434a51"] },
-    },
+    legend: { labels: { colors: labelColor } },
   };
 
   return (
     <ThemedApexChart
       type="bar"
-      options={options}
-      series={[{ name: translate("dashboard.kpi.ticket"), data: stages.map((s) => s.count) }]}
       height={CHART_HEIGHT}
+      options={options}
+      series={[
+        { name: "Critical", data: trend?.critical ?? [] },
+        { name: "Warning", data: trend?.warning ?? [] },
+      ]}
     />
   );
 }
 
-/** 배치 수율 집계 */
-export function ApexYieldGauge() {
+export function ApexTicketStages({ chart }: { chart: DashboardTicketStageChart }) {
+  const baseChart = useApexBaseChart();
   const { mode } = useColorMode();
-  const { translate, serviceRegion } = useLocale();
   const isDark = mode === "dark";
-  const yieldVal = useMemo(
-    () => batchDashboardForRegion(serviceRegion).kpis.avgYield,
-    [serviceRegion],
-  );
+  const labelColor = isDark ? "#9fa6ad" : "#5b6b73";
 
   const options: ApexOptions = {
-    chart: {
-      type: "radialBar",
-      fontFamily: '"Malgun Gothic", "맑은 고딕", sans-serif',
-      background: "transparent",
-    },
+    ...baseChart,
+    chart: { ...baseChart.chart, type: "bar" },
+    xaxis: { categories: chart.stages, labels: { style: { colors: labelColor } } },
+    yaxis: { labels: { style: { colors: labelColor } } },
+    colors: ["#2563eb"],
+  };
+
+  return (
+    <ThemedApexChart
+      type="bar"
+      height={CHART_HEIGHT}
+      options={options}
+      series={[{ name: "Tickets", data: chart.counts }]}
+    />
+  );
+}
+
+export function ApexYieldGauge({ avgYield }: { avgYield: number }) {
+  const baseChart = useApexBaseChart();
+  const { mode } = useColorMode();
+  const isDark = mode === "dark";
+  const labelColor = isDark ? "#9fa6ad" : "#5b6b73";
+
+  const options: ApexOptions = {
+    ...baseChart,
+    chart: { ...baseChart.chart, type: "radialBar" },
     plotOptions: {
       radialBar: {
-        hollow: { size: "65%" },
-        track: { background: isDark ? "rgba(255,255,255,0.1)" : "#eef2f6" },
+        hollow: { size: "62%" },
         dataLabels: {
-          name: { fontSize: "12px", color: isDark ? "#9fa6ad" : "#5b6b73", offsetY: 20 },
-          value: {
-            fontSize: "24px",
-            fontWeight: 700,
-            color: isDark ? "#e5e7eb" : "#434a51",
-            offsetY: -8,
-            formatter: (v) => `${Number(v).toFixed(1)}%`,
-          },
+          name: { color: labelColor },
+          value: { color: isDark ? "#e5e7eb" : "#434a51", fontSize: "22px" },
         },
       },
     },
-    labels: [translate("dashboard.chart.yield")],
-    colors: [yieldVal >= 95 ? "#059669" : yieldVal >= 90 ? "#d97706" : "#dc2626"],
+    labels: ["Yield %"],
+    colors: ["#059669"],
   };
 
-  return <ThemedApexChart type="radialBar" options={options} series={[yieldVal]} height={CHART_HEIGHT} />;
+  return <ThemedApexChart type="radialBar" height={CHART_HEIGHT} options={options} series={[avgYield]} />;
 }

@@ -1,0 +1,19 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": "..",
+  "testRegex": ".*\\.spec\\.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": [
+      "ts-jest",
+      {
+        "tsconfig": {
+          "emitDecoratorMetadata": true,
+          "experimentalDecorators": true
+        }
+      }
+    ]
+  },
+  "testEnvironment": "node",
+  "testPathIgnorePatterns": ["/node_modules/", "/dist/", "/test/"],
+  "setupFilesAfterEnv": ["<rootDir>/test/jest-setup.ts"]
+}

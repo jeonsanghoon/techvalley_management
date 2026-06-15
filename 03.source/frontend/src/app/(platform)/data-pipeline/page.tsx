@@ -12,22 +12,27 @@ import { useFilteredRows } from "@/hooks/useFilteredRows";
 import { bindSearchFields } from "@/lib/grid/bind-search-fields";
 import { combineAnd, matchesDateRange, matchesIndexedFields, matchesSelectFilter } from "@/lib/grid/query-filter";
 import { bindQueryToolbarDate } from "@/lib/grid/query-toolbar-date";
-import { batchCollectionMeta, batchCollectionStats } from "@/lib/data/batch";
-import { realtimeCollectionMeta, realtimeCollectionMetrics, realtimeFleetItems } from "@/lib/data/realtime";
-import { pipelineStatuses } from "@/lib/mock-data";
+import { fallbackMeta, getListItems, useCollectionStats, useEquipment, usePipelineLive, usePipelineTiers, useEnumCodes } from "@/lib/api/hooks";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { TranslationKey } from "@/lib/locale";
 import { localeLabel } from "@/lib/locale/types";
 import { SEARCH_FIELD_LABELS } from "@/lib/locale/search-fields";
-import { localizeDomainValue } from "@/lib/locale/domain-labels";
 import type { CollectionRow } from "@/lib/grid/types";
-
-const STATUSES = ["전체", "online", "alarm", "maintenance", "safe_mode", "offline"];
+import type { PipelineStatus } from "@/lib/types";
 
 const INITIAL_SEARCH = { serialNo: "", customer: "", site: "" };
 
 export default function DataPipelinePage() {
   const { translate, language, formatAsOf } = useLocale();
+  const { data: pipelineLive } = usePipelineLive();
+  const { data: statusCodesData } = useEnumCodes("EQST");
+  const { data: collectionStatsResult } = useCollectionStats();
+  const collectionStats = collectionStatsResult?.data;
+  const batchMeta = collectionStatsResult?.meta ?? fallbackMeta("/pipeline/collection-stats");
+  const { data: equipmentData } = useEquipment();
+  const equipmentRows = getListItems(equipmentData);
+  const realtimeMeta = pipelineLive?.meta ?? fallbackMeta("/pipeline/live", "realtime");
+  const { data: tiersPayload } = usePipelineTiers();
   const query = useQueryState(INITIAL_SEARCH, { status: "전체" });
 
   const searchDefs = useMemo(
@@ -40,37 +45,36 @@ export default function DataPipelinePage() {
   );
 
   const statusFilterOptions = useMemo(
-    () =>
-      STATUSES.map((s) => ({
-        value: s,
-        label: s === "전체" ? translate("common.all" as TranslationKey) : localizeDomainValue(s, language),
-      })),
-    [language, translate],
+    () => [
+      { value: "전체", label: translate("common.all" as TranslationKey) },
+      ...getListItems(statusCodesData).map((c) => ({ value: c.code, label: c.name })),
+    ],
+    [statusCodesData, translate],
   );
 
   const statItems = useMemo(
     () => [
-      { label: translate("dataPipeline.stat.registered" as TranslationKey), value: batchCollectionStats.totalDevices, variant: "info" as const },
-      { label: translate("dataPipeline.stat.online" as TranslationKey), value: batchCollectionStats.onlineDevices, variant: "success" as const },
+      { label: translate("dataPipeline.stat.registered" as TranslationKey), value: collectionStats?.totalDevices ?? 0, variant: "info" as const },
+      { label: translate("dataPipeline.stat.online" as TranslationKey), value: collectionStats?.onlineDevices ?? 0, variant: "success" as const },
       {
         label: translate("dataPipeline.stat.normalized" as TranslationKey),
-        value: batchCollectionStats.normalizedToday.toLocaleString(),
+        value: (pipelineLive?.collections?.periodic_telemetry ?? collectionStats?.normalizedToday ?? 0).toLocaleString(),
         sub: translate("common.countUnit" as TranslationKey),
       },
-      { label: translate("dataPipeline.stat.greengrass" as TranslationKey), value: batchCollectionStats.greengrassComponents, variant: "default" as const },
+      { label: translate("dataPipeline.stat.greengrass" as TranslationKey), value: collectionStats?.greengrassComponents ?? 0, variant: "default" as const },
     ],
-    [translate],
+    [translate, collectionStats, pipelineLive],
   );
 
   const liveCollectionRows: CollectionRow[] = useMemo(
     () =>
-      realtimeFleetItems.map((eq) => ({
+      equipmentRows.map((eq) => ({
         ...eq,
         tubeRx: eq.status !== "offline" ? translate("dataPipeline.rx.active" as TranslationKey) : "—",
         detectorRx: eq.status !== "offline" ? translate("dataPipeline.rx.active" as TranslationKey) : "—",
         bodyRx: eq.status !== "offline" ? translate("dataPipeline.rx.active" as TranslationKey) : "—",
       })),
-    [translate],
+    [translate, equipmentRows],
   );
 
   const collectionFilter = useMemo(
@@ -90,26 +94,44 @@ export default function DataPipelinePage() {
     [query.applied],
   );
 
-  const tierRows = pipelineStatuses;
+  const tierRows = useMemo((): PipelineStatus[] => {
+    if (Array.isArray(tiersPayload)) return tiersPayload as PipelineStatus[];
+    if (tiersPayload && Array.isArray((tiersPayload as { items?: PipelineStatus[] }).items)) {
+      return (tiersPayload as { items: PipelineStatus[] }).items;
+    }
+    return [];
+  }, [tiersPayload]);
 
   const { rowData: equipRows, resultCount: equipCount } = useFilteredRows(liveCollectionRows, collectionFilter);
 
-  const batchAsOf = formatAsOf(batchCollectionMeta.asOf);
-  const realtimeAsOf = formatAsOf(realtimeCollectionMeta.asOf);
+  const batchAsOf = formatAsOf(batchMeta.asOf);
+  const realtimeAsOf = formatAsOf(pipelineLive?.asOf ?? realtimeMeta.asOf);
 
   const realtimeStatItems = useMemo(
     () => [
-      { label: translate("dataPipeline.realtime.messagesPerMin" as TranslationKey), value: realtimeCollectionMetrics.messagesPerMin.toLocaleString(), variant: "info" as const },
-      { label: translate("dataPipeline.realtime.spoolBuffer" as TranslationKey), value: `${realtimeCollectionMetrics.spoolBufferMb} MB`, variant: "warning" as const },
-      { label: translate("dataPipeline.realtime.hotTierLag" as TranslationKey), value: `${realtimeCollectionMetrics.hotTierLagMs} ms`, variant: "success" as const },
+      {
+        label: translate("dataPipeline.realtime.messagesPerMin" as TranslationKey),
+        value: (pipelineLive?.collections?.messages_per_min ?? 0).toLocaleString(),
+        variant: "info" as const,
+      },
+      {
+        label: translate("dataPipeline.realtime.spoolBuffer" as TranslationKey),
+        value: `${pipelineLive?.collections?.spool_buffer_mb ?? 0} MB`,
+        variant: "warning" as const,
+      },
+      {
+        label: translate("dataPipeline.realtime.hotTierLag" as TranslationKey),
+        value: `${pipelineLive?.collections?.hot_tier_lag_ms ?? 0} ms`,
+        variant: "success" as const,
+      },
     ],
-    [translate],
+    [translate, pipelineLive],
   );
 
   return (
     <Box>
       <PageToolbar>
-        <DataScopeBadge meta={batchCollectionMeta} />
+        <DataScopeBadge meta={batchMeta} />
       </PageToolbar>
 
       <StatGrid items={statItems} />
@@ -117,7 +139,7 @@ export default function DataPipelinePage() {
       <SectionCard title={translate("dataPipeline.section.tierConfig" as TranslationKey)} sx={{ mb: 2 }}>
         <Stack spacing={2}>
           <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
-            <DataScopeBadge meta={batchCollectionMeta} />
+            <DataScopeBadge meta={batchMeta} />
             <Typography variant="body2" color="text.secondary">
               {translate("dataPipeline.section.tierConfigDesc" as TranslationKey)
                 .replace("{tierTitle}", translate("dataPipeline.grid.tierTitle" as TranslationKey))
@@ -156,7 +178,7 @@ export default function DataPipelinePage() {
       <SectionCard title={translate("dataPipeline.section.realtime" as TranslationKey)}>
         <Stack spacing={2}>
           <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-            <DataScopeBadge meta={realtimeCollectionMeta} />
+            <DataScopeBadge meta={realtimeMeta} />
             <Typography variant="body2" color="text.secondary">
               {translate("dataPipeline.realtime.note" as TranslationKey)}
             </Typography>

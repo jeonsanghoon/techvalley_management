@@ -10,7 +10,7 @@ import { useFilteredRows } from "@/hooks/useFilteredRows";
 import { bindSearchFields } from "@/lib/grid/bind-search-fields";
 import { combineAnd, fieldStr, matchesBoolSelectFilter, matchesDateRange, matchesIndexedFields } from "@/lib/grid/query-filter";
 import { bindQueryToolbarDate } from "@/lib/grid/query-toolbar-date";
-import { asRecords } from "@/lib/mock-data";
+import { getListItems, useAsRecords } from "@/lib/api/hooks";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { TranslationKey } from "@/lib/locale";
 import { localeLabel } from "@/lib/locale/types";
@@ -21,6 +21,8 @@ const INITIAL_SEARCH = { ticketId: "", equipmentSn: "", customer: "", workSummar
 
 export default function AsPage() {
   const { translate, language } = useLocale();
+  const { data: asData } = useAsRecords();
+  const asRows = getListItems(asData);
   const query = useQueryState(INITIAL_SEARCH, { recurrence: "전체" });
 
   const searchDefs = useMemo(
@@ -61,7 +63,7 @@ export default function AsPage() {
     [query.applied],
   );
 
-  const { rowData, resultCount } = useFilteredRows(asRecords, filterFn);
+  const { rowData, resultCount } = useFilteredRows(asRows, filterFn);
   const avg = rowData.reduce((s, r) => s + (r.satisfaction ?? 0), 0) / (rowData.length || 1);
 
   const statItems = useMemo(

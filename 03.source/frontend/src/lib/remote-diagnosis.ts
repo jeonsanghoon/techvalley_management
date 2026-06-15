@@ -1,4 +1,5 @@
 import type { AlarmSeverity } from "./types";
+import { api } from "./api/endpoints";
 
 export type RemoteDiagnosisComponent = "detector" | "motor" | "tube" | "body";
 export type RemoteDiagnosisStatus = "open" | "in_progress" | "resolved";
@@ -17,139 +18,55 @@ export interface RemoteDiagnosisFinding {
   metrics?: Record<string, string | number>;
 }
 
-/** 원격 진단 결과 — Hot Tier / edge 진단 Job 스냅샷 */
-export const remoteDiagnosisFindings: RemoteDiagnosisFinding[] = [
-  {
-    id: "rd-000",
-    equipmentSn: "HK-2024-00158",
-    component: "motor",
-    severity: "warning",
-    messageKey: "remoteDiagnosis.finding.motorCoord.message",
-    actionKey: "remoteDiagnosis.finding.motorCoord.action",
-    detectedAt: "2026-06-06T14:14:00+09:00",
-    status: "open",
-    metrics: { offsetX: 20, offsetY: -30, offsetZ: 40, unit: "deg" },
-  },
-  {
-    id: "rd-001",
-    equipmentSn: "RP-2023-00892",
-    component: "detector",
-    severity: "critical",
-    messageKey: "remoteDiagnosis.finding.deadPixel.message",
-    actionKey: "remoteDiagnosis.finding.deadPixel.action",
-    detectedAt: "2026-06-06T14:12:00+09:00",
-    status: "open",
-    metrics: { deadPixelCount: 847, threshold: 120 },
-  },
-  {
-    id: "rd-002",
-    equipmentSn: "RP-2023-00892",
-    component: "motor",
-    severity: "warning",
-    messageKey: "remoteDiagnosis.finding.motorCoord.message",
-    actionKey: "remoteDiagnosis.finding.motorCoord.action",
-    detectedAt: "2026-06-06T14:10:00+09:00",
-    status: "open",
-    metrics: { offsetX: 20, offsetY: -30, offsetZ: 40, unit: "deg" },
-  },
-  {
-    id: "rd-003",
-    equipmentSn: "HK-2024-00158",
-    component: "tube",
-    severity: "warning",
-    messageKey: "remoteDiagnosis.finding.tubeDrift.message",
-    actionKey: "remoteDiagnosis.finding.tubeDrift.action",
-    detectedAt: "2026-06-06T13:45:00+09:00",
-    status: "in_progress",
-    metrics: { kvDrift: 4.2 },
-  },
-  {
-    id: "rd-004",
-    equipmentSn: "RP-2023-EU0892",
-    component: "detector",
-    severity: "warning",
-    messageKey: "remoteDiagnosis.finding.deadPixel.message",
-    actionKey: "remoteDiagnosis.finding.deadPixel.action",
-    detectedAt: "2026-06-06T07:05:00+02:00",
-    status: "open",
-    metrics: { deadPixelCount: 312, threshold: 120 },
-  },
-  {
-    id: "rd-005",
-    equipmentSn: "RP-2023-MX0892",
-    component: "motor",
-    severity: "warning",
-    messageKey: "remoteDiagnosis.finding.motorCoord.message",
-    actionKey: "remoteDiagnosis.finding.motorCoord.action",
-    detectedAt: "2026-06-05T21:40:00-06:00",
-    status: "open",
-    metrics: { offsetX: 1.9, offsetY: 2.7, offsetZ: -2.2, unit: "deg" },
-  },
-];
-
-const STANDARD_CHECK_COMPONENTS: RemoteDiagnosisComponent[] = ["motor", "detector", "tube"];
-
-function healthyBaselineFinding(
-  equipmentSn: string,
-  component: RemoteDiagnosisComponent,
-): RemoteDiagnosisFinding {
-  const base = {
-    equipmentSn,
-    component,
-    severity: "warning" as AlarmSeverity,
-    detectedAt: new Date().toISOString(),
-    status: "open" as RemoteDiagnosisStatus,
-  };
-
-  switch (component) {
-    case "detector":
-      return {
-        ...base,
-        id: `rd-health-${equipmentSn}-detector`,
-        messageKey: "remoteDiagnosis.finding.deadPixel.message",
-        actionKey: "remoteDiagnosis.finding.deadPixel.action",
-        metrics: { deadPixelCount: 42, threshold: 120 },
-      };
-    case "motor":
-      return {
-        ...base,
-        id: `rd-health-${equipmentSn}-motor`,
-        messageKey: "remoteDiagnosis.finding.motorCoord.message",
-        actionKey: "remoteDiagnosis.finding.motorCoord.action",
-        metrics: { offsetX: 0.3, offsetY: -0.2, offsetZ: 0.4, unit: "deg" },
-      };
-    case "tube":
-      return {
-        ...base,
-        id: `rd-health-${equipmentSn}-tube`,
-        messageKey: "remoteDiagnosis.finding.tubeDrift.message",
-        actionKey: "remoteDiagnosis.finding.tubeDrift.action",
-        metrics: { kvDrift: 0.8 },
-      };
-    default:
-      return {
-        ...base,
-        id: `rd-health-${equipmentSn}-body`,
-        messageKey: "remoteDiagnosis.finding.generic.detail",
-        actionKey: "remoteDiagnosis.finding.generic.summary",
-        metrics: {},
-      };
-  }
-}
-
-/** 장비별 진단 항목 — 등록된 이슈가 없으면 표준 3종(디텍터·모터·튜브) 건강 점검 */
-export function getFindingsForEquipment(equipmentSn: string): RemoteDiagnosisFinding[] {
-  const known = remoteDiagnosisFindings.filter((f) => f.equipmentSn === equipmentSn);
-  if (known.length > 0) return known;
-  return STANDARD_CHECK_COMPONENTS.map((component) => healthyBaselineFinding(equipmentSn, component));
-}
-
-export const remoteDiagnosisMeta = {
-  scope: "realtime" as const,
-  asOf: "2026-06-06T14:15:00+09:00",
-  source: "edge.diagnosis.job",
-  refreshInterval: "15분 (edge-diagnosis-rollup)",
+export type ApiRemoteFinding = {
+  id: string;
+  equipmentSn: string;
+  code: string;
+  severity: string;
+  title: string;
+  detail: string;
+  suggestedAction?: string;
+  detectedAt: string;
 };
+
+function inferComponent(code: string): RemoteDiagnosisComponent {
+  const c = code.toUpperCase();
+  if (c.includes("DET") || c.includes("TEMP")) return "detector";
+  if (c.includes("TUBE") || c.includes("KV")) return "tube";
+  if (c.includes("MOTOR")) return "motor";
+  return "body";
+}
+
+export function mapApiRemoteFinding(row: ApiRemoteFinding): RemoteDiagnosisFinding {
+  let metrics: Record<string, string | number> = {};
+  try {
+    if (row.detail?.startsWith("{")) {
+      metrics = JSON.parse(row.detail) as Record<string, string | number>;
+    }
+  } catch {
+    metrics = {};
+  }
+
+  return {
+    id: row.id,
+    equipmentSn: row.equipmentSn,
+    component: inferComponent(row.code),
+    severity: row.severity === "critical" ? "critical" : "warning",
+    messageKey: "remoteDiagnosis.finding.generic.message",
+    actionKey: "remoteDiagnosis.finding.generic.action",
+    detectedAt: row.detectedAt,
+    status: "open",
+    metrics,
+  };
+}
+
+/** 장비별 진단 항목 — API(DB) findings 만 사용 */
+export function getFindingsForEquipment(
+  equipmentSn: string,
+  apiRows: ApiRemoteFinding[] = [],
+): RemoteDiagnosisFinding[] {
+  return apiRows.filter((f) => f.equipmentSn === equipmentSn).map(mapApiRemoteFinding);
+}
 
 /** 실시간 원격 진단 Job 응답 */
 export type DiagnosisRunResult = {
@@ -163,92 +80,6 @@ export type DiagnosisRunResult = {
   status: RemoteDiagnosisStatus;
   completedAt: string;
 };
-
-const DIAGNOSIS_JOB_MS = 1400;
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => window.setTimeout(resolve, ms));
-}
-
-function jitter(n: number, pct = 0.08): number {
-  const delta = n * pct * (Math.random() * 2 - 1);
-  return Math.round((n + delta) * 10) / 10;
-}
-
-function evaluateSeverity(
-  component: RemoteDiagnosisComponent,
-  metrics: Record<string, string | number>,
-): AlarmSeverity {
-  if (component === "detector") {
-    const count = Number(metrics.deadPixelCount ?? 0);
-    const threshold = Number(metrics.threshold ?? 120);
-    if (count > threshold * 5) return "critical";
-    return "warning";
-  }
-  if (component === "motor") {
-    const max = Math.max(
-      Math.abs(Number(metrics.offsetX ?? 0)),
-      Math.abs(Number(metrics.offsetY ?? 0)),
-      Math.abs(Number(metrics.offsetZ ?? 0)),
-    );
-    if (max >= 3) return "critical";
-    return "warning";
-  }
-  if (component === "tube") {
-    const drift = Math.abs(Number(metrics.kvDrift ?? 0));
-    if (drift >= 5) return "critical";
-    return "warning";
-  }
-  return "warning";
-}
-
-function isWithinNormalRange(component: RemoteDiagnosisComponent, metrics: Record<string, string | number>): boolean {
-  if (component === "detector") {
-    return Number(metrics.deadPixelCount ?? 0) <= Number(metrics.threshold ?? 120);
-  }
-  if (component === "motor") {
-    const max = Math.max(
-      Math.abs(Number(metrics.offsetX ?? 0)),
-      Math.abs(Number(metrics.offsetY ?? 0)),
-      Math.abs(Number(metrics.offsetZ ?? 0)),
-    );
-    return max < 1.5;
-  }
-  if (component === "tube") {
-    return Math.abs(Number(metrics.kvDrift ?? 0)) < 2.5;
-  }
-  return false;
-}
-
-function buildLiveMetrics(finding: RemoteDiagnosisFinding): Record<string, string | number> {
-  const base = { ...(finding.metrics ?? {}) };
-  if (finding.component === "detector") {
-    return {
-      deadPixelCount: Math.round(jitter(Number(base.deadPixelCount ?? 400), 0.05)),
-      threshold: base.threshold ?? 120,
-      scanLines: Math.round(jitter(2048, 0.001)),
-      badPixelRate: `${jitter(Number(base.deadPixelCount ?? 400) / 20480, 0.06).toFixed(2)}%`,
-    };
-  }
-  if (finding.component === "motor") {
-    return {
-      offsetX: Number(base.offsetX ?? 0),
-      offsetY: Number(base.offsetY ?? 0),
-      offsetZ: Number(base.offsetZ ?? 0),
-      unit: base.unit ?? "deg",
-      homingOk: "Y",
-    };
-  }
-  if (finding.component === "tube") {
-    return {
-      kvDrift: jitter(Number(base.kvDrift ?? 0), 0.1),
-      kvTarget: 160,
-      kvMeasured: jitter(160 + Number(base.kvDrift ?? 0), 0.02),
-      maMeasured: jitter(3.5, 0.05),
-    };
-  }
-  return base;
-}
 
 export type DiagnosisDisplayText = {
   summary: string;
@@ -350,24 +181,18 @@ export function formatDiagnosisDisplay(
   }
 }
 
-/** Edge 진단 Job — 프로토타입: MQTT/Job 응답을 시뮬레이션 */
+/** Edge 진단 Job — POST /api/remote/diagnostics/:id/run */
 export async function runRemoteDiagnosisJob(finding: RemoteDiagnosisFinding): Promise<DiagnosisRunResult> {
-  await delay(DIAGNOSIS_JOB_MS);
-  const metrics = buildLiveMetrics(finding);
-  const severity = evaluateSeverity(finding.component, metrics);
+  const { data } = await api.runRemoteDiagnosis(finding.id);
   return {
-    findingId: finding.id,
-    equipmentSn: finding.equipmentSn,
-    component: finding.component,
-    severity,
-    messageKey: finding.messageKey,
-    actionKey: finding.actionKey,
-    metrics,
-    status: isWithinNormalRange(finding.component, metrics)
-      ? "resolved"
-      : finding.status === "resolved"
-        ? "resolved"
-        : "in_progress",
-    completedAt: new Date().toISOString(),
+    findingId: data.findingId,
+    equipmentSn: data.equipmentSn,
+    component: data.component as RemoteDiagnosisComponent,
+    severity: data.severity === "critical" ? "critical" : "warning",
+    messageKey: data.messageKey,
+    actionKey: data.actionKey,
+    metrics: data.metrics,
+    status: data.status as RemoteDiagnosisStatus,
+    completedAt: data.completedAt,
   };
 }

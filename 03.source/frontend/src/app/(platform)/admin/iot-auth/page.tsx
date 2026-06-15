@@ -12,20 +12,22 @@ import { bindSearchFields } from "@/lib/grid/bind-search-fields";
 import { combineAnd, matchesDateRange, matchesIndexedFields, matchesSelectFilter } from "@/lib/grid/query-filter";
 import { bindQueryToolbarDate } from "@/lib/grid/query-toolbar-date";
 import { DataScopeBadge } from "@/components/ui/DataScopeBadge";
-import { batchIotThings, batchOperationalMeta } from "@/lib/data/batch";
+import { fallbackMeta, getListItems, useAuthConfig, useIotThings, useEnumCodes } from "@/lib/api/hooks";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { TranslationKey } from "@/lib/locale";
 import { localeLabel } from "@/lib/locale/types";
 import { SEARCH_FIELD_LABELS } from "@/lib/locale/search-fields";
-import { localizeDomainValue } from "@/lib/locale/domain-labels";
 import type { IotThingAuth } from "@/lib/types";
-
-const STATUSES = ["전체", "connected", "disconnected", "pending"];
 
 const INITIAL_SEARCH = { sn: "", thing: "", cert: "", policy: "" };
 
 export default function AdminIotAuthPage() {
   const { translate, language } = useLocale();
+  const { data: iotData } = useIotThings();
+  const { data: statusCodesData } = useEnumCodes("IOTC");
+  const iotRows = getListItems(iotData);
+  const dataMeta = iotData?.meta ?? fallbackMeta("/iot/things");
+  const { data: authConfig } = useAuthConfig();
   const query = useQueryState(INITIAL_SEARCH, { status: "전체" });
 
   const searchDefs = useMemo(
@@ -39,22 +41,37 @@ export default function AdminIotAuthPage() {
   );
 
   const statusFilterOptions = useMemo(
-    () =>
-      STATUSES.map((s) => ({
-        value: s,
-        label: s === "전체" ? translate("common.all" as TranslationKey) : localizeDomainValue(s, language),
-      })),
-    [language, translate],
+    () => [
+      { value: "전체", label: translate("common.all" as TranslationKey) },
+      ...getListItems(statusCodesData).map((c) => ({ value: c.code, label: c.name })),
+    ],
+    [statusCodesData, translate],
   );
 
   const authConfigItems = useMemo(
     () => [
+      {
+        label: translate("adminIotAuth.config.provider" as TranslationKey),
+        value: authConfig?.provider === "aws" ? "AWS Cognito" : "Local JWT",
+      },
+      ...(authConfig?.cognito?.enabled
+        ? [
+            {
+              label: "Cognito User Pool",
+              value: authConfig.cognito.userPoolId,
+            },
+            {
+              label: "Cognito Client",
+              value: authConfig.cognito.clientId,
+            },
+          ]
+        : []),
       { label: translate("adminIotAuth.config.provisioning" as TranslationKey), value: "JITP (Just-In-Time Provisioning)" },
       { label: translate("adminIotAuth.config.transport" as TranslationKey), value: "MQTT over TLS 1.3" },
       { label: translate("adminIotAuth.config.credentials" as TranslationKey), value: "Secrets Manager · KMS CMK" },
       { label: translate("adminIotAuth.config.policyTemplate" as TranslationKey), value: "tv-critical-policy / tv-standard-policy" },
     ],
-    [translate],
+    [translate, authConfig],
   );
 
   const filterFn = useMemo(
@@ -75,12 +92,12 @@ export default function AdminIotAuthPage() {
     [query.applied],
   );
 
-  const { rowData, resultCount } = useFilteredRows(batchIotThings, filterFn);
+  const { rowData, resultCount } = useFilteredRows(iotRows, filterFn);
 
   return (
     <Box>
       <PageToolbar>
-        <DataScopeBadge meta={batchOperationalMeta} />
+        <DataScopeBadge meta={dataMeta} />
       </PageToolbar>
 
       <QueryToolbar

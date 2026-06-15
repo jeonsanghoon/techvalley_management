@@ -1,15 +1,16 @@
 import type { CSSProperties } from "react";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { TranslationKey } from "@/lib/locale";
+import type { Alarm, ServiceTicket } from "@/lib/types";
 import type { FleetMapEquipment } from "@/lib/fleet-map-types";
-import {
-  getFleetMapOperationalContext,
-} from "@/lib/fleet-map-context";
+import { getFleetMapOperationalContext } from "@/lib/fleet-map-context";
 
 type FleetMapMarkerInfoProps = {
   equipment: FleetMapEquipment;
   statusLabel: string;
   statusColor: string;
+  mapAlarms?: Alarm[];
+  mapTickets?: ServiceTicket[];
 };
 
 const STATUS_HINT_KEYS: Record<string, TranslationKey> = {
@@ -31,13 +32,25 @@ function formatCoord(value: number, positiveSuffix: string, negativeSuffix: stri
 }
 
 /** 지도 마커 팝업 본문 — MUI 미사용 */
-export function FleetMapMarkerInfo({ equipment, statusLabel, statusColor }: FleetMapMarkerInfoProps) {
+export function FleetMapMarkerInfo({
+  equipment,
+  statusLabel,
+  statusColor,
+  mapAlarms = [],
+  mapTickets = [],
+}: FleetMapMarkerInfoProps) {
   const { translate, formatDateTime } = useLocale();
   const hintKey = STATUS_HINT_KEYS[equipment.status] ?? "map.hint.default";
   const hint = translate(hintKey);
   const latLabel = formatCoord(equipment.lat, "N", "S");
   const lngLabel = formatCoord(equipment.lng, "E", "W");
-  const { alarm, ticket } = getFleetMapOperationalContext(equipment.serialNo);
+  const openTickets = mapTickets.filter((t) => t.stage !== "완료");
+  const { alarm, ticket } = getFleetMapOperationalContext(
+    equipment.serialNo,
+    mapAlarms,
+    openTickets,
+    mapTickets,
+  );
 
   return (
     <div className="tv-fleet-map-info" style={{ "--status-color": statusColor } as CSSProperties}>

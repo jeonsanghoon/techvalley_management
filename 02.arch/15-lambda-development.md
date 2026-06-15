@@ -198,11 +198,11 @@ npm run terraform:plan       # plan only
 ```bash
 npm run local:up    # repo 루트 — Podman + bootstrap
 # 또는
-podman compose -f 02.arch/config/local/docker-compose.yml up -d
-set -a && source 02.arch/config/local/env.local.example && set +a
-./02.arch/config/local/bootstrap-postgres.sh
-./02.arch/config/local/bootstrap-documentdb.sh
-./02.arch/config/local/minio-init.sh
+podman compose -f 10.local/docker-compose.yml up -d
+set -a && source 10.local/env.local.example && set +a
+./10.local/bootstrap-postgres.sh
+./10.local/bootstrap-documentdb.sh
+./10.local/minio-init.sh
 ```
 
 | 컨테이너 | 포트 | 대체 AWS |

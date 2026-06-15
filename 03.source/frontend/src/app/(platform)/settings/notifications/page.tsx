@@ -10,19 +10,20 @@ import { useQueryState } from "@/hooks/useQueryState";
 import { useFilteredRows } from "@/hooks/useFilteredRows";
 import { bindSearchFields } from "@/lib/grid/bind-search-fields";
 import { combineAnd, matchesBoolSelectFilter, matchesIndexedFields, matchesSelectFilter } from "@/lib/grid/query-filter";
-import { notificationChannels } from "@/lib/mock-data";
+import { getListItems, useNotificationChannels, useEnumCodes } from "@/lib/api/hooks";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { TranslationKey } from "@/lib/locale";
 import { localeLabel } from "@/lib/locale/types";
 import { SEARCH_FIELD_LABELS } from "@/lib/locale/search-fields";
 import type { NotificationChannel } from "@/lib/types";
 
-const TYPES = ["SNS", "SES", "Dashboard", "Webhook"];
-
 const INITIAL_SEARCH = { name: "", target: "", recipients: "", description: "" };
 
 export default function SettingsNotificationsPage() {
   const { translate, language } = useLocale();
+  const { data: channelData } = useNotificationChannels();
+  const { data: typeCodesData } = useEnumCodes("NTTY");
+  const channelRows = getListItems(channelData);
   const query = useQueryState(INITIAL_SEARCH, { type: "전체", enabled: "전체" });
 
   const searchDefs = useMemo(
@@ -36,8 +37,11 @@ export default function SettingsNotificationsPage() {
   );
 
   const typeFilterOptions = useMemo(
-    () => TYPES.map((t) => ({ value: t, label: t })),
-    [],
+    () => [
+      { value: "전체", label: translate("common.all" as TranslationKey) },
+      ...getListItems(typeCodesData).map((c) => ({ value: c.code, label: c.name })),
+    ],
+    [typeCodesData, translate],
   );
 
   const enabledFilterOptions = useMemo(
@@ -63,7 +67,7 @@ export default function SettingsNotificationsPage() {
     [query.applied],
   );
 
-  const { rowData, resultCount } = useFilteredRows(notificationChannels, filterFn);
+  const { rowData, resultCount } = useFilteredRows(channelRows, filterFn);
 
   return (
     <Box>

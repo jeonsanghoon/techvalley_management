@@ -12,20 +12,21 @@ import { bindSearchFields } from "@/lib/grid/bind-search-fields";
 import { createKeysetFetcher, countFilteredRows } from "@/lib/grid/keyset-fetch";
 import { combineAnd, matchesDateRange, matchesIndexedFields, matchesSelectFilter } from "@/lib/grid/query-filter";
 import { bindQueryToolbarDate } from "@/lib/grid/query-toolbar-date";
-import { batchOperationalMeta, batchServiceTickets } from "@/lib/data/batch";
+import { fallbackMeta, getListItems, useServiceTickets, useEnumCodes } from "@/lib/api/hooks";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { TranslationKey } from "@/lib/locale";
 import { localeLabel } from "@/lib/locale/types";
 import { SEARCH_FIELD_LABELS } from "@/lib/locale/search-fields";
-import { localizeDomainValue } from "@/lib/locale/domain-labels";
 import type { ServiceTicket } from "@/lib/types";
-
-const STAGES = ["전체", "접수", "배정", "출동", "작업", "완료"];
 
 const INITIAL_SEARCH = { id: "", equipmentSn: "", customer: "", symptom: "" };
 
 export default function ServiceTicketsPage() {
   const { translate, language, formatAsOf } = useLocale();
+  const { data: ticketData } = useServiceTickets();
+  const { data: stageCodesData } = useEnumCodes("TKST");
+  const ticketRows = getListItems(ticketData);
+  const dataMeta = ticketData?.meta ?? fallbackMeta("/service/tickets");
   const query = useQueryState(INITIAL_SEARCH, { stage: "전체" });
 
   const searchDefs = useMemo(
@@ -39,22 +40,21 @@ export default function ServiceTicketsPage() {
   );
 
   const stageFilterOptions = useMemo(
-    () =>
-      STAGES.map((s) => ({
-        value: s,
-        label: s === "전체" ? translate("common.all" as TranslationKey) : localizeDomainValue(s, language),
-      })),
-    [language, translate],
+    () => [
+      { value: "전체", label: translate("common.all" as TranslationKey) },
+      ...getListItems(stageCodesData).map((c) => ({ value: c.code, label: c.name })),
+    ],
+    [stageCodesData, translate],
   );
 
   const statItems = useMemo(() => {
-    const open = batchServiceTickets.filter((t) => t.stage !== "완료");
-    const slaRisk = batchServiceTickets.filter((t) => t.slaBreached || t.severity === "critical");
+    const open = ticketRows.filter((t) => t.stage !== "closed" && t.stage !== "완료");
+    const slaRisk = ticketRows.filter((t) => t.slaBreached || t.severity === "critical");
     return [
       { label: translate("serviceTickets.stat.open" as TranslationKey), value: open.length, variant: "warning" as const },
       {
         label: "Critical",
-        value: batchServiceTickets.filter((t) => t.severity === "critical").length,
+        value: ticketRows.filter((t) => t.severity === "critical").length,
         variant: "danger" as const,
       },
       {
@@ -65,11 +65,11 @@ export default function ServiceTicketsPage() {
       },
       {
         label: translate("serviceTickets.stat.done" as TranslationKey),
-        value: batchServiceTickets.filter((t) => t.stage === "완료").length,
+        value: ticketRows.filter((t) => t.stage === "closed" || t.stage === "완료").length,
         variant: "success" as const,
       },
     ];
-  }, [translate]);
+  }, [translate, ticketRows]);
 
   const filterFn = useMemo(() => {
     const { from, to } = query.applied.dateRange;
@@ -87,16 +87,16 @@ export default function ServiceTicketsPage() {
   }, [query.applied]);
 
   const fetchRows = useMemo(
-    () => createKeysetFetcher(batchServiceTickets, { idField: "id", filterFn }),
-    [filterFn],
+    () => createKeysetFetcher(ticketRows, { idField: "id", filterFn }),
+    [filterFn, ticketRows],
   );
 
-  const batchAsOf = formatAsOf(batchOperationalMeta.asOf);
+  const batchAsOf = formatAsOf(dataMeta.asOf);
 
   return (
     <Box>
       <PageToolbar>
-        <DataScopeBadge meta={batchOperationalMeta} />
+        <DataScopeBadge meta={dataMeta} />
         <PrimaryButton href="/service-progress" variant="outlined" menuId="service-progress" perm="view">
           {translate("serviceTickets.toolbar.progress" as TranslationKey)}
         </PrimaryButton>
@@ -119,7 +119,7 @@ export default function ServiceTicketsPage() {
         ]}
         onSearch={query.apply}
         onReset={query.reset}
-        resultCount={countFilteredRows(batchServiceTickets, filterFn)}
+        resultCount={countFilteredRows(ticketRows, filterFn)}
       />
 
       <AgDataGrid

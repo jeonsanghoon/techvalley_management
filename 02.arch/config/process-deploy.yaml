@@ -1,14 +1,16 @@
-# 테크밸리 로컬 E2E — SSOT: 02.arch/config/local/
+# 테크밸리 로컬 E2E — SSOT: 90.infra/10.local/
 version: 1
 
 local:
+  ssot_dir: 90.infra/10.local
+  stack_ref: 90.infra/10.local/local-stack.yaml
   mongo_uri_env: TV_MONGO_URI
   postgres_uri_env: TV_POSTGRES_URI
-  default_mongo_fallback: mongodb://tv:tv_local_dev@127.0.0.1:27000/iot_service?authSource=admin
-  default_postgres: postgresql://tv:tv_local_dev@127.0.0.1:25432/iot_analytics
+  default_mongo_fallback: mongodb://tv:tv_local_dev@127.0.0.1:37017/iot_service?authSource=admin
+  default_postgres: postgresql://tv:tv_local_dev@127.0.0.1:35432/iot_analytics
   minio:
-    endpoint: http://127.0.0.1:19010
-    console: http://127.0.0.1:19011
+    endpoint: http://127.0.0.1:39100
+    console: http://127.0.0.1:39101
     access_key: tv
     secret_key: tv_local_dev
     bucket: tv-local-media
@@ -20,7 +22,7 @@ scenarios:
     description: Podman → bootstrap → manifest → rules → predeploy → Lambda invoke ×3
     steps:
       - id: podman_up
-        run: ./02.arch/config/local/local-up.sh
+        run: ./90.infra/10.local/local-up.sh
       - id: compose_manifest
         run: npm run compose:manifest
         cwd: 03.source/lambda
@@ -28,7 +30,7 @@ scenarios:
         run: npm run rules:build
         cwd: 03.source/lambda
       - id: lambda_test_all
-        run: ./02.arch/config/local/local-test-all.sh
+        run: ./90.infra/10.local/local-test-all.sh
 
 processes:
   ingress_pipeline:

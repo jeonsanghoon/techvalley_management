@@ -24,7 +24,7 @@
 | 이벤트·알람·OTA·제어 | [config/samples/](./config/samples/) `*_event*.json` |
 | AI·자가복구 샘플 | [config/samples/anomaly_event.sample.json](./config/samples/anomaly_event.sample.json) |
 | rules 빌드 | [config/scripts/build-rules.mjs](./config/scripts/build-rules.mjs) |
-| 로컬 Podman | [config/local/docker-compose.yml](./config/local/docker-compose.yml) |
+| 로컬 Podman | [10.local/docker-compose.yml](../../10.local/docker-compose.yml) |
 | Terraform tfvars | [config/terraform/environments/dev.auto.tfvars.json](./config/terraform/environments/dev.auto.tfvars.json) |
 | **PostgreSQL DDL** | [config/schema/postgres/](./config/schema/postgres/) |
 | **DocumentDB 계약** | [config/manifest/processes/03-documentdb.yaml](./config/manifest/processes/03-documentdb.yaml) |
@@ -127,7 +127,7 @@ normalize-config + manifest documentdb + 02-batch-cadence — **세트로 배포
 - [x] Lambda apps (9개 skeleton + file-upload-orchestrator)
 - [x] Terraform modules (ingress / batch / ml / lambda_function)
 - [x] predeploy 스크립트 (compose · rules · assets · tfvars · validate)
-- [x] 로컬 bootstrap (`config/local/bootstrap-*.sh`)
+- [x] 로컬 bootstrap (`10.local/bootstrap-*.sh`)
 - [x] DB DDL·DocumentDB 인덱스 SSOT (`config/schema/`, `03-documentdb.yaml`)
 
 ## 11.12 관련 문서
@@ -137,4 +137,4 @@ normalize-config + manifest documentdb + 02-batch-cadence — **세트로 배포
 - [14-backend-frontend-design.md](./14-backend-frontend-design.md)
 - [15-lambda-development.md](./15-lambda-development.md)
 - [16-local-e2e-testing.md](./16-local-e2e-testing.md)
-- [config/local/README.md](./config/local/README.md)
+- [10.local/README.md](../../10.local/README.md)

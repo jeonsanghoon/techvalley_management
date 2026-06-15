@@ -23,8 +23,9 @@
 ├── rules/                     (13 JSON — rules:build)
 ├── samples/
 ├── scripts/build-rules.mjs
-├── local/docker-compose.yml
 └── terraform/environments/dev.auto.tfvars.json
+
+로컬 Podman·Compose: **[../../10.local/](../../10.local/)** (config/local 아님)
 ```
 
 ## 명령

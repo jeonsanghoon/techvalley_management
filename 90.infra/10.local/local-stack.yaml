@@ -1,0 +1,66 @@
+# 테크밸리 로컬 인프라 SSOT — 10.local/
+# AWS Hot/Warm/S3를 Podman으로 대체. 배포 대응: 90.infra/config/infrastructure.yaml
+version: 1
+
+ssot_dir: 90.infra/10.local
+
+ports:
+  # lib/ports.sh 와 동일 — mobi(25432), fota 등과 충돌 방지
+  publish_host: 127.0.0.1
+  postgres: 35432
+  mongo: 37017
+  minio_api: 39100
+  minio_console: 39101
+
+credentials:
+  user: tv
+  password: tv_local_dev
+
+services:
+  postgres:
+    container_name: tv-postgres
+    image: postgres:16
+    aws_equivalent: Aurora PostgreSQL (Warm tier)
+    database: iot_analytics
+    uri_env: TV_POSTGRES_URI
+    bootstrap: bootstrap-postgres.sh
+    schema_dir: 90.infra/config/schema/postgres
+
+  documentdb:
+    container_name: tv-mongo
+    image: mongo:7
+    aws_equivalent: Amazon DocumentDB (Hot tier)
+    database: iot_service
+    uri_env: TV_MONGO_URI
+    bootstrap: bootstrap-documentdb.mjs
+    manifest: 90.infra/config/manifest/processes/03-documentdb.yaml
+
+  minio:
+    container_name: tv-minio
+    image: minio/minio
+    aws_equivalent: S3
+    buckets:
+      - tv-analytics-raw
+      - tv-media-upload
+    bootstrap: minio-init.sh
+
+compose:
+  file: docker-compose.yml
+  engine: podman   # docker compose 동일 파일 사용 가능
+
+scripts:
+  up: local-up.sh
+  down: local-down.sh
+  status: local-status.sh
+  verify: local-verify.sh
+  test_lambda: local-test-all.sh
+  e2e_full: local-e2e-full.sh
+
+env:
+  example: env.local.example
+  local: env.local
+
+npm:
+  local_up: npm run local:up
+  local_verify: npm run local:verify
+  local_down: npm run local:down

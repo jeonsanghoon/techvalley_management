@@ -79,7 +79,7 @@
 
 ## 4.5 로컬·E2E (계획)
 
-**`90.infra/local/`** Podman compose — [02.arch/config/local/docker-compose.yml](./config/local/docker-compose.yml)
+**`10.local/`** Podman compose — [10.local/docker-compose.yml](../10.local/docker-compose.yml)
 
 | 서비스 | 포트 | 용도 |
 |--------|------|------|

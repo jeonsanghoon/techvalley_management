@@ -12,17 +12,19 @@ import { bindSearchFields } from "@/lib/grid/bind-search-fields";
 import { combineAnd, matchesDateRange, matchesIndexedFields, matchesSelectFilter } from "@/lib/grid/query-filter";
 import { bindQueryToolbarDate } from "@/lib/grid/query-toolbar-date";
 import { DataScopeBadge } from "@/components/ui/DataScopeBadge";
-import { batchOperationalMeta, batchReports } from "@/lib/data/batch";
+import { fallbackMeta, getListItems, useReports, useEnumCodes } from "@/lib/api/hooks";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { TranslationKey } from "@/lib/locale";
 import type { ReportSummary } from "@/lib/types";
-
-const CATEGORIES = ["전체", "운영", "알람", "AS", "검사"];
 
 const INITIAL_SEARCH = { name: "", category: "", id: "" };
 
 export default function ReportsPage() {
   const { translate } = useLocale();
+  const { data: reportData } = useReports();
+  const { data: categoryCodesData } = useEnumCodes("RPCT");
+  const reportRows = getListItems(reportData);
+  const dataMeta = reportData?.meta ?? fallbackMeta("/reports");
   const query = useQueryState(INITIAL_SEARCH, { category: "전체" });
 
   const searchDefs = useMemo(
@@ -35,12 +37,11 @@ export default function ReportsPage() {
   );
 
   const categoryFilterOptions = useMemo(
-    () =>
-      CATEGORIES.map((c) => ({
-        value: c,
-        label: c === "전체" ? translate("common.all" as TranslationKey) : translate(`reports.category.${c}` as TranslationKey),
-      })),
-    [translate],
+    () => [
+      { value: "전체", label: translate("common.all" as TranslationKey) },
+      ...getListItems(categoryCodesData).map((c) => ({ value: c.code, label: c.name })),
+    ],
+    [categoryCodesData, translate],
   );
 
   const filterFn = useMemo(
@@ -60,12 +61,12 @@ export default function ReportsPage() {
     [query.applied],
   );
 
-  const { rowData, resultCount } = useFilteredRows(batchReports, filterFn);
+  const { rowData, resultCount } = useFilteredRows(reportRows, filterFn);
 
   return (
     <Box>
       <PageToolbar>
-        <DataScopeBadge meta={batchOperationalMeta} />
+        <DataScopeBadge meta={dataMeta} />
         <PrimaryButton perm="create">{translate("reports.toolbar.create" as TranslationKey)}</PrimaryButton>
       </PageToolbar>
 

@@ -6,15 +6,11 @@ export type ServiceabilityLevel =
   | "당일 방문"
   | "익일 방문"
   | "부품 대기";
-export type ServiceStage = "접수" | "배정" | "출동" | "작업" | "완료";
+/** TKST common_code ref_data1 값 (open|assigned|dispatched|in_progress|closed) */
+export type ServiceStage = string;
 export type RemoteResult = "resolved" | "unresolved" | "pending";
-export type PartOrderStatus =
-  | "요청"
-  | "확정"
-  | "출고"
-  | "운송중"
-  | "도착"
-  | "교체완료";
+/** PRST common_code ref_data1 값 */
+export type PartOrderStatus = string;
 export type PipelineTier = "Hot" | "Warm" | "Cold";
 export type UserRole =
   | "시스템 관리자"
@@ -250,7 +246,8 @@ export interface Installation {
   plannedInstallDate: string;
   actualInstallDate?: string;
   iotRegistered: boolean;
-  status: "예정" | "진행중" | "시운전" | "완료";
+  /** INST common_code ref_data1 값 (planned|in_progress|commissioning|done) */
+  status: string;
 }
 
 export interface AsRecord {
@@ -324,6 +321,18 @@ export interface ReportSummary {
   category: string;
   lastGenerated: string;
   recordCount: number;
+}
+
+export interface BatchDashboardKpis {
+  totalFleet: number;
+  online: number;
+  onlinePct?: number;
+  alarm: number;
+  maintenance: number;
+  openTickets: number;
+  slaAtRisk: number;
+  avgYield: number;
+  partsPending: number;
 }
 
 export interface UserAccount {

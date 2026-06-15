@@ -8,7 +8,7 @@ import { useQueryState } from "@/hooks/useQueryState";
 import { useFilteredRows } from "@/hooks/useFilteredRows";
 import { bindSearchFields } from "@/lib/grid/bind-search-fields";
 import { combineAnd, matchesBoolSelectFilter, matchesIndexedFields, matchesSelectFilter } from "@/lib/grid/query-filter";
-import { commonCodes } from "@/lib/mock-data";
+import { getListItems, useCommonCodes } from "@/lib/api/hooks";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { TranslationKey } from "@/lib/locale";
 import type { CommonCode } from "@/lib/types";
@@ -17,6 +17,8 @@ const INITIAL_SEARCH = { group: "", code: "", name: "" };
 
 export default function AdminCodesPage() {
   const { translate } = useLocale();
+  const { data: codeData } = useCommonCodes();
+  const codeRows = getListItems(codeData);
   const query = useQueryState(INITIAL_SEARCH, { group: "전체", active: "전체" });
 
   const searchDefs = useMemo(
@@ -29,8 +31,8 @@ export default function AdminCodesPage() {
   );
 
   const groups = useMemo(
-    () => Array.from(new Set(commonCodes.map((c) => c.group))),
-    [],
+    () => Array.from(new Set(codeRows.map((c) => c.group))),
+    [codeRows],
   );
 
   const groupFilterOptions = useMemo(
@@ -60,7 +62,7 @@ export default function AdminCodesPage() {
     [query.applied],
   );
 
-  const { rowData, resultCount } = useFilteredRows(commonCodes, filterFn);
+  const { rowData, resultCount } = useFilteredRows(codeRows, filterFn);
 
   return (
     <Box>

@@ -21,6 +21,11 @@ function ScopeDetail({ meta }: { meta: DataSourceMeta }) {
       <Typography variant="body2" color="text.secondary" sx={{ display: "block" }}>
         {translate("scope.source")}: {meta.source}
       </Typography>
+      {meta.endpoint && (
+        <Typography variant="body2" color="text.secondary" sx={{ display: "block" }}>
+          {translate("scope.endpoint")}: {meta.endpoint}
+        </Typography>
+      )}
       {meta.refreshInterval && (
         <Typography variant="body2" color="text.secondary" sx={{ display: "block" }}>
           {translate("scope.refresh")}: {meta.refreshInterval}

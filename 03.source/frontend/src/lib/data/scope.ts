@@ -9,6 +9,8 @@ export interface DataSourceMeta {
   source: string;
   /** 갱신 주기 설명 (배치 Job cron 등) */
   refreshInterval?: string;
+  /** 조회 REST 경로 (예: GET /api/equipment) */
+  endpoint?: string;
 }
 
 export const BATCH_SOURCES = {

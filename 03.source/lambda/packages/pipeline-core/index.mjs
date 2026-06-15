@@ -1,5 +1,24 @@
 /** @techvalley/pipeline-core — Lambda 공통 유틸 (테크밸리) */
 
+import { decodeKinesisRecord, getEnv, partitionKey } from "./kinesis.mjs";
+
+export { decodeKinesisRecord, getEnv, partitionKey };
+export { processStreamRecord } from "./stream-sync.mjs";
+export { runCadence } from "./cadence-executor.mjs";
+export { matchTopicRoute, parseTopicSegments } from "./topic-router.mjs";
+export { convertPayload, computeBaseTime } from "./converter.mjs";
+export { evaluateAlertsRaw, toAlarmNotificationDoc } from "./alerts-raw.mjs";
+export {
+  getMongo,
+  getPgPool,
+  closeClients,
+  loadYamlFile,
+  loadJsonFile,
+  upsertMongo,
+  resolveDeviceOrg,
+} from "./clients.mjs";
+export { mongoUri, postgresUri, minioConfig } from "./env.mjs";
+
 export function createHandler(appName, options = {}) {
   const { onEvent = defaultOnEvent } = options;
 
@@ -41,22 +60,4 @@ function preview(record) {
 
 async function defaultOnEvent({ appName, record }) {
   return { appName, status: "ok", recordType: record?.eventSource ?? "direct" };
-}
-
-export function decodeKinesisRecord(record) {
-  if (!record?.kinesis?.data) return null;
-  const raw = Buffer.from(record.kinesis.data, "base64").toString("utf8");
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return { raw };
-  }
-}
-
-export function getEnv(name, fallback = "") {
-  return process.env[name] ?? fallback;
-}
-
-export function partitionKey(payload, field = "device_code") {
-  return payload?.[field] ?? payload?.device?.code ?? "unknown";
 }

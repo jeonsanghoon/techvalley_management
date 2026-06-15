@@ -69,18 +69,21 @@ export function statVariantToTone(
   return variant;
 }
 
-/** 엔지니어·장비 등 상태 문자열 → 톤 */
+/** 상태 코드 → 카드 톤 (common_code ref_data1 영문 코드 + 레거시 한글 호환) */
 export function statusToTone(status: string): CardTone {
   const s = status.toLowerCase();
-  if (s.includes("출동") || s.includes("가능") || s === "online" || s === "healthy" || s === "완료") {
+  // 영문 코드 (TKST/EQST common_code ref_data1)
+  if (s === "dispatched" || s === "closed" || s === "done" || s === "online" || s === "healthy") {
     return "success";
   }
-  if (s.includes("작업") || s.includes("정비") || s.includes("maintenance") || s === "warning") {
-    return "warning";
-  }
-  if (s.includes("알람") || s === "alarm" || s === "critical" || s === "error" || s.includes("휴무")) {
-    return s.includes("휴무") ? "default" : "danger";
-  }
-  if (s.includes("배정") || s === "info") return "info";
+  if (s === "in_progress" || s === "maintenance") return "warning";
+  if (s === "alarm" || s === "critical" || s === "error") return "danger";
+  if (s === "assigned" || s === "info") return "info";
+  if (s === "open" || s === "planned" || s === "commissioning") return "primary";
+  // 레거시 한글 코드 호환
+  if (s.includes("출동") || s.includes("가능") || s.includes("완료")) return "success";
+  if (s.includes("작업") || s.includes("정비")) return "warning";
+  if (s.includes("알람") || s.includes("휴무")) return s.includes("휴무") ? "default" : "danger";
+  if (s.includes("배정")) return "info";
   return "primary";
 }

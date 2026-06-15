@@ -12,21 +12,23 @@ import { bindSearchFields } from "@/lib/grid/bind-search-fields";
 import { combineAnd, matchesDateRange, matchesIndexedFields, matchesSelectFilter } from "@/lib/grid/query-filter";
 import { bindQueryToolbarDate } from "@/lib/grid/query-toolbar-date";
 import { DataScopeBadge } from "@/components/ui/DataScopeBadge";
-import { batchOperationalMeta, batchYieldRecords } from "@/lib/data/batch";
-import { algorithmConfigs } from "@/lib/mock-data";
+import { fallbackMeta, getListItems, useAlgorithms, useYieldRecords, useEnumCodes } from "@/lib/api/hooks";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { TranslationKey } from "@/lib/locale";
 import { localeLabel } from "@/lib/locale/types";
 import { SEARCH_FIELD_LABELS } from "@/lib/locale/search-fields";
-import { localizeDomainValue } from "@/lib/locale/domain-labels";
 import type { AlgorithmConfig, YieldRecord } from "@/lib/types";
-
-const ALG_STATUSES = ["전체", "active", "staging", "disabled"];
 
 const INITIAL_SEARCH = { algName: "", algVersion: "", equipmentSn: "", lotNo: "", serialNo: "" };
 
 export default function InspectionPage() {
   const { translate, language, formatAsOf } = useLocale();
+  const { data: algorithmData } = useAlgorithms();
+  const { data: algStatusCodesData } = useEnumCodes("ALGS");
+  const algorithmRows = getListItems(algorithmData);
+  const dataMeta = algorithmData?.meta ?? fallbackMeta("/inspection/algorithms");
+  const { data: yieldData } = useYieldRecords();
+  const yieldRowsSource = getListItems(yieldData);
   const query = useQueryState(INITIAL_SEARCH, { algStatus: "전체" });
 
   const searchDefs = useMemo(
@@ -41,12 +43,11 @@ export default function InspectionPage() {
   );
 
   const algStatusFilterOptions = useMemo(
-    () =>
-      ALG_STATUSES.map((s) => ({
-        value: s,
-        label: s === "전체" ? translate("common.all" as TranslationKey) : localizeDomainValue(s, language),
-      })),
-    [language, translate],
+    () => [
+      { value: "전체", label: translate("common.all" as TranslationKey) },
+      ...getListItems(algStatusCodesData).map((c) => ({ value: c.code, label: c.name })),
+    ],
+    [algStatusCodesData, translate],
   );
 
   const algFilter = useMemo(
@@ -77,12 +78,12 @@ export default function InspectionPage() {
     [query.applied],
   );
 
-  const { rowData: algRows } = useFilteredRows(algorithmConfigs, algFilter);
-  const { rowData: yieldRows, resultCount } = useFilteredRows(batchYieldRecords, yieldFilter);
+  const { rowData: algRows } = useFilteredRows(algorithmRows, algFilter);
+  const { rowData: yieldRows, resultCount } = useFilteredRows(yieldRowsSource, yieldFilter);
 
   const avg = yieldRows.reduce((s, r) => s + r.yieldPct, 0) / (yieldRows.length || 1);
-  const activeAlg = algRows.find((a) => a.status === "active") ?? algorithmConfigs.find((a) => a.status === "active");
-  const batchAsOf = formatAsOf(batchOperationalMeta.asOf);
+  const activeAlg = algRows.find((a) => a.status === "active") ?? algorithmRows.find((a) => a.status === "active");
+  const batchAsOf = formatAsOf(dataMeta.asOf);
 
   const statItems = useMemo(
     () => [
@@ -97,7 +98,7 @@ export default function InspectionPage() {
   return (
     <Box>
       <PageToolbar>
-        <DataScopeBadge meta={batchOperationalMeta} />
+        <DataScopeBadge meta={dataMeta} />
         <PrimaryButton perm="create">{translate("inspection.toolbar.create" as TranslationKey)}</PrimaryButton>
       </PageToolbar>
 

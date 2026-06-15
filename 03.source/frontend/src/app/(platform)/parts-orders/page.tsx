@@ -11,20 +11,20 @@ import { useFilteredRows } from "@/hooks/useFilteredRows";
 import { bindSearchFields } from "@/lib/grid/bind-search-fields";
 import { combineAnd, matchesDateRange, matchesIndexedFields, matchesSelectFilter } from "@/lib/grid/query-filter";
 import { bindQueryToolbarDate } from "@/lib/grid/query-toolbar-date";
-import { partOrders } from "@/lib/mock-data";
+import { getListItems, usePartOrders, useEnumCodes } from "@/lib/api/hooks";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { TranslationKey } from "@/lib/locale";
 import { localeLabel } from "@/lib/locale/types";
 import { SEARCH_FIELD_LABELS } from "@/lib/locale/search-fields";
-import { localizeDomainValue } from "@/lib/locale/domain-labels";
 import type { PartOrder } from "@/lib/types";
-
-const STATUSES = ["전체", "요청", "확정", "출고", "운송중", "도착", "교체완료"];
 
 const INITIAL_SEARCH = { id: "", ticketId: "", equipmentSn: "", partNo: "", partName: "" };
 
 export default function PartsOrdersPage() {
   const { translate, language } = useLocale();
+  const { data: partOrderData } = usePartOrders();
+  const partOrderRows = getListItems(partOrderData);
+  const { data: statusCodesData } = useEnumCodes("PRST");
   const query = useQueryState(INITIAL_SEARCH, { status: "전체" });
 
   const searchDefs = useMemo(
@@ -39,12 +39,11 @@ export default function PartsOrdersPage() {
   );
 
   const statusFilterOptions = useMemo(
-    () =>
-      STATUSES.map((s) => ({
-        value: s,
-        label: s === "전체" ? translate("common.all" as TranslationKey) : localizeDomainValue(s, language),
-      })),
-    [language, translate],
+    () => [
+      { value: "전체", label: translate("common.all" as TranslationKey) },
+      ...getListItems(statusCodesData).map((c) => ({ value: c.code, label: c.name })),
+    ],
+    [statusCodesData, translate],
   );
 
   const filterFn = useMemo(
@@ -66,7 +65,7 @@ export default function PartsOrdersPage() {
     [query.applied],
   );
 
-  const { rowData, resultCount } = useFilteredRows(partOrders, filterFn);
+  const { rowData, resultCount } = useFilteredRows(partOrderRows, filterFn);
 
   const statItems = useMemo(
     () => [

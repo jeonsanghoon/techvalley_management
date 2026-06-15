@@ -1,0 +1,4 @@
+{
+  "typescript.tsdk": "03.source/beckend/node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true
+}

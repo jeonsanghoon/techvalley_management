@@ -11,6 +11,11 @@ VALUES
   ('USR-TV-OPS', 'ops@techvalley.local', '현장 운영자', 1, 'active', NOW(), NOW(), '로컬 개발')
 ON CONFLICT (code) DO UPDATE SET updated_at = NOW();
 
+-- 로컬 JWT 로그인용 demo-password (bcrypt)
+UPDATE public."user"
+SET password_hash = '$2b$10$DCSBPdhdfWhzs.Suf0hOe.vdbaLWqVcpKZpUFmEr97eM4XbXKy8zO'
+WHERE code IN ('USR-TV-ADMIN', 'USR-TV-OPS');
+
 INSERT INTO public.language (code, language_name, locale, is_default, sort_order)
 VALUES
   ('ko', '한국어', 'ko-KR', TRUE, 1),

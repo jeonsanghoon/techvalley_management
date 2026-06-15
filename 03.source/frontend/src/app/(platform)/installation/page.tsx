@@ -11,20 +11,20 @@ import { useFilteredRows } from "@/hooks/useFilteredRows";
 import { bindSearchFields } from "@/lib/grid/bind-search-fields";
 import { combineAnd, matchesBoolSelectFilter, matchesDateRange, matchesIndexedFields, matchesSelectFilter } from "@/lib/grid/query-filter";
 import { bindQueryToolbarDate } from "@/lib/grid/query-toolbar-date";
-import { installations } from "@/lib/mock-data";
+import { getListItems, useInstallations, useEnumCodes } from "@/lib/api/hooks";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { TranslationKey } from "@/lib/locale";
 import { localeLabel } from "@/lib/locale/types";
 import { SEARCH_FIELD_LABELS } from "@/lib/locale/search-fields";
-import { localizeDomainValue } from "@/lib/locale/domain-labels";
 import type { Installation } from "@/lib/types";
-
-const STATUSES = ["예정", "진행중", "시운전", "완료"];
 
 const INITIAL_SEARCH = { orderRef: "", equipmentSn: "", model: "", customer: "", site: "" };
 
 export default function InstallationPage() {
   const { translate, language } = useLocale();
+  const { data: installationData } = useInstallations();
+  const installationRows = getListItems(installationData);
+  const { data: statusCodesData } = useEnumCodes("INST");
   const query = useQueryState(INITIAL_SEARCH, { status: "전체", iot: "전체" });
 
   const searchDefs = useMemo(
@@ -39,12 +39,11 @@ export default function InstallationPage() {
   );
 
   const statusFilterOptions = useMemo(
-    () =>
-      STATUSES.map((s) => ({
-        value: s,
-        label: localizeDomainValue(s, language),
-      })),
-    [language],
+    () => [
+      { value: "전체", label: translate("common.all" as TranslationKey) },
+      ...getListItems(statusCodesData).map((c) => ({ value: c.code, label: c.name })),
+    ],
+    [statusCodesData, translate],
   );
 
   const iotFilterOptions = useMemo(
@@ -75,7 +74,7 @@ export default function InstallationPage() {
     [query.applied],
   );
 
-  const { rowData, resultCount } = useFilteredRows(installations, filterFn);
+  const { rowData, resultCount } = useFilteredRows(installationRows, filterFn);
 
   const statItems = useMemo(
     () => [

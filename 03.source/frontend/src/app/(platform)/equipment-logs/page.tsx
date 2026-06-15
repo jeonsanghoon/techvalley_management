@@ -36,7 +36,7 @@ import {
   EQUIPMENT_LOG_CATEGORIES,
   parseEquipmentLogsSearchParams,
 } from "@/lib/equipment-log-nav";
-import { batchEquipmentLogs, batchEquipmentLogsMeta, batchFleetSample } from "@/lib/data/batch";
+import { fallbackMeta, getListItems, useEquipment, useEquipmentLogs } from "@/lib/api/hooks";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { TranslationKey } from "@/lib/locale";
 import { localeLabel } from "@/lib/locale/types";
@@ -47,26 +47,29 @@ import { EMPTY_DATE_RANGE, presetToRange, type DateRangePreset } from "@/lib/ui/
 
 const LEVELS = ["전체", "INFO", "WARN", "ERROR"] as const;
 
+const BACKEND_LOG_CATEGORIES = new Set<LogCategory>(["튜브", "디텍터", "본체", "원격제어", "펌웨어", "감사"]);
+
 const INITIAL_SEARCH = { message: "", source: "", payload: "" };
 
 const DEFAULT_CATEGORY: LogCategory = "튜브";
 
-function countByCategory(equipmentId: string): Record<LogCategory, number> {
+function countByCategory(logs: EquipmentLogEntry[], equipmentId: string): Record<LogCategory, number> {
   return Object.fromEntries(
     EQUIPMENT_LOG_CATEGORIES.map((cat) => [
       cat,
-      batchEquipmentLogs.filter((l) => l.equipmentId === equipmentId && l.category === cat).length,
+      logs.filter((l) => l.equipmentId === equipmentId && l.category === cat).length,
     ]),
   ) as Record<LogCategory, number>;
 }
 
 function countByLevel(
+  logs: EquipmentLogEntry[],
   equipmentId: string,
   category: LogCategory,
   from: string,
   to: string,
 ): Record<(typeof LEVELS)[number], number> {
-  const base = batchEquipmentLogs.filter(
+  const base = logs.filter(
     (l) =>
       l.equipmentId === equipmentId &&
       l.category === category &&
@@ -84,16 +87,22 @@ export default function EquipmentLogsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { translate, language } = useLocale();
+  const { data: fleetData } = useEquipment();
+  const fleetRows = getListItems(fleetData);
+  const dataMeta = fleetData?.meta ?? fallbackMeta("/equipment");
   const urlState = useMemo(() => parseEquipmentLogsSearchParams(searchParams), [searchParams]);
 
-  const defaultEquipmentId = batchFleetSample[0]?.id ?? "";
+  const defaultEquipmentId = fleetRows[0]?.id ?? "";
   const [equipmentId, setEquipmentId] = useState(
-    urlState.equipmentId && batchFleetSample.some((e) => e.id === urlState.equipmentId)
+    urlState.equipmentId && fleetRows.some((e) => e.id === urlState.equipmentId)
       ? urlState.equipmentId
       : defaultEquipmentId,
   );
   const [category, setCategory] = useState<LogCategory>(urlState.category ?? DEFAULT_CATEGORY);
 
+  const logCategoryParam = BACKEND_LOG_CATEGORIES.has(category) ? category : undefined;
+  const { data: logData } = useEquipmentLogs(logCategoryParam);
+  const logRows = getListItems(logData);
   const query = useQueryState(INITIAL_SEARCH, { level: "전체" }, urlState.dateRange);
 
   const searchDefs = useMemo(
@@ -114,17 +123,18 @@ export default function EquipmentLogsPage() {
     [translate],
   );
 
-  const selectedEq = batchFleetSample.find((e) => e.id === equipmentId) ?? batchFleetSample[0];
-  const categoryCounts = useMemo(() => countByCategory(equipmentId), [equipmentId]);
+  const selectedEq = fleetRows.find((e) => e.id === equipmentId) ?? fleetRows[0];
+  const categoryCounts = useMemo(() => countByCategory(logRows, equipmentId), [logRows, equipmentId]);
   const levelCounts = useMemo(
     () =>
       countByLevel(
+        logRows,
         equipmentId,
         category,
         query.applied.dateRange.from,
         query.applied.dateRange.to,
       ),
-    [equipmentId, category, query.applied.dateRange],
+    [logRows, equipmentId, category, query.applied.dateRange],
   );
 
   const localeTag = language === "en" ? "en-US" : "ko-KR";
@@ -148,7 +158,7 @@ export default function EquipmentLogsPage() {
   );
 
   useEffect(() => {
-    if (urlState.equipmentId && batchFleetSample.some((e) => e.id === urlState.equipmentId)) {
+    if (urlState.equipmentId && fleetRows.some((e) => e.id === urlState.equipmentId)) {
       setEquipmentId(urlState.equipmentId);
     }
     if (urlState.category) {
@@ -159,7 +169,13 @@ export default function EquipmentLogsPage() {
       query.apply();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- URL 진입 시 1회 동기화
-  }, [urlState.equipmentId, urlState.category, urlState.dateRange.from, urlState.dateRange.to]);
+  }, [urlState.equipmentId, urlState.category, urlState.dateRange.from, urlState.dateRange.to, fleetRows]);
+
+  useEffect(() => {
+    if (!equipmentId && fleetRows[0]?.id) {
+      setEquipmentId(fleetRows[0].id);
+    }
+  }, [equipmentId, fleetRows]);
 
   const filterFn = useMemo(() => {
     const { from, to } = query.applied.dateRange;
@@ -178,8 +194,8 @@ export default function EquipmentLogsPage() {
   }, [equipmentId, category, query.applied]);
 
   const fetchRows = useMemo(
-    () => createKeysetFetcher(batchEquipmentLogs, { idField: "id", filterFn }),
-    [filterFn],
+    () => createKeysetFetcher(logRows, { idField: "id", filterFn }),
+    [filterFn, logRows],
   );
 
   const handleEquipmentChange = (nextId: string) => {
@@ -219,7 +235,7 @@ export default function EquipmentLogsPage() {
     syncUrl({ equipmentId, category, from: "", to: "", anchorAt: null });
   };
 
-  const resultCount = countFilteredRows(batchEquipmentLogs, filterFn);
+  const resultCount = countFilteredRows(logRows, filterFn);
   const categoryLabel = translate(`equipmentLogs.category.${category}` as TranslationKey);
 
   const gridSubtitle = query.applied.dateRange.from
@@ -230,7 +246,7 @@ export default function EquipmentLogsPage() {
   return (
     <Box>
       <PageToolbar>
-        <DataScopeBadge meta={batchEquipmentLogsMeta} />
+        <DataScopeBadge meta={dataMeta} />
         <PrimaryButton href="/metric-stream#event" variant="outlined" menuId="metric-stream-event" perm="view" startIcon={<BoltIcon fontSize="small" />}>
           {translate("equipmentLogs.toolbar.metricStream" as TranslationKey)}
         </PrimaryButton>
@@ -290,7 +306,7 @@ export default function EquipmentLogsPage() {
                 value={equipmentId}
                 onChange={(e) => handleEquipmentChange(e.target.value)}
               >
-                {batchFleetSample.map((eq) => (
+                {fleetRows.map((eq) => (
                   <MenuItem key={eq.id} value={eq.id}>
                     {eq.serialNo} · {eq.customer} / {eq.site}
                   </MenuItem>
@@ -298,10 +314,10 @@ export default function EquipmentLogsPage() {
               </Select>
             </FormControl>
             <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", gap: 0.75, alignItems: "center" }}>
-              <StatusBadge status={selectedEq.status} />
-              <Chip label={selectedEq.model} size="small" variant="outlined" />
+              <StatusBadge status={selectedEq?.status ?? "offline"} />
+              <Chip label={selectedEq?.model ?? "—"} size="small" variant="outlined" />
               <Chip label={`ID ${equipmentId}`} size="small" variant="outlined" sx={{ fontFamily: "monospace" }} />
-              <Chip label={selectedEq.slaTier} size="small" variant="outlined" />
+              <Chip label={selectedEq?.slaTier ?? "—"} size="small" variant="outlined" />
             </Stack>
           </Stack>
         </Stack>
@@ -383,7 +399,7 @@ export default function EquipmentLogsPage() {
       <AgDataGrid
         key={`equipment-logs-${equipmentId}-${category}-${query.refreshKey}`}
         gridId={`equipment-logs-${equipmentId}-${category}`}
-        title={`${selectedEq.serialNo} · ${categoryLabel}`}
+        title={`${selectedEq?.serialNo ?? "—"} · ${categoryLabel}`}
         subtitle={gridSubtitle}
         fetchRows={fetchRows}
         columnSet="equipmentLogCategory"

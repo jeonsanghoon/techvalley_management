@@ -19,9 +19,9 @@ import { useQueryState } from "@/hooks/useQueryState";
 import { bindSearchFields } from "@/lib/grid/bind-search-fields";
 import { combineAnd, matchesIndexedFields } from "@/lib/grid/query-filter";
 import { DataScopeBadge } from "@/components/ui/DataScopeBadge";
-import { alarms } from "@/lib/mock-data";
-import { realtimeFleetItems, realtimeFleetMeta } from "@/lib/data/realtime";
-import { remoteDiagnosisFindings, formatDiagnosisDisplay } from "@/lib/remote-diagnosis";
+import { fallbackMeta, getListItems, useAlarms, useFleetLive } from "@/lib/api/hooks";
+import { useRemoteDiagnostics } from "@/lib/api/hooks";
+import { api } from "@/lib/api/endpoints";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { TranslationKey } from "@/lib/locale";
 import { localeLabel } from "@/lib/locale/types";
@@ -31,31 +31,49 @@ const INITIAL_SEARCH = { serialNo: "", model: "", customer: "", site: "" };
 
 export default function RemoteControlPage() {
   const { translate, language } = useLocale();
+  const { data: fleetData } = useFleetLive();
+  const fleetRows = getListItems(fleetData);
+  const dataMeta = fleetData?.meta ?? fallbackMeta("/fleet/live");
+  const { data: alarmData } = useAlarms();
+  const alarmRows = getListItems(alarmData);
   const searchParams = useSearchParams();
   const query = useQueryState(INITIAL_SEARCH, { equipmentSn: "전체" });
   const [kv, setKv] = useState(160);
   const [ma, setMa] = useState(3.5);
   const [result, setResult] = useState<string | null>(null);
+  const [commandLoading, setCommandLoading] = useState(false);
+  const [commandError, setCommandError] = useState<string | null>(null);
 
+  const sendCommand = async (command: "apply_params" | "safe_mode" | "emg") => {
+    if (!selectedSn) return;
+    setCommandLoading(true);
+    setCommandError(null);
+    try {
+      const { data } = await api.remoteControlCommand({
+        equipmentSn: selectedSn,
+        command,
+        params: command === "apply_params" ? { kv, ma } : undefined,
+      });
+      setResult(data.status);
+    } catch (e) {
+      setCommandError(e instanceof Error ? e.message : "Command failed");
+      setResult(null);
+    } finally {
+      setCommandLoading(false);
+    }
+  };
+
+  const { data: remoteData } = useRemoteDiagnostics();
+  const remoteDiagnostics = getListItems(remoteData);
   const findingId = searchParams.get("findingId");
   const linkedFinding = useMemo(
-    () => (findingId ? remoteDiagnosisFindings.find((f) => f.id === findingId) : undefined),
-    [findingId],
+    () => (findingId ? remoteDiagnostics.find((f) => f.id === findingId) : undefined),
+    [findingId, remoteDiagnostics],
   );
-
-  const linkedDiagnosisText = useMemo(() => {
-    if (!linkedFinding) return null;
-    return formatDiagnosisDisplay(
-      linkedFinding.component,
-      linkedFinding.metrics ?? {},
-      (key) => translate(key as TranslationKey),
-      linkedFinding.status,
-    );
-  }, [linkedFinding, translate]);
 
   useEffect(() => {
     const sn = searchParams.get("equipmentSn");
-    if (sn && realtimeFleetItems.some((e) => e.serialNo === sn)) {
+    if (sn && fleetRows.some((e) => e.serialNo === sn)) {
       query.applyFilter("equipmentSn", sn);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- URL deep-link only on mount
@@ -73,17 +91,17 @@ export default function RemoteControlPage() {
 
   const equipmentOptions = useMemo(
     () => [
-      ...realtimeFleetItems.map((item) => ({
+      ...fleetRows.map((item) => ({
         value: item.serialNo,
         label: `${item.serialNo} — ${item.model}`,
       })),
     ],
-    [translate],
+    [fleetRows],
   );
 
   const filteredEquipments = useMemo(
     () =>
-      realtimeFleetItems.filter((item) =>
+      fleetRows.filter((item) =>
         combineAnd(
           matchesIndexedFields(query.applied.search, {
             serialNo: item.serialNo,
@@ -100,15 +118,15 @@ export default function RemoteControlPage() {
   const selectedSn =
     query.applied.select.equipmentSn !== "전체"
       ? query.applied.select.equipmentSn
-      : filteredEquipments[0]?.serialNo ?? realtimeFleetItems[0]?.serialNo ?? "";
+      : filteredEquipments[0]?.serialNo ?? fleetRows[0]?.serialNo ?? "";
 
-  const eq = realtimeFleetItems.find((e) => e.serialNo === selectedSn);
-  const linkedAlarm = alarms.find((a) => a.equipmentSn === selectedSn && a.remoteResult === "unresolved");
+  const eq = fleetRows.find((e) => e.serialNo === selectedSn);
+  const linkedAlarm = alarmRows.find((a) => a.equipmentSn === selectedSn && a.remoteResult === "unresolved");
 
   return (
     <Box>
       <PageToolbar>
-        <DataScopeBadge meta={realtimeFleetMeta} />
+        <DataScopeBadge meta={dataMeta} />
       </PageToolbar>
 
       <QueryToolbar
@@ -152,17 +170,17 @@ export default function RemoteControlPage() {
         </Card>
       )}
 
-      {linkedFinding && linkedDiagnosisText && linkedFinding.equipmentSn === selectedSn && (
+      {linkedFinding && linkedFinding.equipmentSn === selectedSn && (
         <Card title={translate("remoteControl.card.linkedDiagnosis" as TranslationKey)} sx={{ mb: 2 }}>
           <Stack spacing={1.5}>
             <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
-              <StatusBadge status={linkedFinding.severity} />
+              <StatusBadge status={linkedFinding.severity === "critical" ? "critical" : "warning"} />
               <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                {linkedDiagnosisText.summary}
+                {linkedFinding.title}
               </Typography>
             </Stack>
             <Typography variant="body2" sx={{ lineHeight: 1.55 }}>
-              {linkedDiagnosisText.detail}
+              {linkedFinding.detail}
             </Typography>
           </Stack>
         </Card>
@@ -185,7 +203,13 @@ export default function RemoteControlPage() {
                 <Slider min={1} max={6} step={0.1} value={ma} onChange={(_, v) => setMa(v as number)} valueLabelDisplay="auto" />
               </Box>
               <PermissionGate menuId="remote-control" action="execute">
-                <Button variant="contained" color="secondary" fullWidth onClick={() => setResult("unresolved")}>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  fullWidth
+                  disabled={commandLoading || !selectedSn}
+                  onClick={() => void sendCommand("apply_params")}
+                >
                   {translate("remoteControl.action.applyParameters" as TranslationKey)}
                 </Button>
               </PermissionGate>
@@ -197,13 +221,30 @@ export default function RemoteControlPage() {
           <Card title={translate("remoteControl.card.safeMode" as TranslationKey)}>
             <Stack spacing={2}>
               <PermissionGate menuId="remote-control" action="execute">
-                <Button variant="outlined" color="warning" fullWidth onClick={() => setResult("pending")}>
+                <Button
+                  variant="outlined"
+                  color="warning"
+                  fullWidth
+                  disabled={commandLoading || !selectedSn}
+                  onClick={() => void sendCommand("safe_mode")}
+                >
                   {translate("remoteControl.action.safeMode" as TranslationKey)}
                 </Button>
               </PermissionGate>
-              <Button variant="outlined" color="error" fullWidth>
+              <Button
+                variant="outlined"
+                color="error"
+                fullWidth
+                disabled={commandLoading || !selectedSn}
+                onClick={() => void sendCommand("emg")}
+              >
                 {translate("remoteControl.action.emgHotline" as TranslationKey)}
               </Button>
+              {commandError && (
+                <Alert severity="error" variant="outlined">
+                  {commandError}
+                </Alert>
+              )}
               <Alert severity="info" variant="outlined">
                 {translate("remoteControl.alert.failsafe" as TranslationKey)}
               </Alert>

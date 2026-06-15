@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { cpSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
+import { spawnSync } from "node:child_process";
 import { loadIngressDeploy, appDirName } from "./lib/deploy-config.mjs";
 import { appsRoot, configRoot } from "./lib/paths.mjs";
 
@@ -30,7 +31,19 @@ function stageApp(appDir, bundleDir) {
 
   writeFileSync(
     join(bundleDir, "package.json"),
-    JSON.stringify({ type: "module", name: `@techvalley/${appDir}` }, null, 2),
+    JSON.stringify(
+      {
+        type: "module",
+        name: `@techvalley/${appDir}`,
+        dependencies: {
+          mongodb: "^6.21.0",
+          pg: "^8.16.0",
+          yaml: "^2.8.3",
+        },
+      },
+      null,
+      2,
+    ),
   );
 
   const coreSrc = join(appsRoot, "..", "packages/pipeline-core");
@@ -42,6 +55,15 @@ function stageApp(appDir, bundleDir) {
     join(bundleDir, "node_modules/@techvalley/pipeline-core/package.json"),
     JSON.stringify({ type: "module", name: "@techvalley/pipeline-core", main: "index.mjs" }, null, 2),
   );
+
+  const npm = spawnSync("npm", ["install", "--omit=dev", "--no-audit", "--no-fund"], {
+    cwd: bundleDir,
+    stdio: "pipe",
+  });
+  if (npm.status !== 0) {
+    console.error(npm.stderr?.toString() ?? "npm install failed");
+    process.exit(1);
+  }
 
   const extras = STAGE_FILES[appDir] ?? [];
   for (const item of extras) {

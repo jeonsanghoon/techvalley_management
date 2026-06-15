@@ -1,19 +1,41 @@
-# 90.infra — 테크밸리 배포 인프라
+# 90.infra — 테크밸리 인프라
 
-> **설정 SSOT: `02.arch/config/`**  
-> `config/`는 `npm run sync:config --prefix 03.source/lambda` 미러입니다.
+배포·로컬 인프ra **단일 루트**.
 
-## 동기화
-
-```bash
-cd 03.source/lambda && npm run sync:config
+```
+90.infra/
+├── 10.local/           ← Podman · Compose · bootstrap (로컬 실행 SSOT)
+├── config/             ← Lambda YAML · DDL · manifest · rules
+├── terraform/          ← AWS IaC
+└── README.md
 ```
 
-## Terraform
+## 로컬 개발
 
-`terraform/` — 예정. tfvars 예: `02.arch/config/terraform/environments/dev.auto.tfvars.json`
+```bash
+npm run local:up       # 90.infra/10.local/local-up.sh
+npm run local:verify
+npm run local:down
+```
 
-## 문서
+상세: [10.local/README.md](./10.local/README.md)
 
-- [02.arch/config/README.md](../02.arch/config/README.md)
-- [02.arch/11-config-examples-reference.md](../02.arch/11-config-examples-reference.md)
+## 배포 설정
+
+- **작성 SSOT**: `02.arch/config/` → `npm run sync:config` → `90.infra/config/`
+- Terraform: [terraform/README.md](./terraform/README.md)
+
+## AWS ↔ 로컬
+
+| AWS | 로컬 (`10.local/`) |
+|-----|-------------------|
+| Aurora PostgreSQL | Postgres `:35432` |
+| DocumentDB | Mongo `:37017` |
+| S3 | MinIO `:39100` |
+
+포트·URI: [10.local/local-stack.yaml](./10.local/local-stack.yaml)
+
+## 관련
+
+- [config/README.md](./config/README.md)
+- [../02.arch/16-local-e2e-testing.md](../02.arch/16-local-e2e-testing.md)

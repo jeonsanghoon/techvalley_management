@@ -11,7 +11,7 @@ import { useFilteredRows } from "@/hooks/useFilteredRows";
 import { bindSearchFields } from "@/lib/grid/bind-search-fields";
 import { combineAnd, matchesDateRange, matchesIndexedFields, matchesSelectFilter } from "@/lib/grid/query-filter";
 import { bindQueryToolbarDate } from "@/lib/grid/query-toolbar-date";
-import { customers, sites } from "@/lib/mock-data";
+import { getListItems, useCustomers, useSites } from "@/lib/api/hooks";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { TranslationKey } from "@/lib/locale";
 import { localeLabel } from "@/lib/locale/types";
@@ -23,6 +23,10 @@ const INITIAL_SEARCH = { customerName: "", siteName: "", address: "" };
 
 export default function CustomersPage() {
   const { translate, language } = useLocale();
+  const { data: customerData } = useCustomers();
+  const customers = getListItems(customerData);
+  const { data: siteData } = useSites();
+  const sites = getListItems(siteData);
   const query = useQueryState(INITIAL_SEARCH, { type: "전체", region: "전체" });
 
   const searchDefs = useMemo(
@@ -86,7 +90,7 @@ export default function CustomersPage() {
           ),
         ),
       ],
-    [],
+    [customers, sites],
   );
 
   const regionFilterOptions = useMemo(
@@ -105,7 +109,7 @@ export default function CustomersPage() {
       { label: translate("customers.stat.totalAccounts" as TranslationKey), value: customers.length, variant: "default" as const },
       { label: translate("customers.stat.totalSites" as TranslationKey), value: sites.length, variant: "default" as const },
     ],
-    [translate, customerCount, siteCount],
+    [translate, customerCount, siteCount, customers.length, sites.length],
   );
 
   return (

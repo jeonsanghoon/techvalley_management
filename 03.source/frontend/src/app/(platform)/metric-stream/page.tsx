@@ -30,7 +30,7 @@ import { bindSearchFields } from "@/lib/grid/bind-search-fields";
 import { combineAnd, matchesDateRange, matchesIndexedFields } from "@/lib/grid/query-filter";
 import { bindQueryToolbarDate } from "@/lib/grid/query-toolbar-date";
 import { DataScopeBadge } from "@/components/ui/DataScopeBadge";
-import { generateLiveMetric, realtimeFleetItems, realtimeMetricMeta, realtimeMetricSeed } from "@/lib/data/realtime";
+import { fallbackMeta, getListItems, useFleetLive, useMetricStreamLatest } from "@/lib/api/hooks";
 import {
   METRIC_STREAM_DEFAULT_TAB,
   METRIC_STREAM_TABS,
@@ -48,6 +48,11 @@ const METRIC_STREAM_PATH = "/metric-stream";
 export default function MetricStreamPage() {
   const pathname = usePathname();
   const { translate, language } = useLocale();
+  const { data: fleetData } = useFleetLive();
+  const fleetRows = getListItems(fleetData);
+  const dataMeta = fleetData?.meta ?? fallbackMeta("/fleet/live");
+  const { data: metricsData } = useMetricStreamLatest();
+  const latestMetrics = getListItems(metricsData);
   const query = useQueryState(INITIAL_SEARCH, { equipmentId: "전체" });
   const { tab, setTab } = useHashTab(
     METRIC_STREAM_PATH,
@@ -65,7 +70,16 @@ export default function MetricStreamPage() {
   }, [pathname]);
 
   const [live, setLive] = useState(true);
-  const [stream, setStream] = useState<MetricLogEntry[]>(() => realtimeMetricSeed.slice(0, 40));
+  const [stream, setStream] = useState<MetricLogEntry[]>([]);
+
+  useEffect(() => {
+    if (!latestMetrics.length) return;
+    setStream((prev) => {
+      const ids = new Set(prev.map((entry) => entry.id));
+      const merged = [...latestMetrics.filter((entry) => !ids.has(entry.id)), ...prev];
+      return merged.slice(0, 120);
+    });
+  }, [latestMetrics]);
 
   const searchDefs = useMemo(
     () => [
@@ -78,25 +92,25 @@ export default function MetricStreamPage() {
 
   const equipmentFilterOptions = useMemo(
     () => [
-      ...realtimeFleetItems.slice(0, 12).map((eq) => ({ value: eq.id, label: eq.serialNo })),
+      ...fleetRows.slice(0, 12).map((eq) => ({ value: eq.id, label: eq.serialNo })),
     ],
-    [translate],
+    [fleetRows],
   );
 
   const equipmentId = query.applied.select.equipmentId ?? "전체";
   const localeTag = language === "en" ? "en-US" : "ko-KR";
 
   useEffect(() => {
-    if (!live) return;
+    if (!live || !latestMetrics.length) return;
     const timer = setInterval(() => {
-      const entry = generateLiveMetric(
-        equipmentId === "전체" ? undefined : equipmentId,
-        activeTab.kind,
-      );
-      setStream((prev) => [entry, ...prev].slice(0, 120));
+      setStream((prev) => {
+        const next = latestMetrics[0];
+        if (!next) return prev;
+        return [next, ...prev.filter((entry) => entry.id !== next.id)].slice(0, 120);
+      });
     }, 2500);
     return () => clearInterval(timer);
-  }, [live, equipmentId, activeTab.kind]);
+  }, [live, latestMetrics]);
 
   const filterFn = useCallback(
     (m: MetricLogEntry) => {
@@ -117,14 +131,14 @@ export default function MetricStreamPage() {
 
   const tabRows = useMemo(() => {
     const ids = new Set(stream.map((s) => s.id));
-    const merged = [...stream, ...realtimeMetricSeed.filter((m) => !ids.has(m.id))];
+    const merged = [...stream, ...latestMetrics.filter((m) => !ids.has(m.id))];
     return merged.filter(filterFn).sort((a, b) => b.receivedAt.localeCompare(a.receivedAt));
-  }, [stream, filterFn]);
+  }, [stream, latestMetrics, filterFn]);
 
   const tabCounts = useMemo(() => {
     const { from, to } = query.applied.dateRange;
     const ids = new Set(stream.map((s) => s.id));
-    const merged = [...stream, ...realtimeMetricSeed.filter((m) => !ids.has(m.id))];
+    const merged = [...stream, ...latestMetrics.filter((m) => !ids.has(m.id))];
     const base = merged.filter((m) =>
       combineAnd(
         matchesIndexedFields(query.applied.search, {
@@ -139,7 +153,7 @@ export default function MetricStreamPage() {
     return Object.fromEntries(
       METRIC_STREAM_TABS.map((item) => [item.id, base.filter((m) => m.kind === item.kind).length]),
     ) as Record<MetricStreamTabId, number>;
-  }, [stream, query.applied, equipmentId]);
+  }, [stream, latestMetrics, query.applied, equipmentId]);
 
   const tabStats = useMemo(() => metricStreamTabStats(tab, tabRows), [tab, tabRows]);
 
@@ -153,7 +167,7 @@ export default function MetricStreamPage() {
   return (
     <Box>
       <PageToolbar>
-        <DataScopeBadge meta={realtimeMetricMeta} />
+        <DataScopeBadge meta={dataMeta} />
         <Chip
           icon={
             <FiberManualRecordIcon

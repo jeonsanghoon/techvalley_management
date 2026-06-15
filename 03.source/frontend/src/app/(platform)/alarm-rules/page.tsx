@@ -10,7 +10,7 @@ import { useQueryState } from "@/hooks/useQueryState";
 import { useFilteredRows } from "@/hooks/useFilteredRows";
 import { bindSearchFields } from "@/lib/grid/bind-search-fields";
 import { combineAnd, matchesBoolSelectFilter, matchesIndexedFields, matchesSelectFilter } from "@/lib/grid/query-filter";
-import { alarmRules } from "@/lib/mock-data";
+import { getListItems, useAlarmRules } from "@/lib/api/hooks";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { TranslationKey } from "@/lib/locale";
 import { localeLabel } from "@/lib/locale/types";
@@ -22,6 +22,8 @@ const INITIAL_SEARCH = { name: "", target: "", condition: "" };
 
 export default function AlarmRulesPage() {
   const { translate, language } = useLocale();
+  const { data: ruleData } = useAlarmRules();
+  const ruleRows = getListItems(ruleData);
   const query = useQueryState(INITIAL_SEARCH, { severity: "전체", enabled: "전체" });
 
   const searchDefs = useMemo(
@@ -63,7 +65,7 @@ export default function AlarmRulesPage() {
     [query.applied],
   );
 
-  const { rowData, resultCount } = useFilteredRows(alarmRules, filterFn);
+  const { rowData, resultCount } = useFilteredRows(ruleRows, filterFn);
 
   return (
     <Box>

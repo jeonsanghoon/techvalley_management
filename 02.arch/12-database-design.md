@@ -56,7 +56,7 @@ DocDB ↔ Aurora 링크: `03-documentdb.yaml` → `rdbms_time_series_link` (`dev
 ### 적용 순서
 
 ```bash
-cd 90.infra/local
+cd 10.local
 ./bootstrap-postgres.sh    # 01 → 02 → 04 → 05
 ```
 
@@ -113,7 +113,7 @@ KDS → stream_sync_consumer → DocumentDB (Hot)
 | [s3-object-layout.example.md](./config/samples/s3-object-layout.example.md) | S3 prefix 트리 |
 | [athena-query-examples.sql](./config/samples/athena-query-examples.sql) | Athena SQL |
 
-로컬: MinIO `tv-analytics-raw` — `./config/local/minio-init.sh`
+로컬: MinIO `tv-analytics-raw` — `./10.local/minio-init.sh`
 
 ## 12.6 ERD (요약)
 
@@ -138,11 +138,11 @@ erDiagram
 **전체 E2E**: [16-local-e2e-testing.md](./16-local-e2e-testing.md)
 
 ```bash
-./02.arch/config/local/local-up.sh
+./10.local/local-up.sh
 # 또는 수동:
-podman compose -f 02.arch/config/local/docker-compose.yml up -d
-./02.arch/config/local/bootstrap-postgres.sh
-./02.arch/config/local/bootstrap-documentdb.sh
+podman compose -f 10.local/docker-compose.yml up -d
+./10.local/bootstrap-postgres.sh
+./10.local/bootstrap-documentdb.sh
 ```
 
 ## 12.8 변경 절차

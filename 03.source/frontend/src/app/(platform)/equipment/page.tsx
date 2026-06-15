@@ -13,21 +13,23 @@ import { combineAnd, matchesDateRange, matchesIndexedFields, matchesSelectFilter
 import { bindQueryToolbarDate } from "@/lib/grid/query-toolbar-date";
 import { compareEquipmentOperatingFirst } from "@/lib/fleet-sort";
 import { DataScopeBadge } from "@/components/ui/DataScopeBadge";
-import { batchFleetMeta, batchFleetSample } from "@/lib/data/batch";
+import { fallbackMeta, getListItems, useEquipment, useEnumCodes } from "@/lib/api/hooks";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { TranslationKey } from "@/lib/locale";
 import { localeLabel } from "@/lib/locale/types";
 import { SEARCH_FIELD_LABELS } from "@/lib/locale/search-fields";
-import { localizeDomainValue } from "@/lib/locale/domain-labels";
 import type { Equipment } from "@/lib/types";
 
 const REGIONS = ["전체", "경기", "경북", "충남", "울산", "충북", "전북"];
-const STATUSES = ["전체", "online", "alarm", "maintenance", "safe_mode", "offline"];
 
 const INITIAL_SEARCH = { serialNo: "", customer: "", site: "", model: "" };
 
 export default function EquipmentPage() {
   const { translate, language } = useLocale();
+  const { data: equipmentData } = useEquipment();
+  const equipmentRows = getListItems(equipmentData);
+  const dataMeta = equipmentData?.meta ?? fallbackMeta("/equipment");
+  const { data: statusCodesData } = useEnumCodes("EQST");
   const query = useQueryState(INITIAL_SEARCH, { region: "전체", status: "전체" });
 
   const searchDefs = useMemo(
@@ -41,12 +43,11 @@ export default function EquipmentPage() {
   );
 
   const statusFilterOptions = useMemo(
-    () =>
-      STATUSES.map((s) => ({
-        value: s,
-        label: s === "전체" ? translate("common.all" as TranslationKey) : localizeDomainValue(s, language),
-      })),
-    [language, translate],
+    () => [
+      { value: "전체", label: translate("common.all" as TranslationKey) },
+      ...getListItems(statusCodesData).map((c) => ({ value: c.code, label: c.name })),
+    ],
+    [statusCodesData, translate],
   );
 
   const regionFilterOptions = useMemo(
@@ -62,28 +63,28 @@ export default function EquipmentPage() {
     () => [
       {
         label: translate("equipment.stat.sample" as TranslationKey),
-        value: batchFleetSample.length,
+        value: equipmentRows.length,
         sub: translate("equipment.stat.batchSnapshot" as TranslationKey),
         variant: "info" as const,
       },
       {
         label: translate("equipment.stat.online" as TranslationKey),
-        value: batchFleetSample.filter((e) => e.status === "online").length,
+        value: equipmentRows.filter((e) => e.status === "online").length,
         variant: "success" as const,
       },
       {
         label: translate("equipment.stat.alarm" as TranslationKey),
-        value: batchFleetSample.filter((e) => e.status === "alarm").length,
+        value: equipmentRows.filter((e) => e.status === "alarm").length,
         variant: "danger" as const,
       },
       {
         label: translate("equipment.stat.lowLife" as TranslationKey),
-        value: batchFleetSample.filter((e) => e.tubeLifePct < 30 || e.detectorLifePct < 30).length,
+        value: equipmentRows.filter((e) => e.tubeLifePct < 30 || e.detectorLifePct < 30).length,
         variant: "warning" as const,
         sub: translate("equipment.stat.lowLifeSub" as TranslationKey),
       },
     ],
-    [translate],
+    [translate, equipmentRows],
   );
 
   const filterFn = useMemo(() => {
@@ -104,20 +105,20 @@ export default function EquipmentPage() {
 
   const fetchRows = useMemo(
     () =>
-      createKeysetFetcher(batchFleetSample, {
+      createKeysetFetcher(equipmentRows, {
         idField: "id",
         filterFn,
         sortFn: compareEquipmentOperatingFirst,
       }),
-    [filterFn],
+    [filterFn, equipmentRows],
   );
 
-  const resultCount = countFilteredRows(batchFleetSample, filterFn);
+  const resultCount = countFilteredRows(equipmentRows, filterFn);
 
   return (
     <Box>
       <PageToolbar>
-        <DataScopeBadge meta={batchFleetMeta} />
+        <DataScopeBadge meta={dataMeta} />
         <PrimaryButton href="/equipment-logs" variant="outlined" menuId="equipment-logs" perm="view">
           {translate("equipment.toolbar.logs" as TranslationKey)}
         </PrimaryButton>

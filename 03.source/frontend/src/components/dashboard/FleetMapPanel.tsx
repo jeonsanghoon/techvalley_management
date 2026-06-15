@@ -32,6 +32,7 @@ import { useFleetMapMarkers } from "@/hooks/useFleetMapMarkers";
 import { applyFleetMapTheme, getFleetMapInitOptions } from "@/lib/google-maps-fleet-options";
 import { fleetPinIcon } from "@/lib/fleet-map-markers";
 import type { FleetMapEquipment } from "@/lib/fleet-map-types";
+import type { Alarm, ServiceTicket } from "@/lib/types";
 import { FleetMapMarkerInfo } from "@/components/dashboard/FleetMapMarkerInfo";
 import { FleetMapMarkerPopup } from "@/components/dashboard/FleetMapMarkerPopup";
 import { useMapProjectionOverlay } from "@/hooks/useMapProjectionOverlay";
@@ -61,6 +62,8 @@ export type { FleetMapEquipment } from "@/lib/fleet-map-types";
 type FleetMapContentProps = {
   variant: "embedded" | "fullscreen";
   equipments: FleetMapEquipment[];
+  mapAlarms?: Alarm[];
+  mapTickets?: ServiceTicket[];
   statusFilter: string | null;
   setStatusFilter: Dispatch<SetStateAction<string | null>>;
   selectedId: string | null;
@@ -112,6 +115,8 @@ function flyToServiceRegion(map: google.maps.Map, serviceRegion: ReturnType<type
 function FleetMapContent({
   variant,
   equipments,
+  mapAlarms = [],
+  mapTickets = [],
   statusFilter,
   setStatusFilter,
   selectedId,
@@ -609,6 +614,8 @@ function FleetMapContent({
               equipment={selected}
               statusLabel={translate(STATUS_META[selected.status]?.labelKey ?? "map.status.offline")}
               statusColor={STATUS_META[selected.status]?.color ?? STATUS_META.offline.color}
+              mapAlarms={mapAlarms}
+              mapTickets={mapTickets}
             />
           </FleetMapMarkerPopup>
         )}
@@ -622,7 +629,15 @@ function FleetMapContent({
   );
 }
 
-function FleetMapPanelRoot({ equipments }: { equipments: FleetMapEquipment[] }) {
+function FleetMapPanelRoot({
+  equipments,
+  mapAlarms = [],
+  mapTickets = [],
+}: {
+  equipments: FleetMapEquipment[];
+  mapAlarms?: Alarm[];
+  mapTickets?: ServiceTicket[];
+}) {
   const pathname = usePathname();
   const { translate } = useLocale();
   const mapSurfaceBg = "#242f3e";
@@ -679,6 +694,8 @@ function FleetMapPanelRoot({ equipments }: { equipments: FleetMapEquipment[] }) 
 
   const sharedProps = {
     equipments,
+    mapAlarms,
+    mapTickets,
     statusFilter,
     setStatusFilter,
     selectedId,
@@ -758,11 +775,24 @@ function FleetMapPanelRoot({ equipments }: { equipments: FleetMapEquipment[] }) 
   );
 }
 
-export function FleetMapPanel({ equipments }: { equipments: FleetMapEquipment[] }) {
+export function FleetMapPanel({
+  equipments,
+  mapAlarms = [],
+  mapTickets = [],
+}: {
+  equipments: FleetMapEquipment[];
+  mapAlarms?: Alarm[];
+  mapTickets?: ServiceTicket[];
+}) {
   const pathname = usePathname();
   return (
     <GoogleMapsProvider>
-      <FleetMapPanelRoot key={pathname} equipments={equipments} />
+      <FleetMapPanelRoot
+        key={pathname}
+        equipments={equipments}
+        mapAlarms={mapAlarms}
+        mapTickets={mapTickets}
+      />
     </GoogleMapsProvider>
   );
 }

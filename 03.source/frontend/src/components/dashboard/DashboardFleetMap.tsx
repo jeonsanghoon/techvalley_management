@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { Box, CircularProgress, Stack } from "@mui/material";
 import type { FleetMapEquipment } from "@/lib/fleet-map-types";
+import type { Alarm, ServiceTicket } from "@/lib/types";
 
 const FleetMapPanel = dynamic(
   () => import("@/components/dashboard/FleetMapPanel").then((m) => ({ default: m.FleetMapPanel })),
@@ -26,7 +27,15 @@ const FleetMapPanel = dynamic(
   },
 );
 
-export function DashboardFleetMap({ equipments }: { equipments: FleetMapEquipment[] }) {
+export function DashboardFleetMap({
+  equipments,
+  mapAlarms = [],
+  mapTickets = [],
+}: {
+  equipments: FleetMapEquipment[];
+  mapAlarms?: Alarm[];
+  mapTickets?: ServiceTicket[];
+}) {
   const [mapReady, setMapReady] = useState(false);
 
   useEffect(() => {
@@ -56,7 +65,7 @@ export function DashboardFleetMap({ equipments }: { equipments: FleetMapEquipmen
       }}
     >
       {mapReady ? (
-        <FleetMapPanel equipments={equipments} />
+        <FleetMapPanel equipments={equipments} mapAlarms={mapAlarms} mapTickets={mapTickets} />
       ) : (
         <Stack
           sx={{

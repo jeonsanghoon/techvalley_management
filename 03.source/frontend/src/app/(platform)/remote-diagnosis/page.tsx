@@ -28,7 +28,7 @@ import { DataScopeBadge } from "@/components/ui/DataScopeBadge";
 import { useQueryState } from "@/hooks/useQueryState";
 import { bindSearchFields } from "@/lib/grid/bind-search-fields";
 import { combineAnd, matchesIndexedFields, matchesSelectFilter } from "@/lib/grid/query-filter";
-import { realtimeFleetItems } from "@/lib/data/realtime";
+import { fallbackMeta, getListItems, useFleetLive, useRemoteDiagnostics } from "@/lib/api/hooks";
 import { buildRemoteControlHref } from "@/lib/equipment-remote-nav";
 import {
   getFindingsForEquipment,
@@ -44,7 +44,6 @@ import { useLocale } from "@/contexts/LocaleContext";
 import type { TranslationKey } from "@/lib/locale";
 import { localeLabel } from "@/lib/locale/types";
 import { SEARCH_FIELD_LABELS } from "@/lib/locale/search-fields";
-import type { DataSourceMeta } from "@/lib/data/scope";
 
 const INITIAL_SEARCH = { serialNo: "", model: "", customer: "", site: "" };
 
@@ -76,13 +75,6 @@ const COMPONENT_ORDER: Record<RemoteDiagnosisComponent, number> = {
   detector: 1,
   tube: 2,
   body: 3,
-};
-
-const diagnosisMeta: DataSourceMeta = {
-  scope: "realtime",
-  asOf: "2026-06-06T14:15:00+09:00",
-  source: "edge.diagnosis.job",
-  refreshInterval: "15분 (edge-diagnosis-rollup)",
 };
 
 type EquipmentDiagnosisGroup = {
@@ -447,12 +439,17 @@ function EquipmentDiagnosisCard({
 
 export default function RemoteDiagnosisPage() {
   const { translate, language, formatAsOf } = useLocale();
+  const { data: fleetData } = useFleetLive();
+  const fleetRows = getListItems(fleetData);
+  const dataMeta = fleetData?.meta ?? fallbackMeta("/fleet/live");
+  const { data: remoteData } = useRemoteDiagnostics();
+  const remoteDiagnostics = getListItems(remoteData);
   const searchParams = useSearchParams();
   const query = useQueryState(INITIAL_SEARCH, { equipmentSn: "전체", status: "전체" });
 
   useEffect(() => {
     const sn = searchParams.get("equipmentSn");
-    if (sn && realtimeFleetItems.some((e) => e.serialNo === sn)) {
+    if (sn && fleetRows.some((e) => e.serialNo === sn)) {
       query.applyFilter("equipmentSn", sn);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- URL deep-link only on mount
@@ -535,14 +532,14 @@ export default function RemoteDiagnosisPage() {
 
   const equipmentOptions = useMemo(
     () => [
-      ...[...realtimeFleetItems]
+      ...[...fleetRows]
         .sort(compareEquipmentOperatingFirst)
         .map((item) => ({
           value: item.serialNo,
           label: `${item.serialNo} — ${item.model}`,
         })),
     ],
-    [translate],
+    [fleetRows],
   );
 
   const statusOptions = useMemo(
@@ -557,12 +554,14 @@ export default function RemoteDiagnosisPage() {
   const equipmentGroups = useMemo((): EquipmentDiagnosisGroup[] => {
     const statusFilter = query.applied.select.status ?? "전체";
 
-    return realtimeFleetItems
+    return fleetRows
       .filter((equipment) => {
-        const eqFindings = getFindingsForEquipment(equipment.serialNo);
+        const eqFindings = getFindingsForEquipment(equipment.serialNo, remoteDiagnostics);
+        const apiFindings = remoteDiagnostics.filter((f) => f.equipmentSn === equipment.serialNo);
         const matchStatus =
           statusFilter === "전체" ||
-          eqFindings.some((f) => f.status === statusFilter);
+          eqFindings.some((f) => f.status === statusFilter) ||
+          apiFindings.some((f) => f.severity === statusFilter);
         return combineAnd(
           matchesIndexedFields(query.applied.search, {
             serialNo: equipment.serialNo,
@@ -576,10 +575,10 @@ export default function RemoteDiagnosisPage() {
       })
       .map((equipment) => ({
         equipment,
-        findings: sortFindings(getFindingsForEquipment(equipment.serialNo)),
+        findings: sortFindings(getFindingsForEquipment(equipment.serialNo, remoteDiagnostics)),
       }))
       .sort((a, b) => compareEquipmentOperatingFirst(a.equipment, b.equipment));
-  }, [query.applied]);
+  }, [query.applied, fleetRows, remoteDiagnostics]);
 
   useEffect(() => {
     const visible = new Set(equipmentGroups.map((g) => g.equipment.serialNo));
@@ -611,7 +610,7 @@ export default function RemoteDiagnosisPage() {
   return (
     <Box>
       <PageToolbar>
-        <DataScopeBadge meta={diagnosisMeta} />
+        <DataScopeBadge meta={dataMeta} />
         <PrimaryButton
           onClick={() => {
             if (equipmentGroups.length > 0) void handleRunAllDiagnosis(equipmentGroups);
@@ -714,7 +713,7 @@ export default function RemoteDiagnosisPage() {
         <Typography variant="caption" color="text.secondary" sx={{ alignSelf: "center", ml: "auto" }}>
           {translate("remoteDiagnosis.summary.asOf" as TranslationKey).replace(
             "{asOf}",
-            formatAsOf(diagnosisMeta.asOf),
+            formatAsOf(dataMeta.asOf),
           )}
         </Typography>
       </Stack>

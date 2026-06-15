@@ -12,7 +12,7 @@
 
 ```bash
 # 로컬
-../../90.infra/local/bootstrap-postgres.sh
+../../10.local/bootstrap-postgres.sh
 ```
 
 ## UI ↔ RDS 매핑

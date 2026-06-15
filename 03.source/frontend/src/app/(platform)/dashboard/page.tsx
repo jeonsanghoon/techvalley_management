@@ -18,7 +18,7 @@ import {
 } from "@/components/dashboard/DashboardBoard";
 import { PageToolbar, SectionCard, StatusBadge } from "@/components/ui/PageComponents";
 import { ListPanel, PrimaryButton } from "@/components/ui/mui-primitives";
-import { batchDashboardForRegion } from "@/lib/data/batch";
+import { fallbackMeta, useDashboardSummary, useDashboardTrends } from "@/lib/api/hooks";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { TranslationKey } from "@/lib/locale";
@@ -26,15 +26,19 @@ import { findNavItem } from "@/lib/navigation";
 
 export default function DashboardPage() {
   const { can } = useAuth();
-  const { translate, language, formatAsOf, serviceRegion } = useLocale();
-  const snap = useMemo(() => batchDashboardForRegion(serviceRegion), [serviceRegion]);
-  const { kpis, fleetSample, recentAlarms, openTickets, meta: dataMeta } = snap;
-  const unackedAlarms = recentAlarms.filter((a) => !a.acknowledged);
+  const { translate, language, formatAsOf } = useLocale();
+  const { data: dashboard, isLoading } = useDashboardSummary();
+  const { data: trend } = useDashboardTrends();
 
-  const onlinePct = Math.round((kpis.online / kpis.totalFleet) * 100);
+  const dataMeta = dashboard?.meta ?? fallbackMeta("/dashboard/summary");
+  const batchAsOf = formatAsOf(dataMeta.asOf);
+  const localeTag = language === "en" ? "en-US" : "ko-KR";
 
-  const kpiStripItems = useMemo(
-    () => [
+  const kpiStripItems = useMemo(() => {
+    if (!dashboard) return [];
+    const { kpis } = dashboard;
+    const onlinePct = kpis.onlinePct ?? (kpis.totalFleet > 0 ? Math.round((kpis.online / kpis.totalFleet) * 100) : 0);
+    return [
       {
         label: translate("dashboard.kpi.online" as TranslationKey),
         value: `${kpis.online} / ${kpis.totalFleet}`,
@@ -68,12 +72,8 @@ export default function DashboardPage() {
         value: `${kpis.avgYield}%`,
         highlight: "success" as const,
       },
-    ],
-    [translate, kpis, onlinePct],
-  );
-
-  const DASHBOARD_LIST_HEIGHT = 260;
-  const DASHBOARD_GRID_HEIGHT = 300;
+    ];
+  }, [dashboard, translate]);
 
   const quickLinks = useMemo(
     () =>
@@ -109,8 +109,18 @@ export default function DashboardPage() {
     [translate, can],
   );
 
-  const batchAsOf = formatAsOf(dataMeta.asOf);
-  const localeTag = language === "en" ? "en-US" : "ko-KR";
+  if (isLoading || !dashboard) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography>{translate("common.loading" as TranslationKey)}</Typography>
+      </Box>
+    );
+  }
+
+  const { kpis, fleet, recentAlarms, openTickets, mapAlarms, mapTickets, charts } = dashboard;
+  const unackedAlarms = recentAlarms.filter((a) => !a.acknowledged);
+  const DASHBOARD_LIST_HEIGHT = 260;
+  const DASHBOARD_GRID_HEIGHT = 300;
 
   return (
     <Box>
@@ -127,11 +137,11 @@ export default function DashboardPage() {
           <SectionCard title={translate("dashboard.section.fleetMap" as TranslationKey)} sx={{ mb: 2.5 }}>
             <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
               {translate("dashboard.fleetMap.caption" as TranslationKey)
-                .replace("{sample}", String(fleetSample.length))
+                .replace("{sample}", String(fleet.length))
                 .replace("{total}", String(kpis.totalFleet))
                 .replace("{asOf}", batchAsOf)}
             </Typography>
-            <DashboardFleetMap equipments={fleetSample} />
+            <DashboardFleetMap equipments={fleet} mapAlarms={mapAlarms} mapTickets={mapTickets} />
           </SectionCard>
         </Grid>
         <Grid size={{ xs: 12, lg: 5 }}>
@@ -168,7 +178,7 @@ export default function DashboardPage() {
             title={translate("dashboard.chart.fleetStatus" as TranslationKey)}
             subtitle={translate("dashboard.chart.fleetStatusSub" as TranslationKey)}
           >
-            <ApexFleetDonut />
+            <ApexFleetDonut chart={charts.fleetStatus} />
           </DashboardChartCard>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, xl: 3 }}>
@@ -176,7 +186,7 @@ export default function DashboardPage() {
             title={translate("dashboard.chart.ticketStages" as TranslationKey)}
             subtitle={translate("dashboard.chart.batchSnapshot" as TranslationKey)}
           >
-            <ApexTicketStages />
+            <ApexTicketStages chart={charts.ticketStages} />
           </DashboardChartCard>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, xl: 3 }}>
@@ -184,7 +194,7 @@ export default function DashboardPage() {
             title={translate("dashboard.chart.alarmTrend" as TranslationKey)}
             subtitle={translate("dashboard.chart.alarmTrendSub" as TranslationKey)}
           >
-            <ApexAlarmTrend />
+            <ApexAlarmTrend trend={trend} />
           </DashboardChartCard>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, xl: 3 }}>
@@ -192,7 +202,7 @@ export default function DashboardPage() {
             title={translate("dashboard.chart.yield" as TranslationKey)}
             subtitle={translate("dashboard.chart.yieldSub" as TranslationKey)}
           >
-            <ApexYieldGauge />
+            <ApexYieldGauge avgYield={kpis.avgYield} />
           </DashboardChartCard>
         </Grid>
       </Grid>
@@ -202,9 +212,9 @@ export default function DashboardPage() {
           <AgDataGrid
             title={translate("dashboard.grid.equipment" as TranslationKey)}
             subtitle={translate("dashboard.grid.equipmentSub" as TranslationKey)
-              .replace("{count}", String(fleetSample.length))
+              .replace("{sample}", String(fleet.length))
               .replace("{asOf}", batchAsOf)}
-            rowData={fleetSample}
+            rowData={fleet}
             rowModel="client"
             autoHeight={false}
             columnSet="equipment"

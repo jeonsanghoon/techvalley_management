@@ -16,8 +16,14 @@ npm run lambda:assets
 echo ">> test:local:ingress"
 npm run test:local:ingress
 
+echo ">> test:local:ingress:alarm"
+npm run test:local:ingress:alarm
+
 echo ">> test:local:batch"
 npm run test:local:batch
+
+echo ">> test:local:batch:all"
+npm run test:local:batch:all
 
 echo ">> test:local:media"
 npm run test:local:media

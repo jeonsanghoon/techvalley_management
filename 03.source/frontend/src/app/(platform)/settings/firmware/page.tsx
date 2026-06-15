@@ -12,7 +12,7 @@ import { bindSearchFields } from "@/lib/grid/bind-search-fields";
 import { combineAnd, matchesDateRange, matchesIndexedFields, matchesSelectFilter } from "@/lib/grid/query-filter";
 import { bindQueryToolbarDate } from "@/lib/grid/query-toolbar-date";
 import { DataScopeBadge } from "@/components/ui/DataScopeBadge";
-import { batchFirmwareConfigs, batchOperationalMeta } from "@/lib/data/batch";
+import { fallbackMeta, getListItems, useFirmwareConfigs } from "@/lib/api/hooks";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { TranslationKey } from "@/lib/locale";
 import { localeLabel } from "@/lib/locale/types";
@@ -23,6 +23,9 @@ const INITIAL_SEARCH = { serialNo: "", model: "", customer: "", version: "" };
 
 export default function SettingsFirmwarePage() {
   const { translate, language } = useLocale();
+  const { data: firmwareData } = useFirmwareConfigs();
+  const firmwareRows = getListItems(firmwareData);
+  const dataMeta = firmwareData?.meta ?? fallbackMeta("/firmware/configs");
   const query = useQueryState(INITIAL_SEARCH, { auto: "전체" });
 
   const searchDefs = useMemo(
@@ -61,12 +64,12 @@ export default function SettingsFirmwarePage() {
     [query.applied],
   );
 
-  const { rowData, resultCount } = useFilteredRows(batchFirmwareConfigs, filterFn);
+  const { rowData, resultCount } = useFilteredRows(firmwareRows, filterFn);
 
   return (
     <Box>
       <PageToolbar>
-        <DataScopeBadge meta={batchOperationalMeta} />
+        <DataScopeBadge meta={dataMeta} />
         <PrimaryButton perm="execute">{translate("settingsFirmware.toolbar.ota" as TranslationKey)}</PrimaryButton>
       </PageToolbar>
 
